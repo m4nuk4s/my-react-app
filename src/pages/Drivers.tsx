@@ -73,7 +73,7 @@ export default function Drivers() {
               name: driver.name,
               category: driver.device_model || "laptops",
               manufacturer: manufacturer,
-              image: '/assets/images/driver-placeholder.jpg', // Default image
+              image: driver.image_url || '/assets/images/driver-placeholder.jpg', // Use image from Supabase if available
               os: osList,
               drivers: [{
                 name: driver.description || "Driver Package",
