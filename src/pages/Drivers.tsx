@@ -52,18 +52,18 @@ export default function Drivers() {
         const { supabase } = await import('@/lib/supabase');
         const sampleDataModule = await import('@/utils/sampleData');
         
-        // Try to fetch from Supabase first
-        const { data: supabaseDrivers, error } = await supabase
-          .from('drivers')
+        // Try to fetch from app-specific drivers table first
+        const { data: appDrivers, error: appError } = await supabase
+          .from('app_8e3e8a4d8d0e442280110fd6f6c2cd95_drivers')
           .select('*');
         
-        if (supabaseDrivers && supabaseDrivers.length > 0 && !error) {
-          console.log('Loaded drivers from Supabase:', supabaseDrivers.length);
+        if (appDrivers && appDrivers.length > 0 && !appError) {
+          console.log('Loaded drivers from app-specific table:', appDrivers.length);
           
           // Convert Supabase format to the format needed by the UI
-          const convertedDrivers = supabaseDrivers.map(driver => {
+          const convertedDrivers = appDrivers.map(driver => {
             // Parse OS version string into array
-            const osList = driver.os_version.split(', ').map(os => os.trim().toLowerCase());
+            const osList = driver.os_version?.split(', ').map(os => os.trim().toLowerCase()) || ["windows11"];
             
             // Create manufacturer from name if not available
             const manufacturer = driver.manufacturer || driver.name.split(' ')[0];
@@ -71,7 +71,7 @@ export default function Drivers() {
             return {
               id: driver.id,
               name: driver.name,
-              category: driver.device_model || "laptops",
+              category: driver.device_model || driver.category || "laptops",
               manufacturer: manufacturer,
               image: driver.image_url || '/assets/images/driver-placeholder.jpg', // Use image from Supabase if available
               os: osList,
@@ -87,28 +87,46 @@ export default function Drivers() {
           
           setDrivers(convertedDrivers);
         } else {
-          // Fallback to localStorage if Supabase fails
-          const storedDrivers = localStorage.getItem('drivers');
-          if (storedDrivers) {
-            const parsedDrivers = JSON.parse(storedDrivers);
-            // Convert admin format to drivers page format
-            const convertedDrivers = parsedDrivers.map((driver: DriverType) => ({
-              id: parseInt(driver.id) || driver.id,
-              name: driver.name,
-              category: driver.category,
-              manufacturer: driver.manufacturer,
-              image: driver.image,
-              os: driver.os,
-              drivers: driver.drivers
-            }));
+          // Try the main drivers table
+          const { data: supabaseDrivers, error } = await supabase
+            .from('drivers')
+            .select('*');
+          
+          if (supabaseDrivers && supabaseDrivers.length > 0 && !error) {
+            console.log('Loaded drivers from main Supabase table:', supabaseDrivers.length);
+            
+            // Convert Supabase format to the format needed by the UI
+            const convertedDrivers = supabaseDrivers.map(driver => {
+              // Parse OS version string into array
+              const osList = driver.os_version?.split(', ').map(os => os.trim().toLowerCase()) || ["windows11"];
+              
+              // Create manufacturer from name if not available
+              const manufacturer = driver.manufacturer || driver.name.split(' ')[0];
+              
+              return {
+                id: driver.id,
+                name: driver.name,
+                category: driver.device_model || driver.category || "laptops",
+                manufacturer: manufacturer,
+                image: driver.image_url || '/assets/images/driver-placeholder.jpg', // Use image from Supabase if available
+                os: osList,
+                drivers: [{
+                  name: driver.description || "Driver Package",
+                  version: driver.version,
+                  date: new Date(driver.created_at).toISOString().split('T')[0],
+                  size: driver.size || "1.0 GB",
+                  link: driver.download_url
+                }]
+              };
+            });
+            
             setDrivers(convertedDrivers);
           } else {
-            // Initialize with sample data if no stored drivers
-            sampleDataModule.initializeSampleData();
-            // Reload after initialization
-            const refreshedDrivers = localStorage.getItem('drivers');
-            if (refreshedDrivers) {
-              const parsedDrivers = JSON.parse(refreshedDrivers);
+            // Fallback to localStorage if Supabase fails
+            const storedDrivers = localStorage.getItem('drivers');
+            if (storedDrivers) {
+              const parsedDrivers = JSON.parse(storedDrivers);
+              // Convert admin format to drivers page format
               const convertedDrivers = parsedDrivers.map((driver: DriverType) => ({
                 id: parseInt(driver.id) || driver.id,
                 name: driver.name,
@@ -120,8 +138,26 @@ export default function Drivers() {
               }));
               setDrivers(convertedDrivers);
             } else {
-              // Last resort - use static data
-              setDrivers(staticDrivers);
+              // Initialize with sample data if no stored drivers
+              sampleDataModule.initializeSampleData();
+              // Reload after initialization
+              const refreshedDrivers = localStorage.getItem('drivers');
+              if (refreshedDrivers) {
+                const parsedDrivers = JSON.parse(refreshedDrivers);
+                const convertedDrivers = parsedDrivers.map((driver: DriverType) => ({
+                  id: parseInt(driver.id) || driver.id,
+                  name: driver.name,
+                  category: driver.category,
+                  manufacturer: driver.manufacturer,
+                  image: driver.image,
+                  os: driver.os,
+                  drivers: driver.drivers
+                }));
+                setDrivers(convertedDrivers);
+              } else {
+                // Last resort - use static data
+                setDrivers(staticDrivers);
+              }
             }
           }
         }
