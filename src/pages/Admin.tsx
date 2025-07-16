@@ -55,7 +55,7 @@ const Admin = () => {
   );
 
   useEffect(() => {
-    // Check if user is admin, if not redirect to homes
+    // Check if user is admin, if not redirect to home
     if (!user || !isAdmin) {
       toast.error("You don't have permission to access this page");
       navigate("/");
