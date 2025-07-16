@@ -77,8 +77,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               id: userData.id,
               email: userData.email,
               username: userData.username,
-              isAdmin: userData.isadmin, // Using lowercase column name
-              isApproved: userData.isapproved // Using lowercase column name
+              isAdmin: userData.isAdmin,
+              isApproved: userData.isApproved
             });
           }
         } else {
@@ -182,17 +182,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
 
         if (userData) {
-          if (userData.isadmin || userData.isapproved) { // Using lowercase column names
+          if (userData.isAdmin || userData.isApproved) {
             setUser({
               id: userData.id,
               email: userData.email,
               username: userData.username,
-              isAdmin: userData.isadmin, // Using lowercase column name
-              isApproved: userData.isapproved // Using lowercase column name
+              isAdmin: userData.isAdmin,
+              isApproved: userData.isApproved
             });
             
             // Initialize sample data when admin logs in
-            if (userData.isadmin) { // Using lowercase column name
+            if (userData.isAdmin) {
               initializeSampleData();
             }
             
@@ -237,8 +237,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             email,
             username,
             password, // In a real app, this would be handled by Auth
-            isadmin: false, // Using lowercase column name
-            isapproved: false // Using lowercase column name - New users need admin approval
+            isAdmin: false,
+            isApproved: false // New users need admin approval
           });
 
         if (insertError) {

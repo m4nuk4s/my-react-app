@@ -8,7 +8,6 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { Send, X, MessageSquareText, Loader2, ExternalLink, Search, Check } from "lucide-react";
-import { useSettings } from "@/contexts/SettingsContext";
 
 // Type definitions
 type Guide = {
@@ -46,7 +45,6 @@ type TroubleshootingGuide = {
 };
 
 export default function GuideAssistant() {
-  const { settings } = useSettings();
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [messages, setMessages] = useState<Message[]>([
@@ -354,11 +352,6 @@ export default function GuideAssistant() {
     );
   };
 
-  // Don't render if assistant is disabled in settings
-  if (!settings.showGuideAssistant) {
-    return null;
-  }
-  
   return (
     <div className="fixed bottom-4 right-4 z-50">
       {!isOpen ? (
@@ -543,7 +536,7 @@ function generateResponse(query: string, guides: Guide[], troubleshootingGuides:
       Object.entries(categorizedGuides).forEach(([category, categoryGuides]) => {
         response += `<strong>${category}</strong>:<br/>`;
         response += categoryGuides.map(guide => 
-          `• <a href="/disassembly-guides/${guide.id}" class="text-blue-600 hover:underline">${guide.title}</a> (${guide.model})`
+          `• <a href="/disassembly/${guide.id}" class="text-blue-600 hover:underline">${guide.title}</a> (${guide.model})`
         ).join('<br/>');
         response += '<br/><br/>';
       });
@@ -558,7 +551,7 @@ function generateResponse(query: string, guides: Guide[], troubleshootingGuides:
     const relatedGuides = guides.filter(guide => guide.model === modelMentioned.model);
     if (relatedGuides.length > 0) {
       const guidesText = relatedGuides.map(guide => 
-        `• <a href="/disassembly-guides/${guide.id}" class="text-blue-600 hover:underline">${guide.title}</a> (${guide.difficulty} - ${guide.time})`
+        `• <a href="/disassembly/${guide.id}" class="text-blue-600 hover:underline">${guide.title}</a> (${guide.difficulty} - ${guide.time})`
       ).join('<br/>');
       return `I found ${relatedGuides.length} guide(s) for ${modelMentioned.model}:<br/><br/>${guidesText}<br/><br/>Which one would you like to know more about?`;
     }

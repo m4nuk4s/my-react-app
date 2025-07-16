@@ -193,10 +193,6 @@ export const initializeSampleData = async () => {
               os_version: driver.os.join(', '),
               device_model: driver.category,
               download_url: driver.drivers[0].link,
-              image_url: driver.image,
-              manufacturer: driver.manufacturer,
-              size: driver.drivers[0].size,
-              category: driver.category,
               author_id: null
             });
         }
