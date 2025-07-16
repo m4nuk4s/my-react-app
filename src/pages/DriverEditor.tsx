@@ -164,8 +164,26 @@ const DriverEditor = () => {
     try {
       setStatusMessage(`Syncing driver "${driver.name}" to Supabase...`);
       
+      // Check if the table has the downloads column
+      let hasDownloadsColumn = true;
+      try {
+        // Try to query the schema
+        const { error: schemaError } = await supabase
+          .from(APP_DRIVERS_TABLE)
+          .select('downloads')
+          .limit(1);
+          
+        if (schemaError && schemaError.message.includes('downloads')) {
+          hasDownloadsColumn = false;
+          console.warn('Downloads column not found in table schema. Using fallback.');
+        }
+      } catch (e) {
+        // If there's an error, assume the column doesn't exist
+        hasDownloadsColumn = false;
+      }
+      
       // Map the driver to the format needed for Supabase app-specific table
-      const driverData = {
+      const driverData: any = {
         name: driver.name,
         version: driver.drivers && driver.drivers[0] ? driver.drivers[0].version : '1.0',
         description: driver.drivers && driver.drivers[0] ? driver.drivers[0].name : driver.name,
@@ -174,8 +192,19 @@ const DriverEditor = () => {
         image_url: driver.image || '/placeholder-driver.png',
         manufacturer: driver.manufacturer || 'Unknown',
         size: driver.drivers && driver.drivers[0] ? driver.drivers[0].size : 'Unknown',
-        category: driver.category || 'laptops'
+        category: driver.category || 'laptops',
       };
+      
+      // Only include downloads field if the column exists
+      if (hasDownloadsColumn) {
+        driverData.downloads = driver.drivers ? driver.drivers.map(d => ({
+          name: d.name,
+          version: d.version,
+          date: d.date || new Date().toISOString().split('T')[0],
+          size: d.size,
+          url: d.link
+        })) : [];
+      }
       
       // Check if driver already exists in Supabase
       const { data: existingDrivers, error: fetchError } = await supabase
