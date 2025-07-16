@@ -7,7 +7,7 @@ import Panel from "@/assets/wtpth/panel.jpg"
 export default function Windows10() {
   const isoDownloads = [
     {
-      name: "Windows 10 Home + Office 365",
+      name: "Windows 10 Home EDITION + Office 365",
       version: "22H2",
       size: "16.1 GB",
       link: "http://gofile.me/5wnJP/TX70oFXuM"
