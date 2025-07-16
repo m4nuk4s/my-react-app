@@ -53,59 +53,41 @@ export function Drivers() {
     const fetchDriversWithFiles = async () => {
       setLoading(true);
       try {
-        let driversData: Driver[] = [];
-
-        const { data: dbDrivers, error: driversError } = await supabase
-          .from('drivers')
+        const { data: dbDrivers, error: driversError } = await supabase.from('app_8e3e8a4d8d0e442280110fd6f6c2cd95_drivers')
           .select('*');
 
         const { data: dbFiles, error: driverFilesError } = await supabase
-          .from('driver_files')
+          .from('app_8e3e8a4d8d0e442280110fd6f6c2cd95_drivers')
           .select('*');
 
-        if (driversError || driverFilesError || !dbDrivers || dbDrivers.length === 0) {
-          console.warn('Supabase empty or error:', { driversError, driverFilesError });
-
-          const storedDrivers = localStorage.getItem('drivers');
-          if (storedDrivers) {
-            driversData = JSON.parse(storedDrivers).map((driver: any) => ({
-              ...driver,
-              image_url: driver.image || driver.image_url || '/placeholder-driver.png',
-              os_version: driver.os_version || driver.os || 'Unknown',
-              size: driver.size || driver.total_size || 'Unknown',
-              release_date: driver.release_date || driver.date || driver.created || 'Unknown',
-              files: driver.drivers.map((f: any, idx: number) => ({
-                id: f.id || `${driver.id}-${idx}`,
-                driver_id: driver.id,
-                name: f.name,
-                url: f.link,
-                size: f.size,
-                type: f.type || 'file',
-              }))
-            }));
-          } else {
-            console.error('No drivers found in database or localStorage.');
-            toast.error('Failed to load drivers from database or local storage.');
-            setDrivers([]);
-            setLoading(false);
-            return;
-          }
-        } else {
-          driversData = dbDrivers.map(driver => {
-            const files = dbFiles.filter(file => file.driver_id === driver.id);
-            return {
-              ...driver,
-              image_url: driver.image_url || driver.image || '/placeholder-driver.png',
-              os_version: driver.os_version || driver.os || 'Unknown',
-              size: driver.size || driver.total_size || 'Unknown',
-              release_date: driver.release_date || driver.date || driver.created || 'Unknown',
-              files
-            };
-          });
-
-          localStorage.setItem('drivers', JSON.stringify(driversData));
+        if (driversError || driverFilesError) {
+          console.error('Supabase fetch error:', { driversError, driverFilesError });
+          toast.error('Database fetch failed. Check your Supabase connection and permissions.');
+          setDrivers([]);
+          setLoading(false);
+          return;
         }
 
+        if (!dbDrivers || dbDrivers.length === 0) {
+          toast.error('No driver data found in Supabase. Check your database content and permissions.');
+          setDrivers([]);
+          setLoading(false);
+          return;
+        }
+
+        const driversData: Driver[] = dbDrivers.map(driver => {
+          const files = dbFiles?.filter(file => file.driver_id === driver.id) || [];
+          return {
+            ...driver,
+            image_url: driver.image_url || driver.image || '/placeholder-driver.png',
+            os_version: driver.os_version || driver.os || 'Unknown',
+            size: driver.size || driver.total_size || 'Unknown',
+            release_date: driver.release_date || driver.date || driver.created || 'Unknown',
+            files
+          };
+        });
+
+        localStorage.setItem('drivers', JSON.stringify(driversData));
         setDrivers(driversData);
       } catch (error) {
         console.error('Unexpected error loading drivers:', error);
