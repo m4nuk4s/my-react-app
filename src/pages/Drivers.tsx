@@ -1,23 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Download, Edit, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { Badge } from '../components/ui/badge';
+import { existingDrivers } from '../utils/existingDrivers';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
-import Panel from "@/assets/wtpth/panel.jpg";
 
-interface DriverFile {
-  id: string;
-  driver_id: string;
+// Define types for driver data
+interface DriverDownload {
   name: string;
-  url: string;
+  version: string;
+  date?: string;
   size: string;
-  type: string;
+  url: string;
 }
 
 interface Driver {
@@ -27,18 +28,37 @@ interface Driver {
   description: string;
   os_version: string;
   device_model?: string;
-  files: DriverFile[];
+  download_url: string;  // Keep for backward compatibility
+  downloads?: DriverDownload[];
   image_url?: string;
-  image?: string;
   manufacturer: string;
   size: string;
   category: string;
-  drivers?: any[];
-  release_date?: string;
-  created?: string;
 }
 
-const categories = ['all', 'laptops', 'desktops', 'AIO', 'monitors', 'peripherals'];
+// Define categories for tabs
+const categories = ['all', 'laptops', 'desktops', 'servers', 'monitors', 'peripherals'];
+
+// Map existing drivers to our expected Driver format for fallback
+const localDrivers: Driver[] = existingDrivers.map(driver => ({
+  id: driver.id.toString(),
+  name: driver.name,
+  version: driver.drivers[0].version,
+  description: driver.drivers[0].name,
+  os_version: driver.os.join(', '),
+  download_url: driver.drivers[0].link,
+  image_url: typeof driver.image === 'string' ? driver.image : '',
+  manufacturer: driver.manufacturer,
+  size: driver.drivers[0].size,
+  category: driver.category,
+  downloads: driver.drivers.map(d => ({
+    name: d.name,
+    version: d.version,
+    date: d.date,
+    size: d.size,
+    url: d.link
+  }))
+}));
 
 export function Drivers() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
@@ -49,89 +69,155 @@ export function Drivers() {
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
 
+  // Fetch drivers from Supabase or fallback to local data
   useEffect(() => {
-    const fetchDriversWithFiles = async () => {
-      setLoading(true);
+    const fetchDrivers = async () => {
       try {
-        const { data: dbDrivers, error: driversError } = await supabase.from('app_8e3e8a4d8d0e442280110fd6f6c2cd95_drivers')
-          .select('*');
-
-        const { data: dbFiles, error: driverFilesError } = await supabase
+        setLoading(true);
+        
+        // First try to load from app-specific table
+        const { data: appDrivers, error: appError } = await supabase
           .from('app_8e3e8a4d8d0e442280110fd6f6c2cd95_drivers')
           .select('*');
-
-        if (driversError || driverFilesError) {
-          console.error('Supabase fetch error:', { driversError, driverFilesError });
-          toast.error('Database fetch failed. Check your Supabase connection and permissions.');
-          setDrivers([]);
-          setLoading(false);
-          return;
+        
+        if (appError) {
+          console.error('Error loading app-specific drivers:', appError);
+          
+          // Fall back to main drivers table
+          const { data: mainDrivers, error: mainError } = await supabase
+            .from('drivers')
+            .select('*');
+          
+          if (mainError) {
+            console.error('Error loading drivers from main table:', mainError);
+            // Fall back to local data
+            setDrivers(localDrivers);
+            console.log('Using local driver data as fallback');
+          } else {
+            console.log(`Loaded ${mainDrivers.length} drivers from main table`);
+            setDrivers(mainDrivers as Driver[]);
+          }
+        } else {
+          console.log(`Loaded ${appDrivers.length} drivers from app-specific table`);
+          
+          // Check if we have the N17 driver specifically - log for debugging
+          const n17Driver = appDrivers.find(d => d.name === 'N17V2C4WH128');
+          if (n17Driver) {
+            console.log('N17 driver found in app-specific table:', n17Driver);
+          } else {
+            console.log('N17 driver not found in app-specific table');
+          }
+          
+          setDrivers(appDrivers as Driver[]);
         }
-
-        if (!dbDrivers || dbDrivers.length === 0) {
-          toast.error('No driver data found in Supabase. Check your database content and permissions.');
-          setDrivers([]);
-          setLoading(false);
-          return;
-        }
-
-        const driversData: Driver[] = dbDrivers.map(driver => {
-          const files = dbFiles?.filter(file => file.driver_id === driver.id) || [];
-          return {
-            ...driver,
-            image_url: driver.image_url || driver.image || '/placeholder-driver.png',
-            os_version: driver.os_version || driver.os || 'Unknown',
-            size: driver.size || driver.total_size || 'Unknown',
-            release_date: driver.release_date || driver.date || driver.created || 'Unknown',
-            files
-          };
-        });
-
-        localStorage.setItem('drivers', JSON.stringify(driversData));
-        setDrivers(driversData);
       } catch (error) {
         console.error('Unexpected error loading drivers:', error);
-        toast.error('Unexpected error loading drivers.');
-        setDrivers([]);
+        // Fall back to local data
+        setDrivers(localDrivers);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDriversWithFiles();
+    fetchDrivers();
   }, []);
 
+  // Filter drivers based on search and category
   useEffect(() => {
     let result = [...drivers];
+    
+    // Filter by search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
-        driver =>
-          driver.name.toLowerCase().includes(query) ||
+        driver => 
+          driver.name.toLowerCase().includes(query) || 
           driver.description?.toLowerCase().includes(query) ||
           driver.manufacturer?.toLowerCase().includes(query)
       );
     }
+    
+    // Filter by category
     if (activeTab !== 'all') {
       result = result.filter(driver => driver.category === activeTab);
     }
+    
     setFilteredDrivers(result);
   }, [searchQuery, activeTab, drivers]);
 
+  // Handle driver download
+  const handleDownload = (url: string) => {
+    if (!url || url === '#') {
+      toast.error("Download link not available");
+      return;
+    }
+    
+    // Check if URL is valid
+    try {
+      new URL(url);
+      window.open(url, '_blank');
+      console.log("Opening download URL:", url);
+    } catch (e) {
+      console.error("Invalid download URL:", url);
+      toast.error("Invalid download link");
+    }
+  };
+
+  // State for handling accordion
+  const [expandedDrivers, setExpandedDrivers] = useState<Record<string, boolean>>({});
+
+  // Toggle accordion state
+  const toggleDriverAccordion = (driverId: string) => {
+    setExpandedDrivers(prev => ({
+      ...prev,
+      [driverId]: !prev[driverId]
+    }));
+  };
+  
+  // Handle driver deletion
+  const handleDeleteDriver = (driverId: string) => {
+    if (window.confirm("Are you sure you want to delete this driver?")) {
+      try {
+        // First try to get existing drivers
+        const storedDrivers = localStorage.getItem('drivers') || '[]';
+        const drivers = JSON.parse(storedDrivers);
+        
+        // Filter out the driver to delete
+        const updatedDrivers = drivers.filter((driver: Driver) => driver.id !== driverId);
+        
+        // Update localStorage
+        localStorage.setItem('drivers', JSON.stringify(updatedDrivers));
+        
+        // Try to delete from Supabase as well
+        const deleteFromSupabase = async (id: string) => {
+          await supabase
+            .from('app_8e3e8a4d8d0e442280110fd6f6c2cd95_drivers')
+            .delete()
+            .eq('id', id);
+        };
+        
+        deleteFromSupabase(driverId);
+        
+        // Refresh the driver list
+        setDrivers(updatedDrivers);
+        toast.success("Driver deleted successfully");
+      } catch (error) {
+        console.error("Error deleting driver:", error);
+        toast.error("Failed to delete driver");
+      }
+    }
+  };
+
   return (
     <div className="container py-6">
-      <div className="text-center">
+      <div className="flex flex-col space-y-6">
         <div>
-          <h1
-            className="text-4xl font-bold text-white mb-0 px-4 py-20 rounded bg-cover bg-center"
-            style={{ backgroundImage: `url(${Panel})`, display: 'block' }}
-          >
-            Drivers/Recovery Images/Firmware
-            <p className="text-xl text-blue-100 mb-8">
-              Find and download the latest drivers/firmwares for your devices
-            </p>
-          </h1>
+          <h1 className="text-3xl font-bold mb-2">Driver Downloads</h1>
+          <p className="text-gray-500 dark:text-gray-400">
+            Find and download the latest drivers for your devices
+          </p>
         </div>
+        
         <div className="flex items-center space-x-4">
           <div className="flex-1">
             <Input
@@ -142,6 +228,7 @@ export function Drivers() {
             />
           </div>
         </div>
+        
         <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid grid-cols-3 md:grid-cols-6 gap-2">
             {categories.map((category) => (
@@ -150,6 +237,7 @@ export function Drivers() {
               </TabsTrigger>
             ))}
           </TabsList>
+          
           <TabsContent value={activeTab} className="mt-6">
             {loading ? (
               <div className="text-center py-10">
@@ -161,66 +249,112 @@ export function Drivers() {
                 <p>No drivers found. Try adjusting your search criteria.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredDrivers.map((driver) => (
                   <Card key={driver.id} className="overflow-hidden flex flex-col">
                     {driver.image_url && (
-                      <div className="overflow-hidden bg-whit-100-100 dark:bg-blue-800">
-                        <img
-                          src={driver.image_url}
-                          alt={driver.name}
-                          className="w-full h-auto object-contain max-h-48"
+                      <div className="aspect-video overflow-hidden bg-gray-100 dark:bg-gray-800">
+                        <img 
+                          src={driver.image_url} 
+                          alt={driver.name} 
+                          className="w-full h-full object-cover"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/placeholder-driver.png';
+                            // Handle image load errors by replacing with placeholder
+                            console.log("Image failed to load:", driver.image_url);
+                            (e.target as HTMLImageElement).src = './placeholder-driver.png';
                           }}
                         />
                       </div>
                     )}
                     <CardHeader>
                       <div className="flex justify-between items-start">
-                        <CardTitle className="text-xl font-bold">{driver.name}</CardTitle>
-                        {driver.version && (
-                          <Badge variant="outline" className="text-sm font-semibold">Version {driver.version}</Badge>
-                        )}
+                        <CardTitle className="text-xl">{driver.name}</CardTitle>
+                        <Badge variant="outline">{driver.version}</Badge>
                       </div>
                       <CardDescription>
                         {driver.manufacturer} • {driver.category}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="flex-grow">
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-2 font-medium">{driver.description}</p>
-                      <div className="grid grid-cols-2 gap-4 text-sm mt-4">
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{driver.description}</p>
+                      <div className="grid grid-cols-2 gap-2 text-sm mt-4">
                         <div>
-                          <Label className="text-xs text-gray-500 dark:text-gray-400">Operating System</Label>
-                          <p className="mt-1">
-                            <Badge variant="subtle" className="text-xs bg-blue-500 hover:bg-blue-600 text-white">
-                              <strong>{driver.os_version}</strong>
-                            </Badge>
-                          </p>
+                          <Label className="text-xs text-gray-500 dark:text-gray-400">OS Version</Label>
+                          <p>{driver.os_version}</p>
                         </div>
                         <div>
-                          <Label className="text-xs text-gray-500 dark:text-gray-400"></Label>
-                          <p className="font-semibold mt-1">Available Files</p>
+                          <Label className="text-xs text-gray-500 dark:text-gray-400">Size</Label>
+                          <p>{driver.size}</p>
                         </div>
-                      </div>
-                      <div className="mt-4 space-y-2">
-                        {driver.files && driver.files.length > 0 ? (
-                          driver.files.map((file) => (
-                            <Button
-                              key={file.id}
-                              variant="default"
-                              className="w-full justify-between bg-blue-500 hover:bg-blue-600 text-white transition-colors font-bold"
-                              onClick={() => window.open(file.url, '_blank')}
-                            >
-                              <span>{file.name}</span>
-                              <span className="text-xs text-white/80">{file.size}</span>
-                            </Button>
-                          ))
-                        ) : (
-                          <p className="text-sm text-muted-foreground">No files available for download</p>
-                        )}
                       </div>
                     </CardContent>
+                    <CardFooter className="flex flex-col gap-2">
+                      {/* Always show the individual download buttons for drivers with download files */}
+                      {driver.downloads && driver.downloads.length > 0 ? (
+                        <>
+                          <Button 
+                            onClick={() => toggleDriverAccordion(driver.id)}
+                            className="w-full flex justify-between items-center"
+                            variant="outline"
+                          >
+                            <span className="flex items-center">
+                              <Download className="mr-2 h-4 w-4" />
+                              {driver.downloads.length > 1 
+                                ? `View All Downloads (${driver.downloads.length})` 
+                                : 'View Download Details'}
+                            </span>
+                            {expandedDrivers[driver.id] ? 
+                              <ChevronUp className="h-4 w-4" /> : 
+                              <ChevronDown className="h-4 w-4" />
+                            }
+                          </Button>
+                          
+                          {/* Always show the first download button directly */}
+                          <Button 
+                            onClick={() => handleDownload(driver.downloads[0].url)}
+                            className="w-full"
+                          >
+                            <Download className="mr-2 h-4 w-4" />
+                            Download {driver.downloads[0].name}
+                          </Button>
+                          
+                          {/* Show expanded panel with ALL downloads when clicked */}
+                          {driver.downloads.length > 1 && expandedDrivers[driver.id] && (
+                            <div className="w-full border rounded-md overflow-hidden mt-2">
+                              {driver.downloads.map((download, idx) => (
+                                <div 
+                                  key={idx} 
+                                  className={`flex justify-between items-center p-3 hover:bg-muted ${idx !== 0 ? 'border-t' : ''}`}
+                                >
+                                  <div>
+                                    <div className="font-medium">{download.name}</div>
+                                    <div className="text-xs text-muted-foreground">
+                                      {download.version} • {download.size}
+                                      {download.date && ` • ${download.date}`}
+                                    </div>
+                                  </div>
+                                  <Button 
+                                    size="sm" 
+                                    onClick={() => handleDownload(download.url)}
+                                  >
+                                    <Download className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        // Fallback for drivers without downloads array
+                        <Button 
+                          onClick={() => handleDownload(driver.download_url)}
+                          className="w-full"
+                        >
+                          <Download className="mr-2 h-4 w-4" />
+                          Download Driver
+                        </Button>
+                      )}
+                    </CardFooter>
                   </Card>
                 ))}
               </div>
