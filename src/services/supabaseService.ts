@@ -1,6 +1,12 @@
 import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 import { Ticket, Comment, User as AppUser, Department, UserRole } from '../utils/types';
 import { supabaseUrl, supabaseKey } from '../lib/supabase';
+import { 
+  AuthResponse, UserResponse, SuccessResponse,
+  TicketResponse, SingleTicketResponse, CommentResponse,
+  DepartmentResponse, SingleDepartmentResponse,
+  TicketPayload, CommentPayload
+} from './supabaseTypes';
 
 export class SupabaseService {
   private supabase: SupabaseClient;
@@ -40,7 +46,7 @@ export class SupabaseService {
   }
 
   // Auth methods
-  public async signUp(email: string, password: string, username: string): Promise<{ user: User | null, error: any }> {
+  public async signUp(email: string, password: string, username: string): Promise<AuthResponse> {
     const { data, error } = await this.supabase.auth.signUp({
       email,
       password,
@@ -73,7 +79,7 @@ export class SupabaseService {
     return { user: data?.user ?? null, error };
   }
 
-  public async signIn(email: string, password: string): Promise<{ user: User | null, error: any }> {
+  public async signIn(email: string, password: string): Promise<AuthResponse> {
     const { data, error } = await this.supabase.auth.signInWithPassword({
       email,
       password
@@ -82,12 +88,12 @@ export class SupabaseService {
     return { user: data?.user ?? null, error };
   }
 
-  public async signOut(): Promise<{ error: any }> {
+  public async signOut(): Promise<{ error: Error | null }> {
     const { error } = await this.supabase.auth.signOut();
     return { error };
   }
 
-  public async getUser(): Promise<{ user: User | null, error: any }> {
+  public async getUser(): Promise<AuthResponse> {
     const { data, error } = await this.supabase.auth.getUser();
     return { user: data?.user ?? null, error };
   }
@@ -107,7 +113,7 @@ export class SupabaseService {
   }
 
   // Users methods
-  public async getUsers(): Promise<{ users: AppUser[], error: any }> {
+  public async getUsers(): Promise<UserResponse> {
     const { data, error } = await this.supabase
       .from('users')
       .select('*');
@@ -115,7 +121,7 @@ export class SupabaseService {
     return { users: data as AppUser[] ?? [], error };
   }
 
-  public async getPendingUsers(): Promise<{ users: AppUser[], error: any }> {
+  public async getPendingUsers(): Promise<UserResponse> {
     const { data, error } = await this.supabase
       .from('users')
       .select('*')
@@ -124,7 +130,7 @@ export class SupabaseService {
     return { users: data as AppUser[] ?? [], error };
   }
 
-  public async approveUser(userId: string): Promise<{ success: boolean, error: any }> {
+  public async approveUser(userId: string): Promise<SuccessResponse> {
     const { error } = await this.supabase
       .from('users')
       .update({ isApproved: true })
@@ -133,7 +139,7 @@ export class SupabaseService {
     return { success: !error, error };
   }
 
-  public async updateUser(user: AppUser): Promise<{ success: boolean, error: any }> {
+  public async updateUser(user: AppUser): Promise<SuccessResponse> {
     const { error } = await this.supabase
       .from('users')
       .update({
@@ -149,7 +155,7 @@ export class SupabaseService {
   }
 
   // Tickets methods
-  public async getTickets(): Promise<{ tickets: Ticket[], error: any }> {
+  public async getTickets(): Promise<TicketResponse> {
     const { data, error } = await this.supabase
       .from('tickets')
       .select('*, comments(*)');
@@ -157,7 +163,7 @@ export class SupabaseService {
     return { tickets: data as Ticket[] ?? [], error };
   }
 
-  public async getTicket(id: string): Promise<{ ticket: Ticket | null, error: any }> {
+  public async getTicket(id: string): Promise<SingleTicketResponse> {
     const { data, error } = await this.supabase
       .from('tickets')
       .select('*, comments(*)')
@@ -167,7 +173,7 @@ export class SupabaseService {
     return { ticket: data as Ticket, error };
   }
 
-  public async createTicket(ticket: Omit<Ticket, 'id' | 'createdAt'>): Promise<{ ticket: Ticket | null, error: any }> {
+  public async createTicket(ticket: Omit<Ticket, 'id' | 'createdAt'>): Promise<SingleTicketResponse> {
     const { data, error } = await this.supabase
       .from('tickets')
       .insert([
@@ -181,7 +187,7 @@ export class SupabaseService {
     return { ticket: data?.[0] as Ticket ?? null, error };
   }
 
-  public async updateTicket(ticket: Ticket): Promise<{ success: boolean, error: any }> {
+  public async updateTicket(ticket: Ticket): Promise<SuccessResponse> {
     const { error } = await this.supabase
       .from('tickets')
       .update({
@@ -197,7 +203,7 @@ export class SupabaseService {
     return { success: !error, error };
   }
 
-  public async deleteTicket(id: string): Promise<{ success: boolean, error: any }> {
+  public async deleteTicket(id: string): Promise<SuccessResponse> {
     // Delete associated comments first
     await this.supabase
       .from('comments')
@@ -214,7 +220,7 @@ export class SupabaseService {
   }
 
   // Comments methods
-  public async createComment(comment: Omit<Comment, 'id' | 'createdAt'>): Promise<{ comment: Comment | null, error: any }> {
+  public async createComment(comment: Omit<Comment, 'id' | 'createdAt'>): Promise<CommentResponse> {
     const { data, error } = await this.supabase
       .from('comments')
       .insert([
@@ -229,7 +235,7 @@ export class SupabaseService {
   }
 
   // Departments methods
-  public async getDepartments(): Promise<{ departments: Department[], error: any }> {
+  public async getDepartments(): Promise<DepartmentResponse> {
     const { data, error } = await this.supabase
       .from('departments')
       .select('*');
@@ -237,7 +243,7 @@ export class SupabaseService {
     return { departments: data as Department[] ?? [], error };
   }
 
-  public async createDepartment(department: Omit<Department, 'id'>): Promise<{ department: Department | null, error: any }> {
+  public async createDepartment(department: Omit<Department, 'id'>): Promise<SingleDepartmentResponse> {
     const { data, error } = await this.supabase
       .from('departments')
       .insert([department])
@@ -247,7 +253,7 @@ export class SupabaseService {
   }
 
   // Real-time subscriptions
-  public subscribeToTickets(callback: (payload: any) => void): () => void {
+  public subscribeToTickets(callback: (payload: TicketPayload) => void): () => void {
     const subscription = this.supabase
       .channel('tickets')
       .on(
@@ -262,7 +268,7 @@ export class SupabaseService {
     };
   }
 
-  public subscribeToComments(ticketId: string, callback: (payload: any) => void): () => void {
+  public subscribeToComments(ticketId: string, callback: (payload: CommentPayload) => void): () => void {
     const subscription = this.supabase
       .channel(`comments-${ticketId}`)
       .on(

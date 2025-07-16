@@ -2,13 +2,13 @@ import supabaseService from './supabaseService';
 import { User, Ticket, Comment, Department, TicketStatus, TicketPriority } from '../utils/types';
 
 // Helper function to get data from localStorage
-function getLocalData(key: string): any[] {
+function getLocalData<T>(key: string): T[] {
   const data = localStorage.getItem(key);
   return data ? JSON.parse(data) : [];
 }
 
 // Helper function to save data to localStorage
-function saveLocalData(key: string, data: any[]): void {
+function saveLocalData<T>(key: string, data: T[]): void {
   localStorage.setItem(key, JSON.stringify(data));
 }
 
@@ -25,12 +25,16 @@ export async function getUsers(): Promise<User[]> {
     const { users, error } = await supabaseService.getUsers();
     if (error) {
       console.error('Error fetching users from Supabase:', error);
-      return getLocalData('users').filter((user: any) => delete user.password);
+      return getLocalData<User>('users').filter((user) => {
+        const userWithPassword = user as User & { password?: string };
+        delete userWithPassword.password;
+        return user;
+      });
     }
     return users;
   } else {
-    return getLocalData('users').map((user: any) => {
-      const { password, ...userWithoutPassword } = user;
+    return getLocalData<User>('users').map((user) => {
+      const { password, ...userWithoutPassword } = user as { password: string } & User;
       return userWithoutPassword;
     });
   }
@@ -43,19 +47,19 @@ export async function getPendingUsers(): Promise<User[]> {
     const { users, error } = await supabaseService.getPendingUsers();
     if (error) {
       console.error('Error fetching pending users from Supabase:', error);
-      return getLocalData('users')
-        .filter((user: any) => !user.isApproved)
-        .map((user: any) => {
-          const { password, ...userWithoutPassword } = user;
+      return getLocalData<User>('users')
+        .filter((user) => !user.isApproved)
+        .map((user) => {
+          const { password, ...userWithoutPassword } = user as { password: string } & User;
           return userWithoutPassword;
         });
     }
     return users;
   } else {
-    return getLocalData('users')
-      .filter((user: any) => !user.isApproved)
-      .map((user: any) => {
-        const { password, ...userWithoutPassword } = user;
+    return getLocalData<User>('users')
+      .filter((user) => !user.isApproved)
+      .map((user) => {
+        const { password, ...userWithoutPassword } = user as { password: string } & User;
         return userWithoutPassword;
       });
   }
@@ -72,14 +76,14 @@ export async function approveUser(userId: string): Promise<boolean> {
     }
     return success;
   } else {
-    const users = getLocalData('users');
-    const updatedUsers = users.map((user: any) => {
+    const users = getLocalData<User>('users');
+    const updatedUsers = users.map((user) => {
       if (user.id === userId) {
         return { ...user, isApproved: true };
       }
       return user;
     });
-    saveLocalData('users', updatedUsers);
+    saveLocalData<User>('users', updatedUsers);
     return true;
   }
 }
@@ -92,11 +96,11 @@ export async function getTickets(): Promise<Ticket[]> {
     const { tickets, error } = await supabaseService.getTickets();
     if (error) {
       console.error('Error fetching tickets from Supabase:', error);
-      return getLocalData('tickets') || [];
+      return getLocalData<Ticket>('tickets') || [];
     }
     return tickets;
   } else {
-    return getLocalData('tickets') || [];
+    return getLocalData<Ticket>('tickets') || [];
   }
 }
 
@@ -107,13 +111,13 @@ export async function getTicketById(id: string): Promise<Ticket | null> {
     const { ticket, error } = await supabaseService.getTicket(id);
     if (error) {
       console.error(`Error fetching ticket ${id} from Supabase:`, error);
-      const tickets = getLocalData('tickets') || [];
-      return tickets.find((ticket: Ticket) => ticket.id === id) || null;
+      const tickets = getLocalData<Ticket>('tickets') || [];
+      return tickets.find((ticket) => ticket.id === id) || null;
     }
     return ticket;
   } else {
-    const tickets = getLocalData('tickets') || [];
-    return tickets.find((ticket: Ticket) => ticket.id === id) || null;
+    const tickets = getLocalData<Ticket>('tickets') || [];
+    return tickets.find((ticket) => ticket.id === id) || null;
   }
 }
 
@@ -148,7 +152,7 @@ export async function createTicket(
 }
 
 function createTicketLocal(newTicket: Omit<Ticket, 'id' | 'createdAt'>): Ticket {
-  const tickets = getLocalData('tickets') || [];
+  const tickets = getLocalData<Ticket>('tickets') || [];
   const ticket: Ticket = {
     ...newTicket,
     id: `ticket-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 9)}`,
@@ -157,7 +161,7 @@ function createTicketLocal(newTicket: Omit<Ticket, 'id' | 'createdAt'>): Ticket 
   };
   
   tickets.push(ticket);
-  saveLocalData('tickets', tickets);
+  saveLocalData<Ticket>('tickets', tickets);
   return ticket;
 }
 
@@ -177,15 +181,15 @@ export async function updateTicket(ticket: Ticket): Promise<boolean> {
 }
 
 function updateTicketLocal(ticket: Ticket): boolean {
-  const tickets = getLocalData('tickets') || [];
-  const updatedTickets = tickets.map((t: Ticket) => {
+  const tickets = getLocalData<Ticket>('tickets') || [];
+  const updatedTickets = tickets.map((t) => {
     if (t.id === ticket.id) {
       return ticket;
     }
     return t;
   });
   
-  saveLocalData('tickets', updatedTickets);
+  saveLocalData<Ticket>('tickets', updatedTickets);
   return true;
 }
 
@@ -218,7 +222,7 @@ export async function createComment(
 }
 
 function createCommentLocal(newComment: Omit<Comment, 'id' | 'createdAt'>): Comment {
-  const tickets = getLocalData('tickets') || [];
+  const tickets = getLocalData<Ticket>('tickets') || [];
   const comment: Comment = {
     ...newComment,
     id: `comment-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 9)}`,
@@ -226,7 +230,7 @@ function createCommentLocal(newComment: Omit<Comment, 'id' | 'createdAt'>): Comm
   };
   
   // Find the ticket and add comment
-  const updatedTickets = tickets.map((ticket: Ticket) => {
+  const updatedTickets = tickets.map((ticket) => {
     if (ticket.id === newComment.ticketId) {
       return {
         ...ticket,
@@ -236,7 +240,7 @@ function createCommentLocal(newComment: Omit<Comment, 'id' | 'createdAt'>): Comm
     return ticket;
   });
   
-  saveLocalData('tickets', updatedTickets);
+  saveLocalData<Ticket>('tickets', updatedTickets);
   return comment;
 }
 
@@ -248,11 +252,11 @@ export async function getDepartments(): Promise<Department[]> {
     const { departments, error } = await supabaseService.getDepartments();
     if (error) {
       console.error('Error fetching departments from Supabase:', error);
-      return getLocalData('departments') || [];
+      return getLocalData<Department>('departments') || [];
     }
     return departments;
   } else {
-    return getLocalData('departments') || [];
+    return getLocalData<Department>('departments') || [];
   }
 }
 
@@ -277,23 +281,37 @@ export async function createDepartment(name: string, description?: string): Prom
 }
 
 function createDepartmentLocal(newDepartment: Omit<Department, 'id'>): Department {
-  const departments = getLocalData('departments') || [];
+  const departments = getLocalData<Department>('departments') || [];
   const department: Department = {
     ...newDepartment,
     id: `dept-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 9)}`,
   };
   
   departments.push(department);
-  saveLocalData('departments', departments);
+  saveLocalData<Department>('departments', departments);
   return department;
 }
 
+// Define payload types
+export interface TicketPayload {
+  id: string;
+  ticket: Ticket;
+  eventType: 'INSERT' | 'UPDATE' | 'DELETE';
+}
+
+export interface CommentPayload {
+  id: string;
+  comment: Comment;
+  ticketId: string;
+  eventType: 'INSERT' | 'UPDATE' | 'DELETE';
+}
+
 // Subscriptions
-export function subscribeToTickets(callback: (payload: any) => void): () => void {
+export function subscribeToTickets(callback: (payload: TicketPayload) => void): () => void {
   return supabaseService.subscribeToTickets(callback);
 }
 
-export function subscribeToComments(ticketId: string, callback: (payload: any) => void): () => void {
+export function subscribeToComments(ticketId: string, callback: (payload: CommentPayload) => void): () => void {
   return supabaseService.subscribeToComments(ticketId, callback);
 }
 

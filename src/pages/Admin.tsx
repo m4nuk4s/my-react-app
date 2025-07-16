@@ -1,193 +1,58 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { UserCircle, Edit, Trash2, Search, Plus, CheckCircle, XCircle } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "../components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
+import { Textarea } from "../components/ui/textarea";
+import { useAuth } from "../contexts/AuthContext";
+import { useSettings } from "../contexts/SettingsContext";
 import { toast } from "sonner";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import Panel from "@/assets/wtpth/panel.jpg"
+import { Plus, X, UserCircle, Edit, Trash2, CheckCircle, XCircle, Search } from "lucide-react";
+import { supabase } from "../lib/supabase";
+import { Badge } from "../components/ui/badge";
+import * as modelManager from "../utils/modelManager";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "../components/ui/table";
+import { Switch } from "../components/ui/switch";
 
-// Type definitions
-type User = {
-  id: string;
-  email: string;
-  username: string;
-  isAdmin: boolean;
-};
-
-type UserWithPassword = User & {
-  password: string;
-};
-
-type Step = {
-  title: string;
-  description: string;
-  imageUrl?: string;
-};
-
-type Guide = {
-  id: string;
-  title: string;
-  model: string;
-  category: string;
-  difficulty: string;
-  time: string;
-  description: string;
-  steps: Step[];
-  createdBy: string;
-};
-
-type DriverFile = {
-  name: string;
-  version: string;
-  date: string;
-  size: string;
-  link: string;
-};
-
-type Driver = {
-  id: string;
-  name: string;
-  category: string;
-  manufacturer: string;
-  image: string;
-  os: string[];
-  drivers: DriverFile[];
-};
-
-type TestTool = {
-  id: string;
-  name: string;
-  version: string;
-  description: string;
-  category: string;
-  os: string[];
-  size: string;
-  link: string;
-};
-
-export default function Admin() {
-  const { user, isAdmin } = useAuth();
+const Admin = () => {
   const navigate = useNavigate();
-  const [users, setUsers] = useState<User[]>([]);
-  const [guides, setGuides] = useState<Guide[]>([]);
-  const [drivers, setDrivers] = useState<Driver[]>([]);
-  const [testTools, setTestTools] = useState<TestTool[]>([]);
+  const { user, isAdmin } = useAuth();
+  const { settings, updateSettings } = useSettings();
+
+  const [activeTab, setActiveTab] = useState("users");
+  const [isLoading, setIsLoading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [isEditingUser, setIsEditingUser] = useState(false);
-  const [isEditingGuide, setIsEditingGuide] = useState(false);
-  const [isEditingDriver, setIsEditingDriver] = useState(false);
-  const [isEditingTool, setIsEditingTool] = useState(false);
-  const [selectedGuide, setSelectedGuide] = useState<Guide | null>(null);
-  const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
-  const [selectedTool, setSelectedTool] = useState<TestTool | null>(null);
 
-  // Form states for user management
-  const [editUsername, setEditUsername] = useState("");
-  const [editEmail, setEditEmail] = useState("");
-  const [editPassword, setEditPassword] = useState("");
-  const [editIsAdmin, setEditIsAdmin] = useState(false);
+  // User management state
+  const [users, setUsers] = useState([]);
+  const [pendingUsers, setPendingUsers] = useState([]);
 
-  // Form states for guide management
-  const [editGuideTitle, setEditGuideTitle] = useState("");
-  const [editGuideModel, setEditGuideModel] = useState("");
-  const [editGuideCategory, setEditGuideCategory] = useState("");
-  const [editGuideDifficulty, setEditGuideDifficulty] = useState("easy");
-  const [editGuideTime, setEditGuideTime] = useState("");
-  const [editGuideDescription, setEditGuideDescription] = useState("");
-  const [editGuideSteps, setEditGuideSteps] = useState<Step[]>([]);
-  
-  // Form states for driver management
-  const [editDriverName, setEditDriverName] = useState("");
-  const [editDriverCategory, setEditDriverCategory] = useState("");
-  const [editDriverManufacturer, setEditDriverManufacturer] = useState("");
-  const [editDriverOs, setEditDriverOs] = useState<string[]>([]);
-  const [editDriverImage, setEditDriverImage] = useState("");
-  const [editDriverFiles, setEditDriverFiles] = useState<DriverFile[]>([]);
-  
-  // Form states for test tool management
-  const [editToolName, setEditToolName] = useState("");
-  const [editToolVersion, setEditToolVersion] = useState("");
-  const [editToolDescription, setEditToolDescription] = useState("");
-  const [editToolCategory, setEditToolCategory] = useState("");
-  const [editToolOs, setEditToolOs] = useState<string[]>([]);
-  const [editToolSize, setEditToolSize] = useState("");
-  const [editToolLink, setEditToolLink] = useState("");
-  
-  // Computer models state
-  const [computerModels, setComputerModels] = useState<string[]>([]);
-  const [newModelName, setNewModelName] = useState("");
-  
-  // Load computer models from localStorage
-  useEffect(() => {
-    const storedModels = localStorage.getItem('computerModels');
-    if (storedModels) {
-      try {
-        setComputerModels(JSON.parse(storedModels));
-      } catch (error) {
-        console.error("Error parsing computer models:", error);
-        const defaultModels = [
-          "UKN15I711-8GR512",
-          "UKN15I310-8DG256-IF1599445",
-          "UA-N15C8SL512",
-        ];
-        setComputerModels(defaultModels);
-        localStorage.setItem('computerModels', JSON.stringify(defaultModels));
-      }
-    } else {
-      // Initialize with default models if none exist
-      const defaultModels = [
-        "UKN15I711-8GR512",
-        "UKN15I310-8DG256-IF1599445",
-        "UA-N15C8SL512",
-      ];
-      setComputerModels(defaultModels);
-      localStorage.setItem('computerModels', JSON.stringify(defaultModels));
-    }
-  }, []);
+  // Guide management state
+  const [guides, setGuides] = useState([]);
 
-  // Categories
-  const categories = [
-    "Keyboard",
-    "Display",
-    "Battery",
-    "Motherboard",
-    "Storage",
-    "Memory",
-    "Full Disassembly",
-  ];
-
-  // Driver Categories
-  const driverCategories = [
-    "laptops",
-    "desktops",
-    "printers",
-    "monitors",
-    "storage",
-  ];
-
-  // Tool Categories
-  const toolCategories = [
-    "Hardware",
-    "Storage",
-    "Network",
-    "System",
-    "Diagnostic",
-  ];
+  // Driver management state
+  const [drivers, setDrivers] = useState([]);
   
-  // Operating Systems
-  const operatingSystems = [
-    "windows10",
-    "windows11",
-  ];
+  // Models management state
+  const [computerModels, setComputerModels] = useState([]);
+
+  // App-specific table name for drivers
+  const APP_DRIVERS_TABLE = 'app_8e3e8a4d8d0e442280110fd6f6c2cd95_drivers';
+
+  // Settings management
+  const [assistantEnabled, setAssistantEnabled] = useState(
+    settings?.assistantEnabled !== undefined ? settings.assistantEnabled : true
+  );
 
   useEffect(() => {
     // Check if user is admin, if not redirect to home
@@ -197,1387 +62,699 @@ export default function Admin() {
       return;
     }
 
-    loadUsers();
-    loadGuides();
-    loadDrivers();
-    loadTestTools();
-  }, [user, isAdmin, navigate]);
+    // Load data for the active tab
+    loadActiveTabData();
+  }, [user, isAdmin, navigate, activeTab]);
+
+  useEffect(() => {
+    // Update assistant enabled state when settings change
+    if (settings) {
+      setAssistantEnabled(settings.assistantEnabled !== undefined ? settings.assistantEnabled : true);
+    }
+  }, [settings]);
+
+  const loadActiveTabData = () => {
+    switch(activeTab) {
+      case "users":
+        loadUsers();
+        break;
+      case "guides":
+        loadGuides();
+        break;
+      case "drivers":
+        loadDrivers();
+        break;
+      case "models":
+        // Models are loaded with guides
+        loadGuides();
+        break;
+      case "settings":
+        // Settings are loaded from context
+        break;
+      default:
+        break;
+    }
+  };
 
   const loadUsers = () => {
-    const storedUsers = localStorage.getItem('users');
-    if (storedUsers) {
-      const parsedUsers: UserWithPassword[] = JSON.parse(storedUsers);
-      // Remove passwords from the user objects for security
-      const usersWithoutPasswords: User[] = parsedUsers.map(
-        ({ password, ...rest }) => rest
-      );
-      setUsers(usersWithoutPasswords);
+    setIsLoading(true);
+    try {
+      const storedUsers = localStorage.getItem('users') || '[]';
+      const parsedUsers = JSON.parse(storedUsers);
+      
+      // Separate users into approved and pending
+      const approved = [];
+      const pending = [];
+      
+      parsedUsers.forEach(user => {
+        // Skip the password for security
+        const { password, ...userWithoutPassword } = user;
+        
+        if (user.isApproved === false) {
+          pending.push(userWithoutPassword);
+        } else {
+          approved.push(userWithoutPassword);
+        }
+      });
+      
+      setUsers(approved);
+      setPendingUsers(pending);
+    } catch (error) {
+      console.error("Error loading users:", error);
+      toast.error("Failed to load users");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const loadGuides = () => {
-    console.log("Loading guides for Admin panel");
-    
+    setIsLoading(true);
     try {
-      // Load existing guides from localStorage first
-      let allGuides: Guide[] = [];
-      const storedDisassemblyGuides = localStorage.getItem('disassemblyGuides');
+      // Load guides
+      const storedGuides = localStorage.getItem('disassemblyGuides') || '[]';
+      setGuides(JSON.parse(storedGuides));
       
-      if (storedDisassemblyGuides) {
-        try {
-          const parsedDisassemblyGuides = JSON.parse(storedDisassemblyGuides);
-          console.log("Found disassembly guides:", parsedDisassemblyGuides.length);
-          allGuides = [...parsedDisassemblyGuides];
-        } catch (error) {
-          console.error("Error parsing disassembly guides:", error);
-        }
-      }
-      
-      // If we have no guides yet, initialize from sample data
-      if (allGuides.length === 0) {
-        console.log("No guides found, initializing from sample data");
-        import('@/utils/sampleData').then(module => {
-          module.initializeSampleData();
-          
-          // After initialization, load guides from localStorage
-          const refreshedGuides = localStorage.getItem('disassemblyGuides');
-          if (refreshedGuides) {
-            setGuides(JSON.parse(refreshedGuides));
-            console.log("Guides initialized from sample data");
-          }
-        });
-      } else {
-        // We already have guides, just use them
-        setGuides(allGuides);
-        console.log("Using existing guides from localStorage:", allGuides.length);
-      }
+      // Load computer models using modelManager
+      const models = modelManager.getAllModels();
+      setComputerModels(models);
     } catch (error) {
-      console.error("Error in loadGuides:", error);
-      
-      // Fallback to default guide if everything fails
-      const defaultGuide: Guide = {
-        id: "guide-default",
-        title: "Default Guide",
-        model: "Generic Model",
-        category: "Display",
-        difficulty: "easy",
-        time: "15 minutes",
-        description: "A basic guide to get started",
-        steps: [{title: "Step 1", description: "Begin by powering off the device"}],
-        createdBy: "system"
-      };
-      
-      setGuides([defaultGuide]);
-      localStorage.setItem('disassemblyGuides', JSON.stringify([defaultGuide]));
+      console.error("Error loading guides and models:", error);
+      toast.error("Failed to load guides and models");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const loadDrivers = () => {
-    console.log("Loading drivers for Admin panel");
+    setIsLoading(true);
     try {
-      // Always try to get the drivers from localStorage first
-      const storedDrivers = localStorage.getItem('drivers');
-      
-      if (storedDrivers) {
-        try {
-          const parsedDrivers = JSON.parse(storedDrivers);
-          console.log("Found drivers in localStorage:", parsedDrivers.length);
-          
-          // Use the existing drivers data regardless of count
-          setDrivers(parsedDrivers);
-          console.log("Using existing drivers from localStorage");
-        } catch (error) {
-          console.error("Error parsing drivers:", error);
-          initializeDefaultDrivers();
-        }
-      } else {
-        // No drivers found, initialize from sample data
-        console.log("No drivers found, initializing from sample data");
-        initializeDefaultDrivers();
-      }
+      const storedDrivers = localStorage.getItem('drivers') || '[]';
+      setDrivers(JSON.parse(storedDrivers));
     } catch (error) {
       console.error("Error loading drivers:", error);
-      initializeDefaultDrivers();
-    }
-  };
-  
-  // Helper function to initialize drivers from sample data
-  const initializeDefaultDrivers = () => {
-    import('@/utils/sampleData').then(module => {
-      module.initializeSampleData();
-      // Reload drivers after initialization
-      const refreshedDrivers = localStorage.getItem('drivers');
-      if (refreshedDrivers) {
-        setDrivers(JSON.parse(refreshedDrivers));
-      } else {
-        // Create a default driver as fallback
-        const defaultDriver: Driver = {
-          id: "default-driver",
-          name: "Intel Sample Driver",
-          category: "laptops",
-          manufacturer: "Intel",
-          image: "/assets/images/driver-placeholder.jpg",
-          os: ["windows10", "windows11"],
-          drivers: [{
-            name: "Intel Sample Driver",
-            version: "1.0",
-            date: "2025-07-15",
-            size: "25MB",
-            link: "#"
-          }]
-        };
-        
-        const defaultDrivers = [defaultDriver];
-        localStorage.setItem('drivers', JSON.stringify(defaultDrivers));
-        setDrivers(defaultDrivers);
-      }
-    }).catch(error => {
-      console.error("Error initializing default drivers:", error);
-      
-      // Create a fallback driver if module import fails
-      const fallbackDriver: Driver = {
-        id: "default-driver",
-        name: "Intel Sample Driver",
-        category: "laptops",
-        manufacturer: "Intel",
-        image: "/assets/images/driver-placeholder.jpg",
-        os: ["windows10", "windows11"],
-        drivers: [{
-          name: "Intel Sample Driver",
-          version: "1.0",
-          date: "2025-07-15",
-          size: "25MB",
-          link: "#"
-        }]
-      };
-      
-      localStorage.setItem('drivers', JSON.stringify([fallbackDriver]));
-      setDrivers([fallbackDriver]);
-    });
-  };
-
-  const loadTestTools = () => {
-    const storedTools = localStorage.getItem('testTools');
-    if (storedTools) {
-      setTestTools(JSON.parse(storedTools));
-    } else {
-      // Initialize with empty array if not exists
-      localStorage.setItem('testTools', JSON.stringify([]));
-      setTestTools([]);
+      toast.error("Failed to load drivers");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleApproveUser = (userId: string) => {
-    const storedUsers = localStorage.getItem('users');
-    if (storedUsers) {
-      const parsedUsers: UserWithPassword[] = JSON.parse(storedUsers);
-      const updatedUsers = parsedUsers.map((u) => {
-        if (u.id === userId) {
-          return { ...u, isApproved: true };
+  // Function to handle approving a pending user
+  const handleApproveUser = (userId) => {
+    try {
+      const storedUsers = localStorage.getItem('users') || '[]';
+      const parsedUsers = JSON.parse(storedUsers);
+      
+      const updatedUsers = parsedUsers.map(user => {
+        if (user.id === userId) {
+          return { ...user, isApproved: true };
         }
-        return u;
+        return user;
       });
+      
       localStorage.setItem('users', JSON.stringify(updatedUsers));
-      setUsers(users.map(u => u.id === userId ? { ...u, isApproved: true } : u));
-      toast.success("User approved successfully! They can now log in.");
-    }
-  };
-
-  const handleDeleteUser = (userId: string) => {
-    if (window.confirm("Are you sure you want to delete this user?")) {
-      const storedUsers = localStorage.getItem('users');
-      if (storedUsers) {
-        const parsedUsers: UserWithPassword[] = JSON.parse(storedUsers);
-        const updatedUsers = parsedUsers.filter((u) => u.id !== userId);
-        localStorage.setItem('users', JSON.stringify(updatedUsers));
-        setUsers(users.filter(u => u.id !== userId));
-        toast.success("User deleted successfully");
+      
+      // Update state
+      const approvedUser = pendingUsers.find(user => user.id === userId);
+      if (approvedUser) {
+        setPendingUsers(pendingUsers.filter(user => user.id !== userId));
+        setUsers([...users, { ...approvedUser, isApproved: true }]);
       }
+      
+      toast.success("User approved successfully");
+    } catch (error) {
+      console.error("Error approving user:", error);
+      toast.error("Failed to approve user");
     }
   };
 
-  // Function to add a new computer model
-  const handleAddModel = () => {
-    if (!newModelName.trim()) {
-      toast.error("Model name cannot be empty");
+  // Function to handle rejecting a pending user
+  const handleRejectUser = (userId) => {
+    if (!window.confirm("Are you sure you want to reject this user?")) {
       return;
     }
-
-    if (computerModels.includes(newModelName.trim())) {
-      toast.error("This model already exists");
-      return;
-    }
-
-    const updatedModels = [...computerModels, newModelName.trim()];
-    setComputerModels(updatedModels);
-    localStorage.setItem('computerModels', JSON.stringify(updatedModels));
-    setNewModelName("");
-    toast.success("Computer model added successfully");
-  };
-
-  // Function to delete a computer model
-  const handleDeleteModel = (modelToDelete: string) => {
-    if (window.confirm("Are you sure you want to delete this computer model?")) {
-      const updatedModels = computerModels.filter(model => model !== modelToDelete);
-      setComputerModels(updatedModels);
-      localStorage.setItem('computerModels', JSON.stringify(updatedModels));
-      toast.success("Computer model removed successfully");
+    
+    try {
+      const storedUsers = localStorage.getItem('users') || '[]';
+      const parsedUsers = JSON.parse(storedUsers);
+      
+      const updatedUsers = parsedUsers.filter(user => user.id !== userId);
+      localStorage.setItem('users', JSON.stringify(updatedUsers));
+      
+      // Update state
+      setPendingUsers(pendingUsers.filter(user => user.id !== userId));
+      
+      toast.success("User rejected successfully");
+    } catch (error) {
+      console.error("Error rejecting user:", error);
+      toast.error("Failed to reject user");
     }
   };
 
-  const handleDeleteGuide = (guideId: string) => {
-    if (window.confirm("Are you sure you want to delete this guide?")) {
-      const storedGuides = localStorage.getItem('disassemblyGuides');
-      if (storedGuides) {
-        const parsedGuides = JSON.parse(storedGuides);
-        const updatedGuides = parsedGuides.filter((g: Guide) => g.id !== guideId);
-        localStorage.setItem('disassemblyGuides', JSON.stringify(updatedGuides));
-        setGuides(guides.filter(g => g.id !== guideId));
-        toast.success("Guide deleted successfully");
-      }
-    }
-  };
-
-  const handleEditUser = (user: User) => {
-    setSelectedUser(user);
-    setEditUsername(user.username);
-    setEditEmail(user.email);
-    setEditPassword("");
-    setEditIsAdmin(user.isAdmin);
-    setIsEditingUser(true);
-  };
-
-  const handleEditGuide = (guide: Guide) => {
-    setSelectedGuide(guide);
-    setEditGuideTitle(guide.title);
-    setEditGuideModel(guide.model);
-    setEditGuideCategory(guide.category);
-    setEditGuideDifficulty(guide.difficulty);
-    setEditGuideTime(guide.time);
-    setEditGuideDescription(guide.description);
-    setEditGuideSteps([...guide.steps]);
-    setIsEditingGuide(true);
-  };
-
-  const handleSaveUser = () => {
-    if (!selectedUser) return;
-
-    const storedUsers = localStorage.getItem('users');
-    if (storedUsers) {
-      const parsedUsers: UserWithPassword[] = JSON.parse(storedUsers);
-      
-      // Check if this is a new user or editing an existing one
-      if (!selectedUser.id) {
-        // Create a new user
-        const newUser: UserWithPassword = {
-          id: Date.now().toString(),
-          username: editUsername,
-          email: editEmail,
-          isAdmin: editIsAdmin,
-          password: "password123" // Default password that user can change later
-        };
-        
-        const updatedUsers = [...parsedUsers, newUser];
-        localStorage.setItem('users', JSON.stringify(updatedUsers));
-        
-        // Update local state (without password)
-        const { password, ...userWithoutPassword } = newUser;
-        setUsers([...users, userWithoutPassword]);
-        
-        setIsEditingUser(false);
-        setSelectedUser(null);
-        toast.success("New user created successfully");
-      } else {
-        // Update existing user
-        const updatedUsers = parsedUsers.map((u) => {
-          if (u.id === selectedUser.id) {
-            return {
-              ...u,
-              username: editUsername,
-              email: editEmail,
-              isAdmin: editIsAdmin,
-              ...(editPassword && { password: editPassword }) // Only update password if provided
-            };
-          }
-          return u;
-        });
-        
-        localStorage.setItem('users', JSON.stringify(updatedUsers));
-        
-        // Update the local state
-        const updatedLocalUsers = users.map(u => {
-          if (u.id === selectedUser.id) {
-            return {
-              ...u,
-              username: editUsername,
-              email: editEmail,
-              isAdmin: editIsAdmin
-            };
-          }
-          return u;
-        });
-        
-        setUsers(updatedLocalUsers);
-        setIsEditingUser(false);
-        setSelectedUser(null);
-        toast.success("User updated successfully");
-      }
-    } else {
-      // No users exist yet, create the first one
-      const newUser: UserWithPassword = {
-        id: Date.now().toString(),
-        username: editUsername,
-        email: editEmail,
-        isAdmin: editIsAdmin,
-        password: "password123" // Default password
-      };
-      
-      localStorage.setItem('users', JSON.stringify([newUser]));
-      
-      // Update local state (without password)
-      const { password, ...userWithoutPassword } = newUser;
-      setUsers([userWithoutPassword]);
-      
-      setIsEditingUser(false);
-      setSelectedUser(null);
-      toast.success("New user created successfully");
-    }
-  };
-
-  const handleSaveGuide = () => {
-    if (!selectedGuide) return;
+  // Function to toggle the assistant
+  const handleToggleAssistant = () => {
+    const newValue = !assistantEnabled;
+    setAssistantEnabled(newValue);
     
-    const updatedGuide: Guide = {
-      id: selectedGuide.id,
-      title: editGuideTitle,
-      model: editGuideModel,
-      category: editGuideCategory,
-      difficulty: editGuideDifficulty,
-      time: editGuideTime,
-      description: editGuideDescription,
-      steps: editGuideSteps,
-      createdBy: user?.username || "admin"
-    };
+    // Update settings in context
+    updateSettings({ ...settings, assistantEnabled: newValue });
     
-    const storedGuides = localStorage.getItem('disassemblyGuides');
-    if (storedGuides) {
-      const parsedGuides = JSON.parse(storedGuides);
-      let updatedGuides;
-      
-      if (selectedGuide.id === "new") {
-        // Creating a new guide
-        updatedGuide.id = Date.now().toString();
-        updatedGuides = [...parsedGuides, updatedGuide];
-      } else {
-        // Updating an existing guide
-        updatedGuides = parsedGuides.map((g: Guide) => {
-          if (g.id === selectedGuide.id) {
-            return updatedGuide;
-          }
-          return g;
-        });
-      }
-      
-      localStorage.setItem('disassemblyGuides', JSON.stringify(updatedGuides));
-      setGuides(updatedGuides);  // Update state directly instead of reloading
-      setIsEditingGuide(false);
-      setSelectedGuide(null);
-      toast.success(selectedGuide.id === "new" ? "Guide created successfully" : "Guide updated successfully");
-    }
-  };
-
-  const handleAddNewGuide = () => {
-    const newGuide: Guide = {
-      id: "new",
-      title: "",
-      model: "",
-      category: "",
-      difficulty: "easy",
-      time: "",
-      description: "",
-      steps: [{ title: "Step 1", description: "", imageUrl: "" }],
-      createdBy: user?.username || "admin"
-    };
+    // Save to localStorage
+    const storedSettings = localStorage.getItem('settings') || '{}';
+    const parsedSettings = JSON.parse(storedSettings);
+    localStorage.setItem('settings', JSON.stringify({
+      ...parsedSettings,
+      assistantEnabled: newValue
+    }));
     
-    setSelectedGuide(newGuide);
-    setEditGuideTitle("");
-    setEditGuideModel("");
-    setEditGuideCategory("");
-    setEditGuideDifficulty("easy");
-    setEditGuideTime("");
-    setEditGuideDescription("");
-    setEditGuideSteps([{ title: "Step 1", description: "", imageUrl: "" }]);
-    setIsEditingGuide(true);
+    toast.success(`Assistant ${newValue ? 'enabled' : 'disabled'} successfully`);
   };
 
-  const handleAddStep = () => {
-    setEditGuideSteps([
-      ...editGuideSteps,
-      { 
-        title: `Step ${editGuideSteps.length + 1}`,
-        description: "",
-        imageUrl: ""
-      }
-    ]);
+  // Function to redirect to Add Driver page
+  const handleAddDriver = () => {
+    toast.info("Redirecting to driver management");
+    navigate("/admin/drivers/new");
   };
 
-  const handleRemoveStep = (index: number) => {
-    setEditGuideSteps(editGuideSteps.filter((_, i) => i !== index));
+  // Function to redirect to Add Guide page
+  const handleAddGuide = () => {
+    toast.info("Redirecting to guide editor");
+    navigate("/admin/guides/new");
   };
-
-  const handleUpdateStep = (index: number, field: 'title' | 'description' | 'imageUrl', value: string) => {
-    const updatedSteps = [...editGuideSteps];
-    updatedSteps[index] = { ...updatedSteps[index], [field]: value };
-    setEditGuideSteps(updatedSteps);
-  };
-  
-  // Driver management handlers
-  const handleAddNewDriver = () => {
-    // Get next available numeric ID
-    const getNextDriverId = (): string => {
-      const storedDrivers = localStorage.getItem('drivers');
-      
-      if (storedDrivers) {
-        const drivers = JSON.parse(storedDrivers);
-        const maxId = Math.max(...drivers.map((d: Driver) => parseInt(d.id) || 0));
-        return (maxId + 1).toString();
-      }
-      
-      // If no stored drivers, start from 25 (after existing 24 drivers)
-      return "25";
-    };
-
-    const newDriver: Driver = {
-      id: "new",
-      name: "",
-      category: "laptops", // Default to laptops like your existing data
-      manufacturer: "Thomson", // Default to Thomson like your existing data
-      image: "",
-      os: ["windows11"], // Default to Windows 11 like most of your drivers
-      drivers: []
-    };
-    
-    setSelectedDriver(newDriver);
-    setEditDriverName("");
-    setEditDriverCategory("laptops");
-    setEditDriverManufacturer("Thomson");
-    setEditDriverImage("");
-    setEditDriverOs(["windows11"]);
-    setEditDriverFiles([]);
-    setIsEditingDriver(true);
-  };
-
-  const handleEditDriver = (driver: Driver) => {
-    setSelectedDriver(driver);
-    setEditDriverName(driver.name);
-    setEditDriverCategory(driver.category);
-    setEditDriverManufacturer(driver.manufacturer);
-    setEditDriverImage(driver.image);
-    setEditDriverOs([...driver.os]);
-    setEditDriverFiles([...driver.drivers]);
-    setIsEditingDriver(true);
-  };
-
-  const handleOsToggle = (os: string) => {
-    if (editDriverOs.includes(os)) {
-      setEditDriverOs(editDriverOs.filter(item => item !== os));
-    } else {
-      setEditDriverOs([...editDriverOs, os]);
-    }
-  };
-
-  const handleToolOsToggle = (os: string) => {
-    if (editToolOs.includes(os)) {
-      setEditToolOs(editToolOs.filter(item => item !== os));
-    } else {
-      setEditToolOs([...editToolOs, os]);
-    }
-  };
-
-  const handleAddDriverFile = () => {
-    setEditDriverFiles([
-      ...editDriverFiles, 
-      { 
-        name: "", 
-        version: "", 
-        date: "", 
-        size: "", 
-        link: "" 
-      }
-    ]);
-  };
-
-  const handleRemoveDriverFile = (index: number) => {
-    setEditDriverFiles(editDriverFiles.filter((_, i) => i !== index));
-  };
-
-  const handleUpdateDriverFile = (index: number, field: keyof DriverFile, value: string) => {
-    const updatedFiles = [...editDriverFiles];
-    updatedFiles[index] = { ...updatedFiles[index], [field]: value };
-    setEditDriverFiles(updatedFiles);
-  };
-
-  const handleSaveDriver = () => {
-    if (!selectedDriver) return;
-    
-    // Generate next incremental ID for new drivers
-    const getNextDriverId = (): string => {
-      const storedDrivers = localStorage.getItem('drivers');
-      
-      if (storedDrivers) {
-        const drivers = JSON.parse(storedDrivers);
-        const maxId = Math.max(...drivers.map((d: Driver) => parseInt(d.id) || 0));
-        return (maxId + 1).toString();
-      }
-      
-      return "25"; // Start from 25 if no drivers exist
-    };
-    
-    const updatedDriver: Driver = {
-      id: selectedDriver.id === "new" ? getNextDriverId() : selectedDriver.id,
-      name: editDriverName,
-      category: editDriverCategory,
-      manufacturer: editDriverManufacturer,
-      image: editDriverImage,
-      os: editDriverOs,
-      drivers: editDriverFiles
-    };
-    
-    const storedDrivers = localStorage.getItem('drivers');
-    let updatedDrivers = [];
-    
-    if (storedDrivers) {
-      const parsedDrivers: Driver[] = JSON.parse(storedDrivers);
-      
-      if (selectedDriver.id === "new") {
-        updatedDrivers = [...parsedDrivers, updatedDriver];
-      } else {
-        updatedDrivers = parsedDrivers.map(d => d.id === selectedDriver.id ? updatedDriver : d);
-      }
-    } else {
-      updatedDrivers = [updatedDriver];
-    }
-    
-    localStorage.setItem('drivers', JSON.stringify(updatedDrivers));
-    setDrivers(updatedDrivers);
-    setIsEditingDriver(false);
-    setSelectedDriver(null);
-    toast.success(selectedDriver.id === "new" ? "Driver created successfully" : "Driver updated successfully");
-  };
-
-  const handleDeleteDriver = (driverId: string) => {
-    if (window.confirm("Are you sure you want to delete this driver?")) {
-      const storedDrivers = localStorage.getItem('drivers');
-      if (storedDrivers) {
-        const parsedDrivers = JSON.parse(storedDrivers);
-        const updatedDrivers = parsedDrivers.filter((d: Driver) => d.id !== driverId);
-        localStorage.setItem('drivers', JSON.stringify(updatedDrivers));
-        setDrivers(updatedDrivers);
-        toast.success("Driver deleted successfully");
-      }
-    }
-  };
-
-  // Test tool management handlers
-  const handleAddNewTool = () => {
-    const newTool: TestTool = {
-      id: "new",
-      name: "",
-      version: "",
-      description: "",
-      category: "",
-      os: [],
-      size: "",
-      link: ""
-    };
-    
-    setSelectedTool(newTool);
-    setEditToolName("");
-    setEditToolVersion("");
-    setEditToolDescription("");
-    setEditToolCategory("");
-    setEditToolOs([]);
-    setEditToolSize("");
-    setEditToolLink("");
-    setIsEditingTool(true);
-  };
-
-  const handleEditTool = (tool: TestTool) => {
-    setSelectedTool(tool);
-    setEditToolName(tool.name);
-    setEditToolVersion(tool.version);
-    setEditToolDescription(tool.description);
-    setEditToolCategory(tool.category);
-    setEditToolOs([...tool.os]);
-    setEditToolSize(tool.size);
-    setEditToolLink(tool.link);
-    setIsEditingTool(true);
-  };
-
-  const handleSaveTool = () => {
-    if (!selectedTool) return;
-    
-    const updatedTool: TestTool = {
-      id: selectedTool.id === "new" ? Date.now().toString() : selectedTool.id,
-      name: editToolName,
-      version: editToolVersion,
-      description: editToolDescription,
-      category: editToolCategory,
-      os: editToolOs,
-      size: editToolSize,
-      link: editToolLink
-    };
-    
-    const storedTools = localStorage.getItem('testTools');
-    let updatedTools = [];
-    
-    if (storedTools) {
-      const parsedTools: TestTool[] = JSON.parse(storedTools);
-      
-      if (selectedTool.id === "new") {
-        updatedTools = [...parsedTools, updatedTool];
-      } else {
-        updatedTools = parsedTools.map(t => t.id === selectedTool.id ? updatedTool : t);
-      }
-    } else {
-      updatedTools = [updatedTool];
-    }
-    
-    localStorage.setItem('testTools', JSON.stringify(updatedTools));
-    setTestTools(updatedTools);
-    setIsEditingTool(false);
-    setSelectedTool(null);
-    toast.success(selectedTool.id === "new" ? "Test tool created successfully" : "Test tool updated successfully");
-  };
-
-  const handleDeleteTool = (toolId: string) => {
-    if (window.confirm("Are you sure you want to delete this test tool?")) {
-      const storedTools = localStorage.getItem('testTools');
-      if (storedTools) {
-        const parsedTools = JSON.parse(storedTools);
-        const updatedTools = parsedTools.filter((t: TestTool) => t.id !== toolId);
-        localStorage.setItem('testTools', JSON.stringify(updatedTools));
-        setTestTools(updatedTools);
-        toast.success("Test tool deleted successfully");
-      }
-    }
-  };
-
-  const filteredUsers = users.filter(user => 
-    user.username.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const filteredGuides = guides.filter(guide => 
-    guide.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    guide.model.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    guide.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const filteredDrivers = drivers.filter(driver => 
-    driver.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    driver.manufacturer.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    driver.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const filteredTestTools = testTools.filter(tool => 
-    tool.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    tool.category.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    tool.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   return (
-    
-	
-	
-	<div className="container mx-auto py-8">
-      
-	  
-	    <h1
-          className="text-4xl font-bold text-white mb-0 px-4 py-20 rounded bg-cover bg-center"
-          style={{ backgroundImage: `url(${Panel})`, display: 'block' }}
-        >
-         Admin Dashboard
-		   
-        </h1>
-      
-      <Tabs defaultValue="users">
-        <TabsList className="grid w-full grid-cols-4 mb-8">
-          <TabsTrigger value="users">User Management</TabsTrigger>
-          <TabsTrigger value="guides">Guide Management</TabsTrigger>
-          <TabsTrigger value="models">Computer Models</TabsTrigger>
-          <TabsTrigger value="drivers">Driver Management</TabsTrigger>
+    <div className="container py-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+        <Button onClick={() => navigate("/")} variant="outline">Return to Home</Button>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-5 mb-4">
+          <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="guides">Guides</TabsTrigger>
+          <TabsTrigger value="drivers">Drivers</TabsTrigger>
+          <TabsTrigger value="models">Models</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
-        
-        {/* User Management Tab */}
+
+        {/* Users Tab */}
         <TabsContent value="users">
-          {isEditingUser ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>{selectedUser?.id ? "Edit User" : "Add New User"}</CardTitle>
-                <CardDescription>Update user information</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="username">Username</Label>
-                    <Input
-                      id="username"
-                      value={editUsername}
-                      onChange={(e) => setEditUsername(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={editEmail}
-                      onChange={(e) => setEditEmail(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="Enter new password (leave blank to keep current)"
-                      value={editPassword}
-                      onChange={(e) => setEditPassword(e.target.value)}
-                    />
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="isAdmin"
-                      checked={editIsAdmin}
-                      onChange={(e) => setEditIsAdmin(e.target.checked)}
-                      className="h-4 w-4"
-                    />
-                    <Label htmlFor="isAdmin">Admin privileges</Label>
-                  </div>
-                  <div className="flex justify-end space-x-2">
-                    <Button variant="outline" onClick={() => setIsEditingUser(false)}>
-                      Cancel
-                    </Button>
-                    <Button onClick={handleSaveUser}>
-                      Save Changes
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              <div className="flex justify-between items-center mb-4">
-                <div className="relative w-64">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="search"
-                    placeholder="Search users..."
-                    className="pl-8"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-                <Button onClick={() => {
-                  setSelectedUser({ id: "", email: "", username: "", isAdmin: false });
-                  setEditUsername("");
-                  setEditEmail("");
-                  setEditIsAdmin(false);
-                  setIsEditingUser(true);
-                }}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add New User
-                </Button>
+          <Card>
+            <CardHeader>
+              <CardTitle>User Management</CardTitle>
+              <CardDescription>Manage user accounts and permissions</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Pending Users Section */}
+              <div className="mb-8">
+                <h3 className="text-lg font-medium mb-4">Pending Approval Requests</h3>
+                {isLoading ? (
+                  <p>Loading pending users...</p>
+                ) : pendingUsers.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Username</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead className="w-[200px]">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {pendingUsers.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell>{user.username}</TableCell>
+                          <TableCell>{user.email}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                className="flex items-center gap-1"
+                                onClick={() => handleApproveUser(user.id)}
+                              >
+                                <CheckCircle className="h-4 w-4" /> Approve
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="destructive"
+                                className="flex items-center gap-1"
+                                onClick={() => handleRejectUser(user.id)}
+                              >
+                                <XCircle className="h-4 w-4" /> Reject
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <p className="text-muted-foreground">No pending approval requests</p>
+                )}
               </div>
-              
-              <Card>
-                <CardContent className="p-0">
+
+              {/* Active Users Section */}
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-medium">Active Users</h3>
+                  <Button onClick={() => navigate("/admin/users/new")}>Add New User</Button>
+                </div>
+                
+                {isLoading ? (
+                  <p>Loading users...</p>
+                ) : users.length > 0 ? (
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Username</TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead>Role</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                        <TableHead className="w-[120px]">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredUsers.map((user) => (
+                      {users.map((user) => (
                         <TableRow key={user.id}>
-                          <TableCell className="font-medium">{user.username}</TableCell>
+                          <TableCell>{user.username}</TableCell>
                           <TableCell>{user.email}</TableCell>
                           <TableCell>
-                            {user.isAdmin ? (
-                              <span className="flex items-center text-red-600 font-medium">
-                                <CheckCircle className="h-4 w-4 mr-1" />
-                                Admin
-                              </span>
-                            ) : user.isApproved ? (
-                              <span className="flex items-center text-green-600 font-medium">
-                                <CheckCircle className="h-4 w-4 mr-1" />
-                                Approved User
-                              </span>
-                            ) : (
-                              <span className="flex items-center text-orange-600 font-medium">
-                                <UserCircle className="h-4 w-4 mr-1" />
-                                Pending Approval
-                              </span>
-                            )}
+                            <Badge variant={user.isAdmin ? "default" : "outline"}>
+                              {user.isAdmin ? "Admin" : "User"}
+                            </Badge>
                           </TableCell>
-                          <TableCell className="text-right space-x-2">
-                            {!user.isApproved && !user.isAdmin && (
-                              <Button variant="default" size="sm" onClick={() => handleApproveUser(user.id)}>
-                                Approve
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button 
+                                size="icon" 
+                                variant="ghost"
+                                onClick={() => navigate(`/admin/users/edit/${user.id}`)}
+                              >
+                                <Edit className="h-4 w-4" />
                               </Button>
-                            )}
-                            <Button variant="ghost" size="icon" onClick={() => handleEditUser(user)}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleDeleteUser(user.id)}>
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
+                              <Button 
+                                size="icon" 
+                                variant="ghost"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => {
+                                  if(window.confirm(`Are you sure you want to delete ${user.username}?`)) {
+                                    try {
+                                      // Get existing users
+                                      const storedUsers = localStorage.getItem('users') || '[]';
+                                      const allUsers = JSON.parse(storedUsers);
+                                      
+                                      // Filter out the user to delete
+                                      const updatedUsers = allUsers.filter((u) => u.id !== user.id);
+                                      
+                                      // Update localStorage
+                                      localStorage.setItem('users', JSON.stringify(updatedUsers));
+                                      
+                                      // Update state
+                                      setUsers(users.filter(u => u.id !== user.id));
+                                      toast.success("User deleted successfully");
+                                    } catch (error) {
+                                      console.error("Error deleting user:", error);
+                                      toast.error("Failed to delete user");
+                                    }
+                                  }
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
-                      {filteredUsers.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-center py-6">
-                            <p className="text-muted-foreground">No users found</p>
-                          </TableCell>
-                        </TableRow>
-                      )}
                     </TableBody>
                   </Table>
-                </CardContent>
-              </Card>
-            </>
-          )}
+                ) : (
+                  <p className="text-muted-foreground">No users found</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
-        
-        {/* Guide Management Tab */}
+
+        {/* Guides Tab */}
         <TabsContent value="guides">
-          {isEditingGuide ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>{selectedGuide?.id === "new" ? "Add New Guide" : "Edit Guide"}</CardTitle>
-                <CardDescription>Create or update disassembly guides</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="guide-title">Title</Label>
-                    <Input
-                      id="guide-title"
-                      value={editGuideTitle}
-                      onChange={(e) => setEditGuideTitle(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="guide-model">Computer Model</Label>
-                      <Select 
-                        value={editGuideModel} 
-                        onValueChange={setEditGuideModel}
-                      >
-                        <SelectTrigger id="guide-model">
-                          <SelectValue placeholder="Select computer model" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {computerModels.map((model, index) => (
-                            <SelectItem key={index} value={model}>
-                              {model}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="guide-category">Category</Label>
-                      <Select 
-                        value={editGuideCategory} 
-                        onValueChange={setEditGuideCategory}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category} value={category}>{category}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="guide-difficulty">Difficulty</Label>
-                      <Select 
-                        value={editGuideDifficulty} 
-                        onValueChange={setEditGuideDifficulty}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select difficulty" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="easy">Easy</SelectItem>
-                          <SelectItem value="medium">Medium</SelectItem>
-                          <SelectItem value="hard">Hard</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="guide-time">Estimated Time</Label>
-                      <Input
-                        id="guide-time"
-                        value={editGuideTime}
-                        onChange={(e) => setEditGuideTime(e.target.value)}
-                        placeholder="e.g., 20 minutes"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="guide-description">Description</Label>
-                    <Textarea
-                      id="guide-description"
-                      value={editGuideDescription}
-                      onChange={(e) => setEditGuideDescription(e.target.value)}
-                      rows={3}
-                    />
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <Label>Steps</Label>
-                      <Button type="button" size="sm" variant="outline" onClick={handleAddStep}>
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add Step
-                      </Button>
-                    </div>
-                    
-                    {editGuideSteps.map((step, index) => (
-                      <Card key={index} className="p-4">
-                        <div className="flex justify-between items-center mb-2">
-                          <Input
-                            value={step.title}
-                            onChange={(e) => handleUpdateStep(index, 'title', e.target.value)}
-                            className="w-full max-w-xs"
-                            placeholder={`Step ${index + 1} title`}
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleRemoveStep(index)}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </div>
-                        <Textarea
-                          value={step.description}
-                          onChange={(e) => handleUpdateStep(index, 'description', e.target.value)}
-                          placeholder="Step description..."
-                          rows={2}
-                        />
-                        <div className="mt-3">
-                          <Label htmlFor={`step-media-${index}`}>Image/Video URL (Optional)</Label>
-                          <Input
-                            id={`step-media-${index}`}
-                            value={step.imageUrl || ''}
-                            onChange={(e) => handleUpdateStep(index, 'imageUrl', e.target.value)}
-                            placeholder="URL to image or video (e.g., '/assets/images/step1.jpg' or 'https://youtube.com/embed/...')"
-                            className="mt-1"
-                          />
-                          {step.imageUrl && (
-                            <div className="mt-2 p-2 bg-gray-50 rounded text-sm text-gray-600">
-                              Preview: {step.imageUrl}
-                            </div>
-                          )}
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                  
-                  <div className="flex justify-end space-x-2">
-                    <Button variant="outline" onClick={() => {
-                      setIsEditingGuide(false);
-                      setSelectedGuide(null);
-                    }}>
-                      Cancel
-                    </Button>
-                    <Button onClick={handleSaveGuide}>
-                      {selectedGuide?.id === "new" ? "Create Guide" : "Save Changes"}
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
+          <Card>
+            <CardHeader>
+              <CardTitle>Disassembly Guides</CardTitle>
+              <CardDescription>Manage repair and disassembly guides</CardDescription>
+            </CardHeader>
+            <CardContent>
               <div className="flex justify-between items-center mb-4">
                 <div className="relative w-64">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
-                    type="search"
                     placeholder="Search guides..."
                     className="pl-8"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-                <Button onClick={handleAddNewGuide}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add New Guide
+                <Button onClick={handleAddGuide}>
+                  <Plus className="mr-2 h-4 w-4" /> Add New Guide
                 </Button>
               </div>
-              
-              <Card>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Title</TableHead>
-                        <TableHead>Model</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Difficulty</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredGuides.map((guide) => (
+
+              {isLoading ? (
+                <p>Loading guides...</p>
+              ) : guides.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Model</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Difficulty</TableHead>
+                      <TableHead className="w-[100px]">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {guides
+                      .filter(guide => 
+                        guide.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                        guide.model.toLowerCase().includes(searchTerm.toLowerCase())
+                      )
+                      .map((guide) => (
                         <TableRow key={guide.id}>
-                          <TableCell className="font-medium">{guide.title}</TableCell>
+                          <TableCell>{guide.title}</TableCell>
                           <TableCell>{guide.model}</TableCell>
                           <TableCell>{guide.category}</TableCell>
                           <TableCell>
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              guide.difficulty === 'easy' ? 'bg-green-100 text-green-800' :
-                              guide.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-red-100 text-red-800'
-                            }`}>
-                              {guide.difficulty}
-                            </span>
+                            <Badge variant="outline">
+                              {guide.difficulty === 'easy' ? 'Easy' : 
+                               guide.difficulty === 'medium' ? 'Medium' : 'Hard'}
+                            </Badge>
                           </TableCell>
-                          <TableCell className="text-right space-x-2">
-                            <Button variant="ghost" size="icon" onClick={() => handleEditGuide(guide)}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleDeleteGuide(guide.id)}>
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {filteredGuides.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={5} className="text-center py-6">
-                            <p className="text-muted-foreground">No guides found</p>
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </>
-          )}
-        </TabsContent>
-        
-        {/* Computer Models Management Tab */}
-        <TabsContent value="models">
-          <Card>
-            <CardHeader>
-              <CardTitle>Computer Model Management</CardTitle>
-              <CardDescription>Add or remove computer models for disassembly guides</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <Input
-                      placeholder="Enter new computer model name"
-                      value={newModelName}
-                      onChange={(e) => setNewModelName(e.target.value)}
-                    />
-                  </div>
-                  <Button onClick={handleAddModel}>
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add Model
-                  </Button>
-                </div>
-                
-                <div>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Model Name</TableHead>
-                        <TableHead className="w-[100px]">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {computerModels.map((model, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{model}</TableCell>
                           <TableCell>
-                            <Button variant="ghost" size="icon" onClick={() => handleDeleteModel(model)}>
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button 
+                                size="icon" 
+                                variant="ghost"
+                                onClick={() => navigate(`/admin/guides/edit/${guide.id}`)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                size="icon" 
+                                variant="ghost"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => {
+                                  if(window.confirm(`Are you sure you want to delete "${guide.title}"?`)) {
+                                    try {
+                                      // Get existing guides
+                                      const storedGuides = localStorage.getItem('disassemblyGuides') || '[]';
+                                      const allGuides = JSON.parse(storedGuides);
+                                      
+                                      // Filter out the guide to delete
+                                      const updatedGuides = allGuides.filter((g) => g.id !== guide.id);
+                                      
+                                      // Update localStorage
+                                      localStorage.setItem('disassemblyGuides', JSON.stringify(updatedGuides));
+                                      
+                                      // Update state
+                                      setGuides(updatedGuides);
+                                      toast.success("Guide deleted successfully");
+                                    } catch (error) {
+                                      console.error("Error deleting guide:", error);
+                                      toast.error("Failed to delete guide");
+                                    }
+                                  }
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
-                      {computerModels.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={2} className="text-center py-6 text-muted-foreground">
-                            No computer models available
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center p-8">
+                  <p className="text-muted-foreground mb-4">No guides found</p>
+                  <Button onClick={handleAddGuide}>Create your first guide</Button>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
-        
-        {/* Driver Management Tab */}
+
+        {/* Drivers Tab */}
         <TabsContent value="drivers">
-          {isEditingDriver ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>{selectedDriver?.id === "new" ? "Add New Driver" : "Edit Driver"}</CardTitle>
-                <CardDescription>Create or update driver information</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="driver-name">Driver Name</Label>
-                    <Input
-                      id="driver-name"
-                      value={editDriverName}
-                      onChange={(e) => setEditDriverName(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="driver-category">Category</Label>
-                      <Select 
-                        value={editDriverCategory} 
-                        onValueChange={setEditDriverCategory}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {driverCategories.map((category) => (
-                            <SelectItem key={category} value={category}>{category}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="driver-manufacturer">Manufacturer</Label>
-                      <Input
-                        id="driver-manufacturer"
-                        value={editDriverManufacturer}
-                        onChange={(e) => setEditDriverManufacturer(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="driver-image">Image URL</Label>
-                    <Input
-                      id="driver-image"
-                      placeholder="Path to image (e.g., '/assets/images/driver.jpg')"
-                      value={editDriverImage}
-                      onChange={(e) => setEditDriverImage(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Compatible Operating Systems</Label>
-                    <div className="flex flex-wrap gap-4 pt-2">
-                      {operatingSystems.map((os) => (
-                        <div key={os} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            id={`os-${os}`}
-                            checked={editDriverOs.includes(os)}
-                            onChange={() => handleOsToggle(os)}
-                            className="h-4 w-4"
-                          />
-                          <Label htmlFor={`os-${os}`}>{os === "windows10" ? "Windows 10" : "Windows 11"}</Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <Label>Driver Files</Label>
-                      <Button type="button" size="sm" variant="outline" onClick={handleAddDriverFile}>
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add File
-                      </Button>
-                    </div>
-                    
-                    {editDriverFiles.map((file, index) => (
-                      <Card key={index} className="p-4">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor={`file-name-${index}`}>File Name</Label>
-                            <Input
-                              id={`file-name-${index}`}
-                              value={file.name}
-                              onChange={(e) => handleUpdateDriverFile(index, 'name', e.target.value)}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor={`file-version-${index}`}>Version</Label>
-                            <Input
-                              id={`file-version-${index}`}
-                              value={file.version}
-                              onChange={(e) => handleUpdateDriverFile(index, 'version', e.target.value)}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor={`file-date-${index}`}>Release Date</Label>
-                            <Input
-                              id={`file-date-${index}`}
-                              type="date"
-                              value={file.date}
-                              onChange={(e) => handleUpdateDriverFile(index, 'date', e.target.value)}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor={`file-size-${index}`}>File Size</Label>
-                            <Input
-                              id={`file-size-${index}`}
-                              value={file.size}
-                              placeholder="e.g. 1.5 GB"
-                              onChange={(e) => handleUpdateDriverFile(index, 'size', e.target.value)}
-                            />
-                          </div>
-                        </div>
-                        <div className="mt-4 flex justify-between items-end">
-                          <div className="w-full space-y-2">
-                            <Label htmlFor={`file-link-${index}`}>Download Link</Label>
-                            <Input
-                              id={`file-link-${index}`}
-                              value={file.link}
-                              placeholder="URL to download the file"
-                              onChange={(e) => handleUpdateDriverFile(index, 'link', e.target.value)}
-                            />
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="ml-2 mt-8"
-                            onClick={() => handleRemoveDriverFile(index)}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                  
-                  <div className="flex justify-end space-x-2 mt-6">
-                    <Button variant="outline" onClick={() => {
-                      setIsEditingDriver(false);
-                      setSelectedDriver(null);
-                    }}>
-                      Cancel
-                    </Button>
-                    <Button onClick={handleSaveDriver}>
-                      {selectedDriver?.id === "new" ? "Create Driver" : "Save Changes"}
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
+          <Card>
+            <CardHeader>
+              <CardTitle>Driver Management</CardTitle>
+              <CardDescription>Manage device drivers and downloads</CardDescription>
+            </CardHeader>
+            <CardContent>
               <div className="flex justify-between items-center mb-4">
                 <div className="relative w-64">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
-                    type="search"
                     placeholder="Search drivers..."
                     className="pl-8"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-                <Button onClick={handleAddNewDriver}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add New Driver
+                <Button onClick={handleAddDriver}>
+                  <Plus className="mr-2 h-4 w-4" /> Add New Driver
                 </Button>
               </div>
-              
-              <Card>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Manufacturer</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>OS Compatibility</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredDrivers.map((driver) => (
-                        <TableRow key={driver.id}>
-                          <TableCell className="font-medium">{driver.name}</TableCell>
-                          <TableCell>{driver.manufacturer}</TableCell>
-                          <TableCell>{driver.category}</TableCell>
-                          <TableCell>
-                            <div className="flex space-x-1">
-                              {driver.os.includes("windows10") && (
-                                <Badge variant="outline">Windows 10</Badge>
-                              )}
-                              {driver.os.includes("windows11") && (
-                                <Badge variant="outline">Windows 11</Badge>
-                              )}
+
+              {isLoading ? (
+                <p>Loading drivers...</p>
+              ) : drivers.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {drivers
+                    .filter(driver => 
+                      driver.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                      driver.manufacturer.toLowerCase().includes(searchTerm.toLowerCase())
+                    )
+                    .map((driver) => (
+                      <Card key={driver.id} className="overflow-hidden">
+                        <div className="aspect-video bg-muted relative">
+                          {driver.image ? (
+                            <img 
+                              src={driver.image} 
+                              alt={driver.name} 
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = '/placeholder-driver.png';
+                              }}
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center w-full h-full text-muted-foreground">
+                              No Image
                             </div>
-                          </TableCell>
-                          <TableCell className="text-right space-x-2">
-                            <Button variant="ghost" size="icon" onClick={() => handleEditDriver(driver)}>
-                              <Edit className="h-4 w-4" />
+                          )}
+                        </div>
+                        <CardHeader>
+                          <CardTitle className="text-lg">{driver.name}</CardTitle>
+                          <CardDescription>
+                            {driver.manufacturer} • {driver.category}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex flex-wrap gap-2 mb-4">
+                            {driver.os && driver.os.map(os => (
+                              <Badge key={os} variant="outline">{os}</Badge>
+                            ))}
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => navigate(`/admin/drivers/edit/${driver.id}`)}
+                            >
+                              <Edit className="h-4 w-4 mr-1" /> Edit
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleDeleteDriver(driver.id)}>
-                              <Trash2 className="h-4 w-4 text-red-500" />
+                            <Button 
+                              variant="destructive" 
+                              size="sm"
+                              onClick={() => {
+                                if(window.confirm(`Are you sure you want to delete "${driver.name}"?`)) {
+                                  try {
+                                    // First try to get existing drivers
+                                    const storedDrivers = localStorage.getItem('drivers') || '[]';
+                                    const currentDrivers = JSON.parse(storedDrivers);
+                                    
+                                    // Filter out the driver to delete
+                                    const updatedDrivers = currentDrivers.filter(d => d.id !== driver.id);
+                                    
+                                    // Update localStorage
+                                    localStorage.setItem('drivers', JSON.stringify(updatedDrivers));
+                                    
+                                    // Try to delete from Supabase as well
+                                    const deleteFromSupabase = async (id: string) => {
+                                      await supabase
+                                        .from(APP_DRIVERS_TABLE)
+                                        .delete()
+                                        .eq('id', id);
+                                    };
+                                    
+                                    deleteFromSupabase(driver.id);
+                                    
+                                    // Update the UI
+                                    setDrivers(updatedDrivers);
+                                    toast.success("Driver deleted successfully");
+                                  } catch (error) {
+                                    console.error("Error deleting driver:", error);
+                                    toast.error("Failed to delete driver");
+                                  }
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" /> Delete
                             </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {filteredDrivers.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={5} className="text-center py-6">
-                            <p className="text-muted-foreground">No drivers found</p>
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </>
-          )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                </div>
+              ) : (
+                <div className="text-center p-8">
+                  <p className="text-muted-foreground mb-4">No drivers found</p>
+                  <Button onClick={handleAddDriver}>Add your first driver</Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        {/* End of tabs content */}
+        {/* Computer Models Tab */}
+        <TabsContent value="models">
+          <Card>
+            <CardHeader>
+              <CardTitle>Computer Models</CardTitle>
+              <CardDescription>Manage computer models for guides and drivers</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-end gap-4 mb-6">
+                <div className="flex-1">
+                  <Label htmlFor="newModel">New Model Name</Label>
+                  <Input 
+                    id="newModel" 
+                    placeholder="e.g., UA-N15C8SL512" 
+                    value={searchTerm} 
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <Button onClick={() => {
+                  if (!searchTerm.trim()) {
+                    toast.error("Please enter a model name");
+                    return;
+                  }
+                  
+                  try {
+                    // Import is at the top of the file
+                    import('../utils/modelManager').then(({ addModel }) => {
+                      try {
+                        // Add the model using our utility
+                        addModel(searchTerm.trim());
+                        
+                        // Reset search term and show success
+                        setSearchTerm('');
+                        toast.success("Model added successfully");
+                        
+                        // Reload models to update the UI
+                        loadGuides();
+                      } catch (error) {
+                        if (error.message === 'Model already exists') {
+                          toast.error("Model already exists");
+                        } else {
+                          toast.error("Failed to add model");
+                        }
+                      }
+                    });
+                  } catch (error) {
+                    console.error("Error importing modelManager:", error);
+                    toast.error("Failed to add model");
+                  }
+                }}>Add Model</Button>
+              </div>
+
+              <div className="border rounded-lg">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Model Name</TableHead>
+                      <TableHead className="w-[100px] text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {/* Use actual models from state instead of hardcoded array */}
+                    {(computerModels || ["UKN15I711-8GR512", "UKN15I310-8DG256-IF1599445", "UA-N15C8SL512"]).map((model) => (
+                      <TableRow key={model}>
+                        <TableCell>{model}</TableCell>
+                        <TableCell className="text-right">
+                          <Button 
+                            size="icon" 
+                            variant="ghost"
+                            className="text-destructive hover:text-destructive h-8 w-8"
+                            onClick={() => {
+                              if (window.confirm(`Are you sure you want to delete model "${model}"?`)) {
+                                try {
+                                  // Use the modelManager utility
+                                  modelManager.deleteModel(model);
+                                  
+                                  // Reload models to update the UI
+                                  loadGuides();
+                                  
+                                  toast.success("Model deleted successfully");
+                                } catch (error) {
+                                  console.error("Error deleting model:", error);
+                                  toast.error("Failed to delete model");
+                                }
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Settings Tab */}
+        <TabsContent value="settings">
+          <Card>
+            <CardHeader>
+              <CardTitle>Application Settings</CardTitle>
+              <CardDescription>Customize application behavior</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Assistant Toggle */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-medium">Guide Assistant</h3>
+                  <p className="text-sm text-muted-foreground">Enable or disable the interactive guide assistant</p>
+                </div>
+                <Switch
+                  checked={assistantEnabled}
+                  onCheckedChange={handleToggleAssistant}
+                />
+              </div>
+              
+              <div className="border-t pt-4">
+                <h3 className="text-lg font-medium mb-2">About</h3>
+                <p className="text-sm text-muted-foreground">TechSupport App v1.4</p>
+                <p className="text-sm text-muted-foreground">© 2025 Thomson Technologies</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );
-}
+};
+
+export default Admin;
