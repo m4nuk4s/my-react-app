@@ -9,7 +9,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Badge } from '../components/ui/badge';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
-import Panel from "@/assets/wtpth/panel.jpg";
 
 interface DriverFile {
   id: string;
@@ -38,7 +37,7 @@ interface Driver {
   created?: string;
 }
 
-const categories = ['all', 'laptops', 'desktops', 'AIO', 'monitors', 'peripherals'];
+const categories = ['all', 'laptops', 'desktops', 'servers', 'monitors', 'peripherals'];
 
 export function Drivers() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
@@ -134,18 +133,12 @@ export function Drivers() {
 
   return (
     <div className="container py-6">
-       <div className="text-center">
+      <div className="flex flex-col space-y-6">
         <div>
-           <h1
-          className="text-4xl font-bold text-white mb-0 px-4 py-20 rounded bg-cover bg-center"
-          style={{ backgroundImage: `url(${Panel})`, display: 'block' }}
-        >
-          Drivers/Recovery Images/Firmware
-		   <p className="text-xl text-blue-100 mb-8">
-       Find and download the latest drivers/firmwares for your devices
-    </p>
-        </h1>
-         
+          <h1 className="text-3xl font-bold mb-2">Driver Downloads</h1>
+          <p className="text-gray-500 dark:text-gray-400">
+            Find and download the latest drivers for your devices
+          </p>
         </div>
         <div className="flex items-center space-x-4">
           <div className="flex-1">
@@ -176,11 +169,11 @@ export function Drivers() {
                 <p>No drivers found. Try adjusting your search criteria.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredDrivers.map((driver) => (
                   <Card key={driver.id} className="overflow-hidden flex flex-col">
                     {driver.image_url && (
-                      <div className="overflow-hidden bg-whit-100-100 dark:bg-blue-800">
+                      <div className="overflow-hidden bg-gray-100 dark:bg-gray-800">
                         <img
                           src={driver.image_url}
                           alt={driver.name}
