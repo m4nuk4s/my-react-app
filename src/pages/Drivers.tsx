@@ -256,28 +256,7 @@ export function Drivers() {
                         Download
                       </Button>
                       
-                      {isAdmin && (
-                        <div className="flex w-full gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex-1"
-                            onClick={() => navigate(`/admin/drivers/edit/${driver.id}`)}
-                          >
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </Button>
-                          <Button 
-                            variant="destructive" 
-                            size="sm" 
-                            className="flex-1"
-                            onClick={() => handleDeleteDriver(driver.id)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </Button>
-                        </div>
-                      )}
+                      {/* Admin buttons removed as requested */}
                     </CardFooter>
                   </Card>
                 ))}

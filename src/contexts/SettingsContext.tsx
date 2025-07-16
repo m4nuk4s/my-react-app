@@ -3,11 +3,13 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 // Define settings type
 type Settings = {
   showGuideAssistant: boolean;
+  assistantEnabled: boolean;
 };
 
 // Default settings
 const defaultSettings: Settings = {
   showGuideAssistant: true,
+  assistantEnabled: true,
 };
 
 // Create context

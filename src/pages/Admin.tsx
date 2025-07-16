@@ -51,7 +51,7 @@ const Admin = () => {
 
   // Settings management
   const [assistantEnabled, setAssistantEnabled] = useState(
-    settings?.assistantEnabled !== undefined ? settings.assistantEnabled : true
+    settings?.showGuideAssistant !== undefined ? settings.showGuideAssistant : true
   );
 
   useEffect(() => {
@@ -69,24 +69,24 @@ const Admin = () => {
   useEffect(() => {
     // Update assistant enabled state when settings change
     if (settings) {
-      setAssistantEnabled(settings.assistantEnabled !== undefined ? settings.assistantEnabled : true);
+      setAssistantEnabled(settings.showGuideAssistant);
     }
   }, [settings]);
 
-  const loadActiveTabData = () => {
+  const loadActiveTabData = async () => {
     switch(activeTab) {
       case "users":
         loadUsers();
         break;
       case "guides":
-        loadGuides();
+        await loadGuides();
         break;
       case "drivers":
         loadDrivers();
         break;
       case "models":
         // Models are loaded with guides
-        loadGuides();
+        await loadGuides();
         break;
       case "settings":
         // Settings are loaded from context
@@ -127,16 +127,23 @@ const Admin = () => {
     }
   };
 
-  const loadGuides = () => {
+  const loadGuides = async () => {
     setIsLoading(true);
     try {
       // Load guides
       const storedGuides = localStorage.getItem('disassemblyGuides') || '[]';
       setGuides(JSON.parse(storedGuides));
       
-      // Load computer models using modelManager
-      const models = modelManager.getAllModels();
-      setComputerModels(models);
+      // Load computer models using modelManager - now async
+      try {
+        const models = await modelManager.getAllModels();
+        setComputerModels(models);
+      } catch (modelError) {
+        console.error("Error loading models from Supabase:", modelError);
+        // Fallback to local models if Supabase fails
+        const localModels = JSON.parse(localStorage.getItem('computerModels') || '[]');
+        setComputerModels(localModels);
+      }
     } catch (error) {
       console.error("Error loading guides and models:", error);
       toast.error("Failed to load guides and models");
@@ -216,15 +223,7 @@ const Admin = () => {
     setAssistantEnabled(newValue);
     
     // Update settings in context
-    updateSettings({ ...settings, assistantEnabled: newValue });
-    
-    // Save to localStorage
-    const storedSettings = localStorage.getItem('settings') || '{}';
-    const parsedSettings = JSON.parse(storedSettings);
-    localStorage.setItem('settings', JSON.stringify({
-      ...parsedSettings,
-      assistantEnabled: newValue
-    }));
+    updateSettings({ showGuideAssistant: newValue });
     
     toast.success(`Assistant ${newValue ? 'enabled' : 'disabled'} successfully`);
   };
@@ -643,36 +642,29 @@ const Admin = () => {
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-                <Button onClick={() => {
+                <Button onClick={async () => {
                   if (!searchTerm.trim()) {
                     toast.error("Please enter a model name");
                     return;
                   }
                   
                   try {
-                    // Import is at the top of the file
-                    import('../utils/modelManager').then(({ addModel }) => {
-                      try {
-                        // Add the model using our utility
-                        addModel(searchTerm.trim());
-                        
-                        // Reset search term and show success
-                        setSearchTerm('');
-                        toast.success("Model added successfully");
-                        
-                        // Reload models to update the UI
-                        loadGuides();
-                      } catch (error) {
-                        if (error.message === 'Model already exists') {
-                          toast.error("Model already exists");
-                        } else {
-                          toast.error("Failed to add model");
-                        }
-                      }
-                    });
+                    // Add the model using our utility - now async
+                    await modelManager.addModel(searchTerm.trim());
+                    
+                    // Reset search term and show success
+                    setSearchTerm('');
+                    toast.success("Model added successfully to Supabase and local storage");
+                    
+                    // Reload models to update the UI
+                    await loadGuides();
                   } catch (error) {
-                    console.error("Error importing modelManager:", error);
-                    toast.error("Failed to add model");
+                    if (error.message === 'Model already exists') {
+                      toast.error("Model already exists");
+                    } else {
+                      console.error("Error adding model:", error);
+                      toast.error("Failed to add model");
+                    }
                   }
                 }}>Add Model</Button>
               </div>
@@ -695,16 +687,16 @@ const Admin = () => {
                             size="icon" 
                             variant="ghost"
                             className="text-destructive hover:text-destructive h-8 w-8"
-                            onClick={() => {
+                            onClick={async () => {
                               if (window.confirm(`Are you sure you want to delete model "${model}"?`)) {
                                 try {
-                                  // Use the modelManager utility
-                                  modelManager.deleteModel(model);
+                                  // Use the modelManager utility - now async
+                                  await modelManager.deleteModel(model);
                                   
                                   // Reload models to update the UI
-                                  loadGuides();
+                                  await loadGuides();
                                   
-                                  toast.success("Model deleted successfully");
+                                  toast.success("Model deleted successfully from Supabase and local storage");
                                 } catch (error) {
                                   console.error("Error deleting model:", error);
                                   toast.error("Failed to delete model");

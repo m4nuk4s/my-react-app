@@ -16,6 +16,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { toast } from "sonner";
 import { Plus, X, ArrowLeft } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
+import { supabase } from "../lib/supabase";
 
 type Step = {
   title: string;
@@ -80,7 +81,38 @@ const GuideEditor = () => {
     }
   }, [user, isAdmin, navigate, isNew, id]);
 
-  const loadComputerModels = () => {
+  // App-specific table name for computer models
+  const APP_MODELS_TABLE = 'app_8e3e8a4d8d0e442280110fd6f6c2cd95_models';
+  
+  const loadComputerModels = async () => {
+    try {
+      // First try to get models from Supabase
+      const { data: supabaseModels, error } = await supabase
+        .from(APP_MODELS_TABLE)
+        .select('model_name');
+      
+      if (error) {
+        console.error("Error fetching models from Supabase:", error);
+        // Fallback to local storage if Supabase fails
+        loadModelsFromLocalStorage();
+      } else if (supabaseModels && supabaseModels.length > 0) {
+        // Models found in Supabase
+        const modelNames = supabaseModels.map(item => item.model_name);
+        setComputerModels(modelNames);
+        // Also update localStorage for offline access
+        localStorage.setItem('computerModels', JSON.stringify(modelNames));
+      } else {
+        // No models found in Supabase, try local storage
+        loadModelsFromLocalStorage();
+      }
+    } catch (error) {
+      console.error("Error loading computer models:", error);
+      toast.error("Failed to load computer models");
+      loadModelsFromLocalStorage();
+    }
+  };
+  
+  const loadModelsFromLocalStorage = () => {
     try {
       const storedModels = localStorage.getItem('computerModels');
       if (storedModels) {
@@ -95,12 +127,46 @@ const GuideEditor = () => {
         localStorage.setItem('computerModels', JSON.stringify(defaultModels));
       }
     } catch (error) {
-      console.error("Error loading computer models:", error);
+      console.error("Error loading computer models from localStorage:", error);
       toast.error("Failed to load computer models");
     }
   };
 
-  const loadGuideData = () => {
+  const loadGuideData = async () => {
+    try {
+      // First try to get the guide from Supabase
+      const { data: supabaseGuides, error } = await supabase
+        .from(APP_GUIDES_TABLE)
+        .select('*')
+        .eq('id', id);
+      
+      if (error) {
+        console.error("Error fetching guide from Supabase:", error);
+        // Fallback to local storage if Supabase fails
+        loadFromLocalStorage();
+      } else if (supabaseGuides && supabaseGuides.length > 0) {
+        // Guide found in Supabase
+        const guide = supabaseGuides[0];
+        setGuideTitle(guide.title);
+        setGuideModel(guide.model);
+        setGuideCategory(guide.category);
+        setGuideDifficulty(guide.difficulty);
+        setGuideTime(guide.time);
+        setGuideDescription(guide.description);
+        setGuideSteps(guide.steps || [{ title: "Step 1", description: "", imageUrl: "" }]);
+        setIsLoading(false);
+      } else {
+        // Guide not found in Supabase, try local storage
+        loadFromLocalStorage();
+      }
+    } catch (error) {
+      console.error("Error loading guide data:", error);
+      toast.error("Failed to load guide data");
+      setIsLoading(false);
+    }
+  };
+  
+  const loadFromLocalStorage = () => {
     try {
       const storedGuides = localStorage.getItem('disassemblyGuides');
       if (storedGuides) {
@@ -121,7 +187,7 @@ const GuideEditor = () => {
         }
       }
     } catch (error) {
-      console.error("Error loading guide data:", error);
+      console.error("Error loading guide data from localStorage:", error);
       toast.error("Failed to load guide data");
     } finally {
       setIsLoading(false);
@@ -159,7 +225,44 @@ const GuideEditor = () => {
     setGuideSteps(updatedSteps);
   };
 
-  const handleSaveGuide = () => {
+  // App-specific table name for guides
+  const APP_GUIDES_TABLE = 'app_8e3e8a4d8d0e442280110fd6f6c2cd95_guides';
+  
+  const saveGuideToSupabase = async (guide: Guide) => {
+    try {
+      // Check if the guide exists in Supabase
+      const { data: existingGuides, error: fetchError } = await supabase
+        .from(APP_GUIDES_TABLE)
+        .select('*')
+        .eq('id', guide.id);
+      
+      if (fetchError) throw fetchError;
+      
+      if (existingGuides && existingGuides.length > 0) {
+        // Update existing guide
+        const { error } = await supabase
+          .from(APP_GUIDES_TABLE)
+          .update(guide)
+          .eq('id', guide.id);
+          
+        if (error) throw error;
+        return { success: true, action: 'updated' };
+      } else {
+        // Insert new guide
+        const { error } = await supabase
+          .from(APP_GUIDES_TABLE)
+          .insert([guide]);
+          
+        if (error) throw error;
+        return { success: true, action: 'inserted' };
+      }
+    } catch (error) {
+      console.error('Error saving guide to Supabase:', error);
+      return { success: false, error };
+    }
+  };
+
+  const handleSaveGuide = async () => {
     // Basic validation
     if (!guideTitle.trim()) {
       toast.error("Guide title is required");
@@ -194,6 +297,7 @@ const GuideEditor = () => {
     }
 
     try {
+      setIsLoading(true);
       const storedGuides = localStorage.getItem('disassemblyGuides') || '[]';
       const guides = JSON.parse(storedGuides);
       
@@ -218,12 +322,24 @@ const GuideEditor = () => {
         );
       }
       
+      // Save to localStorage
       localStorage.setItem('disassemblyGuides', JSON.stringify(updatedGuides));
-      toast.success(isNew ? "Guide created successfully!" : "Guide updated successfully!");
-      navigate("/admin");
+      
+      // Save to Supabase
+      const result = await saveGuideToSupabase(newGuide);
+      
+      if (result.success) {
+        toast.success(`Guide ${isNew ? "created" : "updated"} successfully and saved to Supabase!`);
+        navigate("/admin");
+      } else {
+        toast.warning(`Guide saved locally but failed to sync with Supabase: ${result.error?.message || 'Unknown error'}`);
+        navigate("/admin");
+      }
     } catch (error) {
       console.error("Error saving guide:", error);
       toast.error("Failed to save guide");
+    } finally {
+      setIsLoading(false);
     }
   };
 

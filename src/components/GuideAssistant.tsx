@@ -355,7 +355,7 @@ export default function GuideAssistant() {
   };
 
   // Don't render if assistant is disabled in settings
-  if (!settings.showGuideAssistant) {
+  if (settings.showGuideAssistant === false) {
     return null;
   }
   
