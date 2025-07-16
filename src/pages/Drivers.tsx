@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Badge } from '../components/ui/badge';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
+import Panel from "@/assets/wtpth/panel.jpg";
 
 interface DriverFile {
   id: string;
@@ -37,7 +38,7 @@ interface Driver {
   created?: string;
 }
 
-const categories = ['all', 'laptops', 'desktops', 'servers', 'monitors', 'peripherals'];
+const categories = ['all', 'laptops', 'desktops', 'AIO', 'monitors', 'peripherals'];
 
 export function Drivers() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
@@ -52,59 +53,45 @@ export function Drivers() {
     const fetchDriversWithFiles = async () => {
       setLoading(true);
       try {
-        let driversData: Driver[] = [];
-
-        const { data: dbDrivers, error: driversError } = await supabase
-          .from('drivers')
+        const { data: dbDrivers, error: driversError } = await supabase.from('app_8e3e8a4d8d0e442280110fd6f6c2cd95_drivers')
           .select('*');
 
         const { data: dbFiles, error: driverFilesError } = await supabase
-          .from('driver_files')
+          .from('app_8e3e8a4d8d0e442280110fd6f6c2cd95_drivers')
           .select('*');
 
-        if (driversError || driverFilesError || !dbDrivers || dbDrivers.length === 0) {
-          console.warn('Supabase empty or error, loading from localStorage fallback.');
-
-          const storedDrivers = localStorage.getItem('drivers');
-          if (storedDrivers) {
-            driversData = JSON.parse(storedDrivers).map((driver: any) => ({
-              ...driver,
-              image_url: driver.image || driver.image_url || '/placeholder-driver.png',
-              os_version: driver.os_version || driver.os || 'Unknown',
-              size: driver.size || driver.total_size || 'Unknown',
-              release_date: driver.release_date || driver.date || driver.created || 'Unknown',
-              files: driver.drivers.map((f: any, idx: number) => ({
-                id: f.id || `${driver.id}-${idx}`,
-                driver_id: driver.id,
-                name: f.name,
-                url: f.link,
-                size: f.size,
-                type: f.type || 'file',
-              }))
-            }));
-          } else {
-            console.error('No drivers found in database or localStorage.');
-            setDrivers([]);
-            setLoading(false);
-            return;
-          }
-        } else {
-          driversData = dbDrivers.map(driver => {
-            const files = dbFiles.filter(file => file.driver_id === driver.id);
-            return {
-              ...driver,
-              image_url: driver.image_url || driver.image || '/placeholder-driver.png',
-              os_version: driver.os_version || driver.os || 'Unknown',
-              size: driver.size || driver.total_size || 'Unknown',
-              release_date: driver.release_date || driver.date || driver.created || 'Unknown',
-              files
-            };
-          });
+        if (driversError || driverFilesError) {
+          console.error('Supabase fetch error:', { driversError, driverFilesError });
+          toast.error('Database fetch failed. Check your Supabase connection and permissions.');
+          setDrivers([]);
+          setLoading(false);
+          return;
         }
 
+        if (!dbDrivers || dbDrivers.length === 0) {
+          toast.error('No driver data found in Supabase. Check your database content and permissions.');
+          setDrivers([]);
+          setLoading(false);
+          return;
+        }
+
+        const driversData: Driver[] = dbDrivers.map(driver => {
+          const files = dbFiles?.filter(file => file.driver_id === driver.id) || [];
+          return {
+            ...driver,
+            image_url: driver.image_url || driver.image || '/placeholder-driver.png',
+            os_version: driver.os_version || driver.os || 'Unknown',
+            size: driver.size || driver.total_size || 'Unknown',
+            release_date: driver.release_date || driver.date || driver.created || 'Unknown',
+            files
+          };
+        });
+
+        localStorage.setItem('drivers', JSON.stringify(driversData));
         setDrivers(driversData);
       } catch (error) {
         console.error('Unexpected error loading drivers:', error);
+        toast.error('Unexpected error loading drivers.');
         setDrivers([]);
       } finally {
         setLoading(false);
@@ -133,12 +120,17 @@ export function Drivers() {
 
   return (
     <div className="container py-6">
-      <div className="flex flex-col space-y-6">
+      <div className="text-center">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Driver Downloads</h1>
-          <p className="text-gray-500 dark:text-gray-400">
-            Find and download the latest drivers for your devices
-          </p>
+          <h1
+            className="text-4xl font-bold text-white mb-0 px-4 py-20 rounded bg-cover bg-center"
+            style={{ backgroundImage: `url(${Panel})`, display: 'block' }}
+          >
+            Drivers/Recovery Images/Firmware
+            <p className="text-xl text-blue-100 mb-8">
+              Find and download the latest drivers/firmwares for your devices
+            </p>
+          </h1>
         </div>
         <div className="flex items-center space-x-4">
           <div className="flex-1">
@@ -169,11 +161,11 @@ export function Drivers() {
                 <p>No drivers found. Try adjusting your search criteria.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
                 {filteredDrivers.map((driver) => (
                   <Card key={driver.id} className="overflow-hidden flex flex-col">
                     {driver.image_url && (
-                      <div className="overflow-hidden bg-gray-100 dark:bg-gray-800">
+                      <div className="overflow-hidden bg-whit-100-100 dark:bg-blue-800">
                         <img
                           src={driver.image_url}
                           alt={driver.name}
@@ -201,28 +193,10 @@ export function Drivers() {
                         <div>
                           <Label className="text-xs text-gray-500 dark:text-gray-400">Operating System</Label>
                           <p className="mt-1">
-<Badge variant="subtle" className="text-xs bg-blue-500 hover:bg-blue-600 text-white">
-  <strong>
-    {(() => {
-      const text = driver.os_version || "";
-      const keyword = "windows";
-      let result = "";
-      let index = 0;
-
-      while (true) {
-        const nextIndex = text.indexOf(keyword, index + 1);
-        if (nextIndex === -1) {
-          result += text.slice(index);
-          break;
-        }
-        result += text.slice(index, nextIndex) + "\u00A0\u00A0\u00A0\u00A0"; // 4 non-breaking spaces
-        index = nextIndex;
-      }
-
-      return result.trim();
-    })()}
-  </strong>
-</Badge>                        </p>
+                            <Badge variant="subtle" className="text-xs bg-blue-500 hover:bg-blue-600 text-white">
+                              <strong>{driver.os_version}</strong>
+                            </Badge>
+                          </p>
                         </div>
                         <div>
                           <Label className="text-xs text-gray-500 dark:text-gray-400"></Label>
