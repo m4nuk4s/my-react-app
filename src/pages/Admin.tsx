@@ -152,18 +152,97 @@ const Admin = () => {
     }
   };
 
-  const loadDrivers = () => {
-    setIsLoading(true);
+const loadDrivers = async () => {
+  setIsLoading(true);
+  try {
+    // Check if the database schema needs to be fixed (missing image column)
     try {
-      const storedDrivers = localStorage.getItem('drivers') || '[]';
-      setDrivers(JSON.parse(storedDrivers));
-    } catch (error) {
-      console.error("Error loading drivers:", error);
-      toast.error("Failed to load drivers");
-    } finally {
-      setIsLoading(false);
+      // First try to add the image column if it doesn't exist
+      await supabase.rpc('execute_sql', { 
+        sql_query: `
+          DO $$
+          BEGIN
+            -- Add the image column if it doesn't exist
+            IF NOT EXISTS (
+              SELECT FROM information_schema.columns 
+              WHERE table_name = 'app_8e3e8a4d8d0e442280110fd6f6c2cd95_drivers' 
+              AND column_name = 'image'
+            ) THEN
+              ALTER TABLE app_8e3e8a4d8d0e442280110fd6f6c2cd95_drivers 
+              ADD COLUMN image TEXT;
+            END IF;
+          END
+          $$;
+        `
+      });
+      console.log("Checked for image column and added if missing");
+    } catch (schemaError) {
+      console.warn("Could not verify/fix schema, will try regular load:", schemaError);
     }
-  };
+    
+    // Fetch all drivers from Supabase
+    const { data, error } = await supabase
+      .from('app_8e3e8a4d8d0e442280110fd6f6c2cd95_drivers')
+      .select('*')
+      .order('name', { ascending: true });
+
+    if (error) throw error;
+
+    // Process and transform the driver data to match the format needed for display
+    const processedDrivers = data.map(driver => {
+      // Create a file entry from the download_url
+      const driverFile = {
+        name: driver.description || driver.name,
+        version: driver.version || "1.0",
+        date: driver.release_date || new Date().toISOString().split('T')[0],
+        size: driver.size || "Unknown",
+        link: driver.download_url || ""
+      };
+
+      // Use image column as image_url - handle both fields for backward compatibility
+     const imageUrl = driver.image_url || '/placeholder-driver.png';
+      
+      // Parse OS versions from comma-separated string
+      const osVersions = driver.os_version 
+        ? driver.os_version.split(',').map(os => os.trim().toLowerCase()) 
+        : ["windows11"];
+      
+      // Return the formatted driver object - only storing the URL, not full image data
+      return {
+        id: driver.id,
+        name: driver.name,
+        version: driver.version,
+        category: driver.category || "laptops",
+        manufacturer: driver.manufacturer || "Unknown",
+        image: imageUrl, // Use the image URL we determined
+        image_url: imageUrl, // Keep for backward compatibility
+        os: osVersions,
+        os_version: driver.os_version,
+        drivers: [driverFile],
+        size: driver.size,
+        release_date: driver.release_date
+      };
+    });
+    
+    // Update state and localStorage
+    setDrivers(processedDrivers || []);
+    localStorage.setItem('drivers', JSON.stringify(processedDrivers || []));
+    
+    console.log("Drivers loaded successfully:", processedDrivers.length);
+  } catch (error) {
+    console.error('Error fetching drivers from Supabase:', error);
+    toast.error('Failed to load drivers from the database');
+    
+    // Attempt to load from localStorage as fallback
+    const localDrivers = localStorage.getItem('drivers');
+    if (localDrivers) {
+      setDrivers(JSON.parse(localDrivers));
+      console.log("Loaded drivers from localStorage as fallback");
+    }
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // Function to handle approving a pending user
   const handleApproveUser = (userId) => {
@@ -232,6 +311,12 @@ const Admin = () => {
   const handleAddDriver = () => {
     toast.info("Redirecting to driver management");
     navigate("/admin/drivers/new");
+  };
+
+  // Function to redirect to Edit Driver page
+  const handleEditDriver = (driverId) => {
+    toast.info("Redirecting to driver editing");
+    navigate(`/admin/drivers/edit/${driverId}`);
   };
 
   // Function to redirect to Add Guide page
@@ -552,7 +637,12 @@ const Admin = () => {
                           )}
                         </div>
                         <CardHeader>
-                          <CardTitle className="text-lg">{driver.name}</CardTitle>
+                          <div className="flex justify-between items-start">
+                            <CardTitle className="text-lg">{driver.name}</CardTitle>
+                            {driver.version && (
+                              <Badge variant="outline" className="text-sm font-semibold">v{driver.version}</Badge>
+                            )}
+                          </div>
                           <CardDescription>
                             {driver.manufacturer} • {driver.category}
                           </CardDescription>
@@ -560,52 +650,66 @@ const Admin = () => {
                         <CardContent>
                           <div className="flex flex-wrap gap-2 mb-4">
                             {driver.os && driver.os.map(os => (
-                              <Badge key={os} variant="outline">{os}</Badge>
+                              <Badge key={os} variant="outline">
+                                {os === "windows10" ? "Windows 10" : "Windows 11"}
+                              </Badge>
                             ))}
+                            {driver.os_version && !driver.os && (
+                              <Badge variant="outline">
+                                {driver.os_version}
+                              </Badge>
+                            )}
                           </div>
+                          
+                          {/* File download info preview */}
+                          {driver.drivers && driver.drivers.length > 0 && (
+                            <div className="mb-3 text-sm">
+                              <p className="text-muted-foreground">
+                                {driver.drivers.length} file{driver.drivers.length > 1 ? 's' : ''} available
+                              </p>
+                            </div>
+                          )}
+                          
                           <div className="flex justify-end gap-2">
                             <Button 
                               variant="outline" 
                               size="sm" 
-                              onClick={() => navigate(`/admin/drivers/edit/${driver.id}`)}
+                              onClick={() => handleEditDriver(driver.id)}
                             >
                               <Edit className="h-4 w-4 mr-1" /> Edit
                             </Button>
                             <Button 
                               variant="destructive" 
                               size="sm"
-                              onClick={() => {
-                                if(window.confirm(`Are you sure you want to delete "${driver.name}"?`)) {
-                                  try {
-                                    // First try to get existing drivers
-                                    const storedDrivers = localStorage.getItem('drivers') || '[]';
-                                    const currentDrivers = JSON.parse(storedDrivers);
-                                    
-                                    // Filter out the driver to delete
-                                    const updatedDrivers = currentDrivers.filter(d => d.id !== driver.id);
-                                    
-                                    // Update localStorage
-                                    localStorage.setItem('drivers', JSON.stringify(updatedDrivers));
-                                    
-                                    // Try to delete from Supabase as well
-                                    const deleteFromSupabase = async (id: string) => {
-                                      await supabase
-                                        .from(APP_DRIVERS_TABLE)
-                                        .delete()
-                                        .eq('id', id);
-                                    };
-                                    
-                                    deleteFromSupabase(driver.id);
-                                    
-                                    // Update the UI
-                                    setDrivers(updatedDrivers);
-                                    toast.success("Driver deleted successfully");
-                                  } catch (error) {
-                                    console.error("Error deleting driver:", error);
-                                    toast.error("Failed to delete driver");
-                                  }
-                                }
-                              }}
+                              onClick={async () => {
+  if (window.confirm(`Are you sure you want to delete "${driver.name}"?`)) {
+    try {
+      // Remove from localStorage first
+      const storedDrivers = localStorage.getItem('drivers') || '[]';
+      const currentDrivers = JSON.parse(storedDrivers);
+      const updatedDrivers = currentDrivers.filter(d => d.id !== driver.id);
+      localStorage.setItem('drivers', JSON.stringify(updatedDrivers));
+
+      // Delete from Supabase
+      const { data, error } = await supabase
+        .from('app_8e3e8a4d8d0e442280110fd6f6c2cd95_drivers')
+        .delete()
+        .eq('id', driver.id);
+
+      if (error) {
+        console.error("Supabase deletion error:", error);
+        toast.error("Failed to delete from database.");
+      } else {
+        console.log("Deleted from Supabase:", data);
+        toast.success("Driver deleted successfully.");
+        setDrivers(updatedDrivers);
+      }
+    } catch (err) {
+      console.error("Delete failed:", err);
+      toast.error("Error deleting driver.");
+    }
+  }
+}}
                             >
                               <Trash2 className="h-4 w-4 mr-1" /> Delete
                             </Button>

@@ -1,5 +1,5 @@
 // Import the modelManager utility for consistent model management
-import { initializeModels } from '../utils/modelManager';
+import { initializeModels } from '../utils/modelManager.ts';
 
 // Initialize the computer models in localStorage if they don't exist
 function initializeComputerModels() {

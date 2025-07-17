@@ -3,6 +3,7 @@ import { initializeSampleData } from '@/utils/sampleData';
 import { supabase, User, UserWithPassword, setupSupabaseSchema, ensureAdminUser } from '@/lib/supabase';
 import { SupabaseAuthClient } from '@supabase/supabase-js/dist/module/lib/SupabaseAuthClient';
 import emailjs from '@emailjs/browser';
+import { fixAllDatabaseIssues } from '@/lib/databaseFixes';
 
 type AuthContextType = {
   user: User | null;
@@ -35,6 +36,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await setupSupabaseSchema();
         // Ensure admin user exists
         await ensureAdminUser();
+        // Fix any database schema issues
+        await fixAllDatabaseIssues();
         console.log('Supabase initialized successfully');
       } catch (error) {
         console.error('Error initializing Supabase:', error);

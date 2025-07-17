@@ -9,6 +9,8 @@ import { useAuth } from "../contexts/AuthContext";
 import { toast } from "sonner";
 import { Plus, X, ArrowLeft, HardDrive, Save, Trash2 } from "lucide-react";
 import { supabase } from "../lib/supabase";
+import { forceSchemaRefresh } from "../lib/schemaFix";
+import { fixDriversTableSchema } from "../lib/databaseFixes";
 import { v4 as uuidv4 } from 'uuid';
 
 type DriverFile = {
@@ -24,7 +26,7 @@ type Driver = {
   name: string;
   category: string;
   manufacturer: string;
-  image: string;
+  image_url?: string; // ✅ add this
   os: string[];
   drivers: DriverFile[];
 };
@@ -87,36 +89,105 @@ const DriverEditor = () => {
     }
   }, [user, isAdmin, navigate, isNew, id]);
 
-  const loadDriverData = (driverId: string) => {
+  const loadDriverData = async (driverId: string) => {
     try {
-      const storedDrivers = localStorage.getItem('drivers');
-      if (storedDrivers) {
-        const drivers = JSON.parse(storedDrivers);
-        const driver = drivers.find((d: Driver) => d.id === driverId);
+      // Try to fetch the driver directly from Supabase first
+      const { data: driverFromDB, error: fetchError } = await supabase
+        .from(APP_DRIVERS_TABLE)
+        .select('*')
+        .eq('id', driverId)
+        .single();
+      
+      if (fetchError || !driverFromDB) {
+        console.error("Error fetching driver from database:", fetchError);
+        toast.error("Could not load driver from database, trying local storage");
         
-        if (driver) {
-          setDriverName(driver.name);
-          setDriverCategory(driver.category || "laptops");
-          setDriverManufacturer(driver.manufacturer || "");
-          setDriverImage(driver.image || "");
-          setDriverOs(driver.os || ["windows11"]);
-          setDriverFiles(driver.drivers && driver.drivers.length > 0 
-            ? driver.drivers 
-            : [{
-                name: "", 
-                version: "", 
-                date: new Date().toISOString().split('T')[0], 
-                size: "", 
-                link: ""
-              }]);
+        // Fallback to localStorage if database fetch fails
+        const storedDrivers = localStorage.getItem('drivers');
+        if (storedDrivers) {
+          const drivers = JSON.parse(storedDrivers);
+          const driver = drivers.find((d: Driver) => d.id === driverId);
+          
+          if (driver) {
+            setDriverName(driver.name);
+            setDriverCategory(driver.category || "laptops");
+            setDriverManufacturer(driver.manufacturer || "");
+            setDriverImage(driver.image || driver.image_url || "");
+            setDriverOs(driver.os || ["windows11"]);
+            setDriverFiles(driver.drivers && driver.drivers.length > 0 
+              ? driver.drivers 
+              : [{
+                  name: "", 
+                  version: "", 
+                  date: new Date().toISOString().split('T')[0], 
+                  size: "", 
+                  link: ""
+                }]);
+            return;
+          } else {
+            toast.error("Driver not found in local storage");
+            navigate("/admin");
+            return;
+          }
         } else {
-          toast.error("Driver not found");
+          toast.error("No drivers found in local storage");
           navigate("/admin");
+          return;
         }
       }
+      
+      // Process the driver data from the database
+      setDriverName(driverFromDB.name);
+      setDriverCategory(driverFromDB.category || "laptops");
+      setDriverManufacturer(driverFromDB.manufacturer || "");
+      
+      // Make sure we're correctly handling image URL with thorough validation
+      console.log("Driver data from DB:", driverFromDB);
+      
+      // Use image field or image_url as the image URL with validation
+let imageUrl = "";
+if (driverFromDB.image_url && driverFromDB.image_url.trim() !== '') {
+  imageUrl = driverFromDB.image_url.trim();
+} else if (driverFromDB.image && driverFromDB.image.trim() !== '') {
+  imageUrl = driverFromDB.image.trim();
+}
+setDriverImage(imageUrl);
+      console.log("Final image URL set to:", imageUrl);
+      
+      // Handle OS version - split the string if it contains commas
+      const osVersions = driverFromDB.os_version 
+        ? driverFromDB.os_version.split(',').map((os: string) => os.trim().toLowerCase()) 
+        : ["windows11"];
+      console.log("Loading OS versions from DB:", driverFromDB.os_version, "Parsed to array:", osVersions);
+      setDriverOs(osVersions);
+      
+      // Handle release_date safely - if it doesn't exist or is invalid, use current date
+      let releaseDate = new Date().toISOString().split('T')[0];
+      if (driverFromDB.release_date) {
+        try {
+          const parsedDate = new Date(driverFromDB.release_date);
+          if (!isNaN(parsedDate.getTime())) {
+            releaseDate = parsedDate.toISOString().split('T')[0];
+          }
+        } catch (e) {
+          console.warn("Failed to parse release_date, using current date:", e);
+        }
+      }
+      
+      // Create a driver file entry from the download_url
+      const driverFile = {
+        name: driverFromDB.description || driverFromDB.name,
+        version: driverFromDB.version || "1.0",
+        date: releaseDate,
+        size: driverFromDB.size || "Unknown",
+        link: driverFromDB.download_url || ""
+      };
+      
+      setDriverFiles([driverFile]);
     } catch (error) {
       console.error("Error loading driver data:", error);
       toast.error("Failed to load driver data");
+      navigate("/admin");
     } finally {
       setIsLoading(false);
     }
@@ -161,54 +232,324 @@ const DriverEditor = () => {
 
   // Function to sync driver to Supabase app-specific table
   const syncDriverToSupabase = async (driver: Driver) => {
+    console.log("syncDriverToSupabase called with driver:", driver);
+    
     try {
       setStatusMessage(`Syncing driver "${driver.name}" to Supabase...`);
       
-      // Map the driver to the format needed for Supabase app-specific table
+      // Run schema fix to ensure required columns exist
+      try {
+        setStatusMessage(`Running schema fixes for database...`);
+        await fixDriversTableSchema();
+        await forceSchemaRefresh();
+        console.log("Schema fixes applied");
+      } catch (schemaError) {
+        console.warn("Schema fix error:", schemaError);
+      }
+      
+      // Ensure we have a valid image URL
+let imageUrl = '';
+
+if (driver.image_url && driver.image_url.trim() !== '') {
+  imageUrl = driver.image_url.trim();
+}
+
+console.log(`Setting driver image_url to: ${imageUrl}`);
+      
+      // Prepare release date
+      let releaseDate = new Date().toISOString();
+      try {
+        if (driver.drivers && driver.drivers[0] && driver.drivers[0].date) {
+          const date = new Date(driver.drivers[0].date);
+          if (!isNaN(date.getTime())) {
+            releaseDate = date.toISOString();
+          }
+        }
+      } catch (dateError) {
+        console.error("Error parsing date:", dateError);
+      }
+      
+      // Prepare driver data object for database
       const driverData = {
         name: driver.name,
+        manufacturer: driver.manufacturer || 'Unknown',
+        category: driver.category || 'laptops',
+        os_version: Array.isArray(driver.os) ? driver.os.join(', ') : 'windows11',
         version: driver.drivers && driver.drivers[0] ? driver.drivers[0].version : '1.0',
         description: driver.drivers && driver.drivers[0] ? driver.drivers[0].name : driver.name,
-        os_version: Array.isArray(driver.os) ? driver.os.join(', ') : 'windows11',
         download_url: driver.drivers && driver.drivers[0] ? driver.drivers[0].link : '#',
-        image_url: driver.image || '/placeholder-driver.png',
-        manufacturer: driver.manufacturer || 'Unknown',
         size: driver.drivers && driver.drivers[0] ? driver.drivers[0].size : 'Unknown',
-        category: driver.category || 'laptops'
+        image_url: imageUrl,
+        // Don't set image field directly since it might not exist in the schema
+        // We'll let the database fixers handle this
+        release_date: releaseDate
       };
       
-      // Check if driver already exists in Supabase
-      const { data: existingDrivers, error: fetchError } = await supabase
-        .from(APP_DRIVERS_TABLE)
-        .select('name')
-        .eq('name', driver.name);
-        
-      if (fetchError) throw fetchError;
+      console.log("OS version being set in driver data:", driverData.os_version);
       
-      if (existingDrivers && existingDrivers.length > 0) {
-        // Driver already exists, update it
-        const { error } = await supabase
-          .from(APP_DRIVERS_TABLE)
-          .update(driverData)
-          .eq('name', driver.name);
+      console.log("OS version being set in driver data:", driverData.os_version);
+      
+      console.log("Driver data to save with image_url:", imageUrl);
+      
+      // Try to run schema fixes first before saving
+      try {
+        await fixDriversTableSchema();
+        await forceSchemaRefresh();
+      } catch (schemaError) {
+        console.warn("Schema fix attempt failed:", schemaError);
+      }
+      
+      console.log("Driver data to save:", driverData);
+      
+      // Create function to get authorization headers from Supabase client
+      const getHeaders = () => {
+        const headers = new Headers();
+        headers.append('apikey', supabase.supabaseKey);
+        headers.append('Authorization', `Bearer ${supabase.supabaseKey}`);
+        headers.append('Content-Type', 'application/json');
+        headers.append('Prefer', 'return=representation');
+        return headers;
+      };
+      
+      // Get the base URL for REST API calls
+      const apiUrl = `${supabase.supabaseUrl}/rest/v1/${APP_DRIVERS_TABLE}`;
+      
+      // Check if the driver exists
+      let driverExists = false;
+      if (!isNew) {
+        try {
+          console.log("Checking if driver exists with ID:", driver.id);
+          const checkResponse = await fetch(`${apiUrl}?id=eq.${driver.id}&select=id`, {
+            method: 'GET',
+            headers: getHeaders()
+          });
           
-        if (error) throw error;
-        setStatusMessage(`Updated driver "${driver.name}" in Supabase`);
-        return { success: true, action: 'updated' };
+          const checkData = await checkResponse.json();
+          console.log("Check result:", checkData);
+          driverExists = checkData && checkData.length > 0;
+        } catch (checkError) {
+          console.error("Error checking if driver exists:", checkError);
+        }
+      }
+      
+      console.log(`Driver ${driverExists ? 'exists' : 'does not exist'} in database`);
+      
+      // Insert or update based on existence check
+      let result;
+      
+      if (!driverExists) {
+        // New driver - insert
+        setStatusMessage("Creating new driver in database...");
+        console.log("Inserting new driver record");
+        
+        try {
+          // First try using the Supabase client for insertion
+          const driverDataWithId = isNew ? driverData : { ...driverData, id: driver.id };
+          console.log("Inserting with Supabase client:", driverDataWithId);
+          
+          const { data: insertData, error: insertError } = await supabase
+            .from(APP_DRIVERS_TABLE)
+            .insert(driverDataWithId)
+            .select();
+            
+          if (insertError) {
+            console.error("Insert failed with Supabase client:", insertError);
+            
+            // Fallback to direct fetch API
+            console.log("Falling back to direct fetch API for insert");
+            const insertResponse = await fetch(apiUrl, {
+              method: 'POST',
+              headers: getHeaders(),
+              body: JSON.stringify({ 
+                ...driverData, 
+                id: isNew ? undefined : driver.id 
+              })
+            });
+            
+            if (!insertResponse.ok) {
+              const errorText = await insertResponse.text();
+              console.error("Insert failed with status:", insertResponse.status, errorText);
+              
+              // Try a simplified insert with required fields as fallback
+              console.log("Trying simplified insert as fallback");
+              const simplifiedData = {
+                id: isNew ? undefined : driver.id,
+                name: driver.name,
+                manufacturer: driver.manufacturer || 'Unknown',
+                category: driver.category || 'laptops',
+                os_version: Array.isArray(driver.os) ? driver.os.join(', ') : 'windows11', // Ensure proper OS formatting
+                version: driver.drivers && driver.drivers[0] ? driver.drivers[0].version : '1.0',
+                description: driver.drivers && driver.drivers[0] ? driver.drivers[0].name : driver.name,
+                download_url: driver.drivers && driver.drivers[0] ? driver.drivers[0].link : '#',
+                size: driver.drivers && driver.drivers[0] ? driver.drivers[0].size : 'Unknown',
+                image_url: imageUrl
+              };
+              
+              console.log("OS version being saved:", simplifiedData.os_version);
+              
+              console.log("Using simplified insert data with image_url:", imageUrl);
+              
+              const fallbackResponse = await fetch(apiUrl, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify(simplifiedData)
+              });
+              
+              if (!fallbackResponse.ok) {
+                throw new Error(`Fallback insert failed: ${await fallbackResponse.text()}`);
+              }
+              
+              const fallbackData = await fallbackResponse.json();
+              console.log("Fallback insert succeeded:", fallbackData);
+              
+              setStatusMessage(`Added basic driver info to database`);
+              return { success: true, action: 'inserted', data: fallbackData };
+            } else {
+              const fetchInsertData = await insertResponse.json();
+              console.log("Insert successful with fetch API:", fetchInsertData);
+              result = { data: fetchInsertData, error: null };
+              setStatusMessage(`Added driver "${driver.name}" to database`);
+              return { success: true, action: 'inserted', data: fetchInsertData };
+            }
+          } else {
+            console.log("Insert successful with Supabase client:", insertData);
+            result = { data: insertData, error: null };
+            setStatusMessage(`Added driver "${driver.name}" to database`);
+            return { success: true, action: 'inserted', data: insertData };
+          }
+        } catch (insertError) {
+          console.error("All insert attempts failed:", insertError);
+          throw insertError;
+        }
       } else {
-        // Driver doesn't exist, insert it
-        const { error } = await supabase
-          .from(APP_DRIVERS_TABLE)
-          .insert([driverData]);
+        // Existing driver - update
+        setStatusMessage("Updating existing driver...");
+        console.log("Updating driver with direct fetch API:", driver.id);
+        
+        try {
+          // First, try using the Supabase client for the update
+          const { data: updateData, error: updateError } = await supabase
+            .from(APP_DRIVERS_TABLE)
+            .update(driverData)
+            .eq('id', driver.id)
+            .select();
+            
+          if (updateError) {
+            console.error("Update failed with Supabase client:", updateError);
+            
+            // Fallback to direct fetch API if Supabase client fails
+            console.log("Falling back to direct fetch API for update");
+            const updateResponse = await fetch(`${apiUrl}?id=eq.${driver.id}`, {
+              method: 'PATCH',
+              headers: getHeaders(),
+              body: JSON.stringify(driverData)
+            });
+            
+            if (!updateResponse.ok) {
+              const errorText = await updateResponse.text();
+              console.error("Update failed with status:", updateResponse.status, errorText);
+              
+              // Try updating just the basic fields
+              console.log("Trying simplified update with basic fields");
+              const basicUpdateResponse = await fetch(`${apiUrl}?id=eq.${driver.id}`, {
+                method: 'PATCH',
+                headers: getHeaders(),
+                body: JSON.stringify({
+                  name: driver.name,
+                  manufacturer: driver.manufacturer || 'Unknown',
+                  version: driver.drivers && driver.drivers[0] ? driver.drivers[0].version : '1.0',
+                  description: driver.drivers && driver.drivers[0] ? driver.drivers[0].name : driver.name,
+                  download_url: driver.drivers && driver.drivers[0] ? driver.drivers[0].link : '#',
+                  size: driver.drivers && driver.drivers[0] ? driver.drivers[0].size : 'Unknown',
+                  image_url: imageUrl, // Only use image_url field, not image
+                  os_version: Array.isArray(driver.os) ? driver.os.join(', ') : 'windows11' // Ensure OS version is included
+                })
+              });
+              
+              console.log("Using basic update with image_url:", imageUrl);
+              
+              if (!basicUpdateResponse.ok) {
+                throw new Error(`Even basic update failed: ${await basicUpdateResponse.text()}`);
+              }
+              
+              console.log("Basic update succeeded");
+              result = { data: [{id: driver.id, ...driverData}], error: null };
+            } else {
+              const fetchUpdateData = await updateResponse.json();
+              console.log("Update successful with fetch API:", fetchUpdateData);
+              result = { data: fetchUpdateData, error: null };
+            }
+          } else {
+            console.log("Update successful with Supabase client:", updateData);
+            result = { data: updateData, error: null };
+          }
           
-        if (error) throw error;
-        setStatusMessage(`Added driver "${driver.name}" to Supabase`);
-        return { success: true, action: 'inserted' };
+          setStatusMessage(`Updated driver "${driver.name}" in database`);
+          return { success: true, action: 'updated', data: result.data };
+          
+        } catch (updateError) {
+          console.error("Error during update:", updateError);
+          throw updateError;
+        }
       }
     } catch (error) {
       console.error('Error syncing driver to Supabase:', error);
       setStatusMessage(`Error syncing driver "${driver.name}": ${error.message || 'Unknown error'}`);
+      
+      // Always update localStorage even if database sync fails
+      try {
+        const storedDrivers = localStorage.getItem('drivers') || '[]';
+        const drivers = JSON.parse(storedDrivers);
+        
+        // Make sure the driver exists in local storage
+        const existingIndex = drivers.findIndex((d: Driver) => d.id === driver.id);
+        if (existingIndex >= 0) {
+          drivers[existingIndex] = driver;
+        } else {
+          drivers.push(driver);
+        }
+        
+        localStorage.setItem('drivers', JSON.stringify(drivers));
+        console.log("Driver saved to localStorage as fallback");
+      } catch (localError) {
+        console.error("Error saving to localStorage:", localError);
+      }
+      
       return { success: false, error };
+    }
+  };
+
+  const handleSaveDriverClick = async () => {
+    try {
+      console.log("Starting driver save process...");
+      console.log("Driver data before save:", {
+        name: driverName,
+        manufacturer: driverManufacturer,
+        category: driverCategory,
+        os: driverOs,
+		image_url: driverImage.trim(),
+        files: driverFiles
+      });
+      
+      const result = await handleSaveDriver();
+      console.log("handleSaveDriver result:", result);
+      
+      if (result && result.success) {
+        toast.success(`Driver ${result.action === 'inserted' ? 'created' : 'updated'} successfully!`);
+      } else {
+        toast.error("Failed to save driver");
+      }
+      
+      // Reset status after short delay
+      setTimeout(() => {
+        setStatusMessage("");
+        setIsSaving(false);
+      }, 3000);
+    } catch (error) {
+      console.error("Error saving driver:", error);
+      setStatusMessage(`Error: ${error.message || 'Unknown error'}`);
+      setIsSaving(false);
+      toast.error(`Error: ${error.message || 'Unknown error'}`);
     }
   };
 
@@ -216,70 +557,114 @@ const DriverEditor = () => {
     // Basic validation
     if (!driverName.trim()) {
       toast.error("Driver name is required");
-      return;
+      return { success: false, error: "Driver name is required" };
     }
     
     if (!driverManufacturer.trim()) {
       toast.error("Manufacturer is required");
-      return;
+      return { success: false, error: "Manufacturer is required" };
     }
 
     if (driverOs.length === 0) {
       toast.error("Please select at least one operating system");
-      return;
+      return { success: false, error: "No operating system selected" };
     }
 
     // Validate driver files
     const invalidFile = driverFiles.findIndex(file => !file.name.trim() || !file.version.trim() || !file.link.trim() || !file.size.trim());
     if (invalidFile !== -1) {
       toast.error(`Driver file #${invalidFile + 1} is missing required information`);
-      return;
+      return { success: false, error: "Driver file missing information" };
     }
 
     setIsSaving(true);
+    
+    try {
+      // Fix database schema before proceeding
+      setStatusMessage("Fixing database schema to ensure release_date column exists...");
+      
+      // Apply both schema fixes
+      const fixResult = await fixDriversTableSchema();
+      const schemaRefreshResult = await forceSchemaRefresh();
+      
+      if (!fixResult.success) {
+        console.warn("Schema fix attempted but may have had issues:", fixResult.error);
+        setStatusMessage("Schema fix attempted. Continuing with save operation...");
+      } else {
+        setStatusMessage("Database schema fixed. Continuing with save operation...");
+      }
+    } catch (schemaError) {
+      console.warn("Error during schema fix:", schemaError);
+      setStatusMessage("Schema fix encountered an error. Will attempt to continue anyway...");
+    }
 
     try {
+      // Generate ID for new driver or use existing one
+      const driverId = isNew ? uuidv4() : id as string;
+      console.log("Driver ID for save operation:", driverId);
+      
+      // Create the driver object that will be saved both locally and to Supabase
+const newDriver = {
+  id: driverId,
+  name: driverName,
+  category: driverCategory,
+  manufacturer: driverManufacturer,
+  image_url: driverImage.trim(), // ✅ correct field
+  os: driverOs,
+  drivers: driverFiles
+}; 
+      console.log("Full driver object to be saved:", newDriver);
+      
+      // First sync to Supabase - do this before local storage to ensure database consistency
+      setStatusMessage("Syncing to Supabase database...");
+      const result = await syncDriverToSupabase(newDriver);
+      
+      if (!result.success) {
+        throw new Error(`Failed to sync with Supabase: ${result.error?.message || 'Unknown error'}`);
+      }
+      
+      console.log("Supabase sync result:", result);
+      
+      // Update the image URL if it was returned from Supabase
+      if (result.data && result.data[0] && result.data[0].image) {
+        newDriver.image = result.data[0].image;
+      }
+      
+      // Now update localStorage as a backup
       const storedDrivers = localStorage.getItem('drivers') || '[]';
       const drivers = JSON.parse(storedDrivers);
       
-      // Generate ID for new driver or use existing one
-      const driverId = isNew ? uuidv4() : id as string;
-      
-      const newDriver: Driver = {
-        id: driverId,
-        name: driverName,
-        category: driverCategory,
-        manufacturer: driverManufacturer,
-        image: driverImage,
-        os: driverOs,
-        drivers: driverFiles
-      };
-      
       let updatedDrivers;
       if (isNew) {
+        // For new drivers, add to the array
         updatedDrivers = [...drivers, newDriver];
       } else {
-        updatedDrivers = drivers.map((driver: Driver) => 
-          driver.id === id ? newDriver : driver
-        );
+        // For existing drivers, update or add if not found
+        const existingIndex = drivers.findIndex((driver: Driver) => driver.id === driverId);
+        
+        if (existingIndex >= 0) {
+          // Update existing driver
+          updatedDrivers = [...drivers];
+          updatedDrivers[existingIndex] = newDriver;
+        } else {
+          // Driver not found in local storage (might exist only in database)
+          updatedDrivers = [...drivers, newDriver];
+        }
       }
       
-      // Save to localStorage
       localStorage.setItem('drivers', JSON.stringify(updatedDrivers));
       
-      // Sync to Supabase
-      setStatusMessage("Syncing to Supabase...");
-      const result = await syncDriverToSupabase(newDriver);
+      // Show success message and redirect
+      toast.success(`Driver ${isNew ? "created" : "updated"} successfully and synced to database!`);
       
-      if (result.success) {
-        toast.success(`Driver ${isNew ? "created" : "updated"} successfully and synced to Supabase!`);
-        navigate("/admin");
-      } else {
-        toast.error(`Driver saved locally but failed to sync to Supabase: ${result.error?.message}`);
-      }
+      // Give time for toast to be visible before navigating
+      setTimeout(() => {
+        navigate("/admin"); // Redirect to admin dashboard to see the changes
+      }, 1000);
+      
     } catch (error) {
       console.error("Error saving driver:", error);
-      toast.error("Failed to save driver");
+      toast.error(`Failed to save driver: ${error.message || 'Unknown error'}`);
     } finally {
       setIsSaving(false);
     }
@@ -312,7 +697,7 @@ const DriverEditor = () => {
             Cancel
           </Button>
           <Button 
-            onClick={handleSaveDriver} 
+            onClick={handleSaveDriverClick} 
             disabled={isSaving}
             className="flex items-center gap-1"
           >
@@ -382,12 +767,14 @@ const DriverEditor = () => {
               
               <div>
                 <Label htmlFor="image">Image URL</Label>
-                <Input 
-                  id="image" 
-                  placeholder="https://example.com/driver-image.jpg" 
-                  value={driverImage}
-                  onChange={(e) => setDriverImage(e.target.value)}
-                />
+                <Label htmlFor="image">Image URL</Label>
+<Input
+  id="image"
+  type="text"
+  value={driverImage}
+  onChange={(e) => setDriverImage(e.target.value)}
+  placeholder="https://example.com/image.jpg"
+/>
               </div>
               
               <div>

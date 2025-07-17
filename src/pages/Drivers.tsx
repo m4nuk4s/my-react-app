@@ -33,7 +33,7 @@ interface Driver {
   manufacturer: string;
   size: string;
   category: string;
-  drivers?: any[];
+  drivers?: DriverFile[];
   release_date?: string;
   created?: string;
 }
@@ -76,10 +76,65 @@ export function Drivers() {
         }
 
         const driversData: Driver[] = dbDrivers.map(driver => {
-          const files = dbFiles?.filter(file => file.driver_id === driver.id) || [];
+          // Create file entries from download_url
+          const files: DriverFile[] = [];
+          
+          if (driver.download_url && driver.download_url !== '#') {
+            files.push({
+              id: `file-${driver.id}`,
+              driver_id: driver.id,
+              name: driver.description || driver.name,
+              url: driver.download_url,
+              size: driver.size || 'Unknown',
+              type: 'driver'
+            });
+          }
+          
+          // Ensure we have a valid image URL with absolute path
+          let imageUrl = '/placeholder-driver.png';
+          
+          // Process image URL with thorough validation
+          if (driver.image_url && 
+              driver.image_url !== 'null' && 
+              driver.image_url !== 'undefined' && 
+              driver.image_url.trim() !== '') {
+            
+            // If it's a relative URL, make it absolute
+            if (driver.image_url.startsWith('/')) {
+              const baseUrl = window.location.origin;
+              imageUrl = `${baseUrl}${driver.image_url}`;
+            } else if (driver.image_url.startsWith('http')) {
+              // It's already absolute
+              imageUrl = driver.image_url;
+            } else {
+              // Add leading slash if missing
+              const baseUrl = window.location.origin;
+              imageUrl = `${baseUrl}/${driver.image_url}`;
+            }
+          } 
+          // Try image field as fallback
+          else if (driver.image && 
+                  driver.image !== 'null' && 
+                  driver.image !== 'undefined' && 
+                  driver.image.trim() !== '') {
+            
+            // Same processing for image field
+            if (driver.image.startsWith('/')) {
+              const baseUrl = window.location.origin;
+              imageUrl = `${baseUrl}${driver.image}`;
+            } else if (driver.image.startsWith('http')) {
+              imageUrl = driver.image;
+            } else {
+              const baseUrl = window.location.origin;
+              imageUrl = `${baseUrl}/${driver.image}`;
+            }
+          }
+          
+          console.log(`Driver ${driver.id}: Using image URL:`, imageUrl);
+          
           return {
             ...driver,
-            image_url: driver.image_url || driver.image || '/placeholder-driver.png',
+            image_url: imageUrl,
             os_version: driver.os_version || driver.os || 'Unknown',
             size: driver.size || driver.total_size || 'Unknown',
             release_date: driver.release_date || driver.date || driver.created || 'Unknown',
@@ -164,18 +219,24 @@ export function Drivers() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
                 {filteredDrivers.map((driver) => (
                   <Card key={driver.id} className="overflow-hidden flex flex-col">
-                    {driver.image_url && (
-                      <div className="overflow-hidden bg-whit-100-100 dark:bg-blue-800">
+                    <div className="overflow-hidden bg-white dark:bg-blue-800" style={{ minHeight: "120px" }}>
+                      {driver.image_url ? (
                         <img
                           src={driver.image_url}
                           alt={driver.name}
                           className="w-full h-auto object-contain max-h-48"
                           onError={(e) => {
+                            console.error("Image failed to load:", driver.image_url);
                             (e.target as HTMLImageElement).src = '/placeholder-driver.png';
+                            console.log("Fallback image applied");
                           }}
                         />
-                      </div>
-                    )}
+                      ) : (
+                        <div className="flex items-center justify-center h-full">
+                          <span className="text-muted-foreground">No Image Available</span>
+                        </div>
+                      )}
+                    </div>
                     <CardHeader>
                       <div className="flex justify-between items-start">
                         <CardTitle className="text-xl font-bold">{driver.name}</CardTitle>
