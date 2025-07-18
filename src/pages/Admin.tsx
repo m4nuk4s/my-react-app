@@ -181,15 +181,26 @@ const loadDrivers = async () => {
     }
     
     // Fetch all drivers from Supabase
-    const { data, error } = await supabase
+    const { data: dbDrivers, error: driversError } = await supabase
       .from('app_8e3e8a4d8d0e442280110fd6f6c2cd95_drivers')
       .select('*')
       .order('name', { ascending: true });
 
-    if (error) throw error;
+    if (driversError) throw driversError;
+
+    // Fetch additional driver files from the down1 table
+    const { data: down1Files, error: down1Error } = await supabase
+      .from('down1')
+      .select('*');
+
+    if (down1Error) {
+      console.warn('Could not fetch additional driver files from down1 table:', down1Error);
+    } else {
+      console.log('Additional driver files from down1 table:', down1Files);
+    }
 
     // Process and transform the driver data to match the format needed for display
-    const processedDrivers = data.map(driver => {
+    const processedDrivers = dbDrivers.map(driver => {
       // Create a file entry from the download_url
       const driverFile = {
         name: driver.description || driver.name,
@@ -200,12 +211,38 @@ const loadDrivers = async () => {
       };
 
       // Use image column as image_url - handle both fields for backward compatibility
-     const imageUrl = driver.image_url || '/placeholder-driver.png';
+      const imageUrl = driver.image_url || driver.image || '/placeholder-driver.png';
       
       // Parse OS versions from comma-separated string
       const osVersions = driver.os_version 
         ? driver.os_version.split(',').map(os => os.trim().toLowerCase()) 
         : ["windows11"];
+      
+      // Create driver files array starting with the main driver file
+      const files = [driverFile];
+      
+      // Add additional files from down1 table
+      if (down1Files && down1Files.length > 0) {
+        // Find files that match this driver by name
+        const additionalFiles = down1Files.filter(file => 
+          file.model && file.model.toLowerCase() === driver.name.toLowerCase()
+        );
+        
+        if (additionalFiles.length > 0) {
+          console.log(`Found ${additionalFiles.length} additional files for ${driver.name}`);
+          
+          // Add each additional file to the files array
+          additionalFiles.forEach(file => {
+            files.push({
+              name: file.file_name || 'Additional Driver File',
+              version: file.version || '1.0',
+              date: file.release_date || new Date().toISOString().split('T')[0],
+              size: file.file_size || 'Unknown',
+              link: file.download_link || '#'
+            });
+          });
+        }
+      }
       
       // Return the formatted driver object - only storing the URL, not full image data
       return {
@@ -218,9 +255,10 @@ const loadDrivers = async () => {
         image_url: imageUrl, // Keep for backward compatibility
         os: osVersions,
         os_version: driver.os_version,
-        drivers: [driverFile],
+        drivers: files,
         size: driver.size,
-        release_date: driver.release_date
+        release_date: driver.release_date,
+        description: driver.description
       };
     });
     
@@ -618,70 +656,76 @@ const loadDrivers = async () => {
                       driver.manufacturer.toLowerCase().includes(searchTerm.toLowerCase())
                     )
                     .map((driver) => (
-                      <Card key={driver.id} className="overflow-hidden">
-                        <div className="aspect-video bg-muted relative">
-                          {driver.image ? (
-                            <img 
-                              src={driver.image} 
-                              alt={driver.name} 
-                              className="w-full h-full object-cover"
+                      <Card key={driver.id} className="overflow-hidden flex flex-col">
+                        <div className="overflow-hidden bg-white dark:bg-blue-800" style={{ minHeight: "120px" }}>
+                          {driver.image || driver.image_url ? (
+                            <img
+                              src={driver.image || driver.image_url}
+                              alt={driver.name}
+                              className="w-full h-auto object-contain max-h-48"
                               onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = '/placeholder-driver.png';
+                                console.error("Image failed to load:", driver.image || driver.image_url);
+                                (e.target as HTMLImageElement).src = '/placeholder-driver.png';
+                                console.log("Fallback image applied");
                               }}
                             />
                           ) : (
-                            <div className="flex items-center justify-center w-full h-full text-muted-foreground">
-                              No Image
+                            <div className="flex items-center justify-center h-full">
+                              <span className="text-muted-foreground">No Image Available</span>
                             </div>
                           )}
                         </div>
                         <CardHeader>
                           <div className="flex justify-between items-start">
-                            <CardTitle className="text-lg">{driver.name}</CardTitle>
+                            <CardTitle className="text-xl font-bold">{driver.name}</CardTitle>
                             {driver.version && (
-                              <Badge variant="outline" className="text-sm font-semibold">v{driver.version}</Badge>
+                              <Badge variant="outline" className="text-sm font-semibold">Version {driver.version}</Badge>
                             )}
                           </div>
                           <CardDescription>
                             {driver.manufacturer} • {driver.category}
                           </CardDescription>
                         </CardHeader>
-                        <CardContent>
-                          <div className="flex flex-wrap gap-2 mb-4">
-                            {driver.os && driver.os.map(os => (
-                              <Badge key={os} variant="outline">
-                                {os === "windows10" ? "Windows 10" : "Windows 11"}
-                              </Badge>
-                            ))}
-                            {driver.os_version && !driver.os && (
-                              <Badge variant="outline">
-                                {driver.os_version}
-                              </Badge>
-                            )}
-                          </div>
-                          
-                          {/* File download info preview */}
-                          {driver.drivers && driver.drivers.length > 0 && (
-                            <div className="mb-3 text-sm">
-                              <p className="text-muted-foreground">
-                                {driver.drivers.length} file{driver.drivers.length > 1 ? 's' : ''} available
+                        <CardContent className="flex-grow">
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2 font-medium">
+                            {driver.drivers && driver.drivers[0] && driver.drivers[0].name ? driver.drivers[0].name : driver.description}
+                          </p>
+                          <div className="grid grid-cols-2 gap-4 text-sm mt-4">
+                            <div>
+                              <Label className="text-xs text-gray-500 dark:text-gray-400">Operating System</Label>
+                              <p className="mt-1">
+                                {driver.os && driver.os.map(os => (
+                                  <Badge key={os} variant="subtle" className="text-xs bg-blue-500 hover:bg-blue-600 text-white mr-1">
+                                    <strong>{os === "windows10" ? "Windows 10" : "Windows 11"}</strong>
+                                  </Badge>
+                                ))}
+                                {driver.os_version && !driver.os && (
+                                  <Badge variant="subtle" className="text-xs bg-blue-500 hover:bg-blue-600 text-white">
+                                    <strong>{driver.os_version}</strong>
+                                  </Badge>
+                                )}
                               </p>
                             </div>
-                          )}
-                          
-                          <div className="flex justify-end gap-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => handleEditDriver(driver.id)}
-                            >
-                              <Edit className="h-4 w-4 mr-1" /> Edit
-                            </Button>
-                            <Button 
-                              variant="destructive" 
-                              size="sm"
-                              onClick={async () => {
+                            <div>
+                              <Label className="text-xs text-gray-500 dark:text-gray-400"></Label>
+                              {driver.drivers && driver.drivers.length > 0 && (
+                                <p className="font-semibold mt-1">Available Files</p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="mt-4 space-y-2">
+                            <div className="flex justify-end gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => handleEditDriver(driver.id)}
+                              >
+                                <Edit className="h-4 w-4 mr-1" /> Edit
+                              </Button>
+                              <Button 
+                                variant="destructive" 
+                                size="sm"
+                                onClick={async () => {
   if (window.confirm(`Are you sure you want to delete "${driver.name}"?`)) {
     try {
       // Remove from localStorage first
@@ -690,7 +734,20 @@ const loadDrivers = async () => {
       const updatedDrivers = currentDrivers.filter(d => d.id !== driver.id);
       localStorage.setItem('drivers', JSON.stringify(updatedDrivers));
 
-      // Delete from Supabase
+      // Delete related entries from down1 table first
+      const { error: down1Error } = await supabase
+        .from('down1')
+        .delete()
+        .eq('model', driver.name);
+
+      if (down1Error) {
+        console.warn("Warning: Failed to delete related files from down1 table:", down1Error);
+        // Continue with main driver deletion even if down1 deletion fails
+      } else {
+        console.log(`Successfully deleted related files for driver ${driver.name} from down1 table`);
+      }
+
+      // Delete from Supabase driver table
       const { data, error } = await supabase
         .from('app_8e3e8a4d8d0e442280110fd6f6c2cd95_drivers')
         .delete()
@@ -701,7 +758,7 @@ const loadDrivers = async () => {
         toast.error("Failed to delete from database.");
       } else {
         console.log("Deleted from Supabase:", data);
-        toast.success("Driver deleted successfully.");
+        toast.success("Driver and associated files deleted successfully.");
         setDrivers(updatedDrivers);
       }
     } catch (err) {
@@ -710,9 +767,10 @@ const loadDrivers = async () => {
     }
   }
 }}
-                            >
-                              <Trash2 className="h-4 w-4 mr-1" /> Delete
-                            </Button>
+                              >
+                                <Trash2 className="h-4 w-4 mr-1" /> Delete
+                              </Button>
+                            </div>
                           </div>
                         </CardContent>
                       </Card>

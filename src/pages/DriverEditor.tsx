@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { Plus, X, ArrowLeft, HardDrive, Save, Trash2 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { forceSchemaRefresh } from "../lib/schemaFix";
-import { fixDriversTableSchema } from "../lib/databaseFixes";
+import { fixDriversTableSchema, fixDown1TableSchema } from "../lib/databaseFixes";
 import { v4 as uuidv4 } from 'uuid';
 
 type DriverFile = {
@@ -145,13 +145,13 @@ const DriverEditor = () => {
       console.log("Driver data from DB:", driverFromDB);
       
       // Use image field or image_url as the image URL with validation
-let imageUrl = "";
-if (driverFromDB.image_url && driverFromDB.image_url.trim() !== '') {
-  imageUrl = driverFromDB.image_url.trim();
-} else if (driverFromDB.image && driverFromDB.image.trim() !== '') {
-  imageUrl = driverFromDB.image.trim();
-}
-setDriverImage(imageUrl);
+      let imageUrl = "";
+      if (driverFromDB.image_url && driverFromDB.image_url.trim() !== '') {
+        imageUrl = driverFromDB.image_url.trim();
+      } else if (driverFromDB.image && driverFromDB.image.trim() !== '') {
+        imageUrl = driverFromDB.image.trim();
+      }
+      setDriverImage(imageUrl);
       console.log("Final image URL set to:", imageUrl);
       
       // Handle OS version - split the string if it contains commas
@@ -183,13 +183,52 @@ setDriverImage(imageUrl);
         link: driverFromDB.download_url || ""
       };
       
-      setDriverFiles([driverFile]);
+      // Start with the main driver file
+      const driverFiles = [driverFile];
+      
+      // Fetch additional driver files from the down1 table
+      try {
+        setStatusMessage("Loading additional driver files from down1 table...");
+        
+        const { data: down1Files, error: down1Error } = await supabase
+          .from('down1')
+          .select('*')
+          .eq('model', driverFromDB.name); // Match by driver name
+        
+        if (down1Error) {
+          console.warn("Could not fetch additional driver files:", down1Error);
+        } else if (down1Files && down1Files.length > 0) {
+          console.log(`Found ${down1Files.length} additional files for ${driverFromDB.name}:`, down1Files);
+          
+          // Add each additional file
+          down1Files.forEach(file => {
+            driverFiles.push({
+              name: file.file_name || 'Additional Driver File',
+              version: file.version || '1.0',
+              date: file.release_date || new Date().toISOString().split('T')[0],
+              size: file.file_size || 'Unknown',
+              link: file.download_link || '#'
+            });
+          });
+          
+          setStatusMessage(`Loaded driver with ${driverFiles.length - 1} additional files`);
+        } else {
+          console.log("No additional files found in down1 table for this driver");
+        }
+      } catch (downError) {
+        console.error("Error fetching down1 files:", downError);
+      }
+      
+      // Set all the driver files (main + additional)
+      setDriverFiles(driverFiles);
+      
     } catch (error) {
       console.error("Error loading driver data:", error);
       toast.error("Failed to load driver data");
       navigate("/admin");
     } finally {
       setIsLoading(false);
+      setStatusMessage("");
     }
   };
 
@@ -241,6 +280,7 @@ setDriverImage(imageUrl);
       try {
         setStatusMessage(`Running schema fixes for database...`);
         await fixDriversTableSchema();
+        await fixDown1TableSchema(); // Add this to fix down1 table schema
         await forceSchemaRefresh();
         console.log("Schema fixes applied");
       } catch (schemaError) {
@@ -313,6 +353,7 @@ console.log(`Setting driver image_url to: ${imageUrl}`);
       
       // Get the base URL for REST API calls
       const apiUrl = `${supabase.supabaseUrl}/rest/v1/${APP_DRIVERS_TABLE}`;
+      const down1ApiUrl = `${supabase.supabaseUrl}/rest/v1/down1`;
       
       // Check if the driver exists
       let driverExists = false;
@@ -336,6 +377,7 @@ console.log(`Setting driver image_url to: ${imageUrl}`);
       
       // Insert or update based on existence check
       let result;
+      let driverRecordId;
       
       if (!driverExists) {
         // New driver - insert
@@ -402,20 +444,21 @@ console.log(`Setting driver image_url to: ${imageUrl}`);
               const fallbackData = await fallbackResponse.json();
               console.log("Fallback insert succeeded:", fallbackData);
               
+              driverRecordId = fallbackData[0]?.id || driver.id;
+              result = { data: fallbackData, error: null };
               setStatusMessage(`Added basic driver info to database`);
-              return { success: true, action: 'inserted', data: fallbackData };
             } else {
               const fetchInsertData = await insertResponse.json();
               console.log("Insert successful with fetch API:", fetchInsertData);
+              driverRecordId = fetchInsertData[0]?.id || driver.id;
               result = { data: fetchInsertData, error: null };
               setStatusMessage(`Added driver "${driver.name}" to database`);
-              return { success: true, action: 'inserted', data: fetchInsertData };
             }
           } else {
             console.log("Insert successful with Supabase client:", insertData);
+            driverRecordId = insertData[0]?.id || driver.id;
             result = { data: insertData, error: null };
             setStatusMessage(`Added driver "${driver.name}" to database`);
-            return { success: true, action: 'inserted', data: insertData };
           }
         } catch (insertError) {
           console.error("All insert attempts failed:", insertError);
@@ -425,6 +468,7 @@ console.log(`Setting driver image_url to: ${imageUrl}`);
         // Existing driver - update
         setStatusMessage("Updating existing driver...");
         console.log("Updating driver with direct fetch API:", driver.id);
+        driverRecordId = driver.id;
         
         try {
           // First, try using the Supabase client for the update
@@ -483,15 +527,171 @@ console.log(`Setting driver image_url to: ${imageUrl}`);
             console.log("Update successful with Supabase client:", updateData);
             result = { data: updateData, error: null };
           }
-          
-          setStatusMessage(`Updated driver "${driver.name}" in database`);
-          return { success: true, action: 'updated', data: result.data };
-          
         } catch (updateError) {
           console.error("Error during update:", updateError);
           throw updateError;
         }
       }
+      
+      // DO NOT save file 1 to down1 table, ONLY save additional files (file 2, file 3, etc.)
+      console.log("Processing driver files:", driver.drivers?.length || 0, "files found");
+      
+      // Explicitly mark the first file as the main driver file (should NEVER be saved to down1)
+      if (driver.drivers && driver.drivers.length > 0) {
+        driver.drivers[0] = { ...driver.drivers[0], _isMainDriverFile: true };
+        console.log("Marked first file as main driver file (will NOT be saved to down1)");
+      }
+      
+      // Only proceed if there are more than 1 file (to skip file 1)
+      if (driver.drivers && driver.drivers.length > 1) { 
+        try {
+          // Get only additional files (file 2, file 3, etc.) - skip the first file
+          // Also filter out any empty files (those with no name or download link)
+          const additionalFiles = driver.drivers.slice(1).filter(file => 
+            (file.name && file.name.trim() !== '') && 
+            (file.link && file.link.trim() !== '' && file.link !== '#')
+          ).map((file, idx) => {
+            // Mark these as additional files (not the main driver file)
+            return { ...file, _isAdditionalFile: true, _additionalFileIndex: idx + 1 };
+          });
+          
+          console.log(`Found ${additionalFiles.length} valid additional files to save to down1 table`);
+          
+          // Double check we don't have any main files in additionalFiles
+          const safeAdditionalFiles = additionalFiles.filter(file => !file._isMainDriverFile);
+          
+          // Only proceed if there are valid additional files
+          if (safeAdditionalFiles.length > 0) {
+            // Import the helper function for saving files to down1 table
+            const { saveDriverFilesToDown1Table } = await import('../lib/fixDriver.js');
+            
+            console.log("DEBUG: About to call saveDriverFilesToDown1Table with:", { 
+              driverName: driver.name,
+              driverFiles: safeAdditionalFiles // Only the valid additional files, not the main one
+            });
+            
+            // Force clear any cached data in Supabase
+            try {
+              await supabase.rpc('execute_sql', { 
+                sql_query: 'SELECT 1' 
+              });
+            } catch (e) {
+              console.log("DEBUG: Cache clear ping:", e);
+            }
+            
+            // Use the helper function to handle all the saving logic - always use driver.name as model
+            const saveResult = await saveDriverFilesToDown1Table(driver.name, safeAdditionalFiles, setStatusMessage);
+            
+            if (saveResult.success) {
+              console.log(`Successfully saved ${saveResult.savedCount} of ${saveResult.totalFiles} additional driver files to down1 table`);
+            } else {
+              console.error("Error in saveDriverFilesToDown1Table:", saveResult.error);
+            }
+          } else {
+            console.log("No valid additional files to save to down1 table");
+            // Delete existing files since we have no valid files to save
+            try {
+              const { error: deleteError } = await supabase
+                .from('down1')
+                .delete()
+                .eq('model', driver.name);
+                
+              if (deleteError) {
+                console.warn("Error deleting existing down1 records:", deleteError);
+              } else {
+                console.log("Successfully cleared down1 table for this driver");
+              }
+            } catch (error) {
+              console.warn("Error during down1 cleanup:", error);
+            }
+          }
+        } catch (filesError) {
+          console.error("Error importing or running saveDriverFilesToDown1Table:", filesError);
+          setStatusMessage(`Error saving additional driver files: ${filesError.message || 'Unknown error'}`);
+          
+          // Fallback to original method if the helper function fails
+          try {
+            setStatusMessage("Falling back to direct method for saving files...");
+            await fixDown1TableSchema(); // Ensure table exists
+            
+            // Delete existing files first
+            try {
+              const { error: deleteError } = await supabase
+                .from('down1')
+                .delete()
+                .eq('model', driver.name);
+                
+              if (deleteError) {
+                console.warn("Fallback: Error deleting existing down1 records:", deleteError);
+              }
+            } catch (error) {
+              console.warn("Fallback: Error during down1 cleanup:", error);
+            }
+            
+            // CRITICAL: Insert ONLY valid additional files (skip the first one), always using driver.name as model
+            console.log("FALLBACK: Using direct insertion method, skipping file 1");
+            let successCount = 0;
+            // Start from index 1 to skip the first file (NEVER save file 1)
+            for (let i = 1; i < driver.drivers.length; i++) {
+              const file = driver.drivers[i];
+              
+              // Skip empty files
+              if (!file.name || file.name.trim() === '' || !file.link || file.link.trim() === '' || file.link === '#') {
+                console.log(`Skipping empty file at index ${i}`);
+                continue;
+              }
+              
+              try {
+                const { error } = await supabase
+                  .from('down1')
+                  .insert({
+                    file_name: file.name,
+                    version: file.version || "1.0",
+                    release_date: file.date || new Date().toISOString().split('T')[0],
+                    file_size: file.size || "Unknown",
+                    download_link: file.link,
+                    model: driver.name // Always use driver.name as model to relate files to driver
+                  });
+                
+                if (!error) {
+                  successCount++;
+                  console.log(`Successfully saved file ${i} (${file.name}) to down1 table`);
+                }
+              } catch (e) {
+                console.error(`Fallback: Error saving additional file ${i}:`, e);
+              }
+            }
+            
+            const validFileCount = driver.drivers.slice(1).filter(f => 
+              f.name && f.name.trim() !== '' && f.link && f.link.trim() !== '' && f.link !== '#'
+            ).length;
+            
+            setStatusMessage(`Fallback method: Saved ${successCount} of ${validFileCount} additional files to down1 table`);
+          } catch (fallbackError) {
+            console.error("Even fallback method failed:", fallbackError);
+          }
+        }
+      } else {
+        console.log("No additional files to save (only main file exists)");
+        
+        // Delete any existing files in down1 table for this driver
+        try {
+          const { error: deleteError } = await supabase
+            .from('down1')
+            .delete()
+            .eq('model', driver.name);
+            
+          if (deleteError) {
+            console.warn("Error deleting existing down1 records:", deleteError);
+          } else {
+            console.log("Successfully cleared down1 table for this driver");
+          }
+        } catch (error) {
+          console.warn("Error during down1 cleanup:", error);
+        }
+      }
+      
+      return { success: true, action: driverExists ? 'updated' : 'inserted', data: result.data };
     } catch (error) {
       console.error('Error syncing driver to Supabase:', error);
       setStatusMessage(`Error syncing driver "${driver.name}": ${error.message || 'Unknown error'}`);

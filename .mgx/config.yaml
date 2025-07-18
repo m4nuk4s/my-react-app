@@ -1,4 +1,4 @@
-build: pnpm run build
+build: npm run build
 build_path: dist
-dev: pnpm run dev
-install: pnpm install
+dev: npm run dev
+install: npm install

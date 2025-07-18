@@ -102,6 +102,62 @@ export async function fixDriversTableSchema() {
 }
 
 /**
+ * Creates or fixes the down1 table schema for additional driver files
+ */
+export async function fixDown1TableSchema() {
+  console.log("Running down1 table schema fix...");
+  
+  try {
+    // Create down1 table if it doesn't exist
+    const { error: tableError } = await supabase.rpc(
+      'execute_sql',
+      { 
+        sql_query: `
+          -- Create down1 table if it doesn't exist
+          DO $$
+          BEGIN
+            IF NOT EXISTS (
+              SELECT FROM information_schema.tables 
+              WHERE table_name = 'down1'
+            ) THEN
+              -- Create the down1 table for additional driver files
+              CREATE TABLE down1 (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                file_name TEXT NOT NULL,
+                version TEXT NOT NULL,
+                release_date TEXT,
+                file_size TEXT,
+                download_link TEXT NOT NULL,
+                model TEXT NOT NULL,
+                created_at TIMESTAMPTZ DEFAULT NOW(),
+                updated_at TIMESTAMPTZ DEFAULT NOW()
+              );
+              
+              -- Add comments to force schema refresh
+              COMMENT ON TABLE down1 IS 'Additional driver files for download';
+              COMMENT ON COLUMN down1.model IS 'Driver Name linked to app_8e3e8a4d8d0e442280110fd6f6c2cd95_drivers';
+            END IF;
+          END
+          $$;
+        `
+      }
+    );
+
+    if (tableError) {
+      console.error("Error creating down1 table:", tableError);
+      return { success: false, error: tableError };
+    }
+
+    console.log("Successfully created/fixed down1 table schema");
+    return { success: true };
+    
+  } catch (error) {
+    console.error("Unexpected error fixing down1 table schema:", error);
+    return { success: false, error };
+  }
+}
+
+/**
  * Fix all known database issues
  */
 export async function fixAllDatabaseIssues() {
@@ -110,10 +166,14 @@ export async function fixAllDatabaseIssues() {
   // Fix drivers table schema
   const driversFix = await fixDriversTableSchema();
   
+  // Fix down1 table schema
+  const down1Fix = await fixDown1TableSchema();
+  
   return {
-    success: driversFix.success,
+    success: driversFix.success && down1Fix.success,
     fixes: {
-      drivers: driversFix
+      drivers: driversFix,
+      down1: down1Fix
     }
   };
 }

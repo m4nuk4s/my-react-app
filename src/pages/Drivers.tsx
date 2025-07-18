@@ -9,7 +9,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Badge } from '../components/ui/badge';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
+import { ChevronDown, ChevronRight, Download, Package } from 'lucide-react';
 import Panel from "@/assets/wtpth/panel.jpg";
+
+// Import Accordion components
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface DriverFile {
   id: string;
@@ -18,6 +27,8 @@ interface DriverFile {
   url: string;
   size: string;
   type: string;
+  version?: string;
+  release_date?: string;
 }
 
 interface Driver {
@@ -53,15 +64,17 @@ export function Drivers() {
     const fetchDriversWithFiles = async () => {
       setLoading(true);
       try {
+        // Fetch main driver records from the app drivers table
         const { data: dbDrivers, error: driversError } = await supabase.from('app_8e3e8a4d8d0e442280110fd6f6c2cd95_drivers')
           .select('*');
 
-        const { data: dbFiles, error: driverFilesError } = await supabase
-          .from('app_8e3e8a4d8d0e442280110fd6f6c2cd95_drivers')
+        // Fetch additional driver files from the down1 table
+        const { data: down1Files, error: down1Error } = await supabase
+          .from('down1')
           .select('*');
 
-        if (driversError || driverFilesError) {
-          console.error('Supabase fetch error:', { driversError, driverFilesError });
+        if (driversError) {
+          console.error('Supabase fetch error (drivers):', driversError);
           toast.error('Database fetch failed. Check your Supabase connection and permissions.');
           setDrivers([]);
           setLoading(false);
@@ -75,10 +88,18 @@ export function Drivers() {
           return;
         }
 
+        // Process and log the down1 files if available
+        if (down1Error) {
+          console.warn('Could not fetch additional driver files from down1 table:', down1Error);
+        } else {
+          console.log('Additional driver files from down1 table:', down1Files);
+        }
+
         const driversData: Driver[] = dbDrivers.map(driver => {
           // Create file entries from download_url
           const files: DriverFile[] = [];
           
+          // Add main driver file
           if (driver.download_url && driver.download_url !== '#') {
             files.push({
               id: `file-${driver.id}`,
@@ -88,6 +109,32 @@ export function Drivers() {
               size: driver.size || 'Unknown',
               type: 'driver'
             });
+          }
+          
+          // Add additional files from down1 table
+          if (down1Files && down1Files.length > 0) {
+            // Find files that match this driver by name
+            const additionalFiles = down1Files.filter(file => 
+              file.model && file.model.toLowerCase() === driver.name.toLowerCase()
+            );
+            
+            if (additionalFiles.length > 0) {
+              console.log(`Found ${additionalFiles.length} additional files for ${driver.name}`);
+              
+              // Add each additional file to the files array
+              additionalFiles.forEach(file => {
+                files.push({
+                  id: file.id,
+                  driver_id: driver.id,
+                  name: file.file_name || 'Additional Driver File',
+                  url: file.download_link || '#',
+                  size: file.file_size || 'Unknown',
+                  type: 'additional',
+                  version: file.version,
+                  release_date: file.release_date
+                });
+              });
+            }
           }
           
           // Ensure we have a valid image URL with absolute path
@@ -266,17 +313,44 @@ export function Drivers() {
                       </div>
                       <div className="mt-4 space-y-2">
                         {driver.files && driver.files.length > 0 ? (
-                          driver.files.map((file) => (
-                            <Button
-                              key={file.id}
-                              variant="default"
-                              className="w-full justify-between bg-blue-500 hover:bg-blue-600 text-white transition-colors font-bold"
-                              onClick={() => window.open(file.url, '_blank')}
-                            >
-                              <span>{file.name}</span>
-                              <span className="text-xs text-white/80">{file.size}</span>
-                            </Button>
-                          ))
+                          <Accordion type="single" collapsible className="w-full">
+                            <AccordionItem value="driver-files">
+                              <AccordionTrigger className="text-sm font-medium py-2 px-2 bg-blue-100 dark:bg-blue-900/30 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800/50 flex items-center">
+                                <Package className="h-4 w-4 mr-2" />
+                                <span>{driver.files.length} Driver Files Available</span>
+                              </AccordionTrigger>
+                              <AccordionContent>
+                                <div className="space-y-2 mt-2">
+                                  {driver.files.map((file) => (
+                                    <div key={file.id} className="border rounded-md p-2 bg-slate-50 dark:bg-slate-900">
+                                      <div className="flex justify-between items-center mb-1">
+                                        <div className="font-medium">{file.name}</div>
+                                        {file.version && (
+                                          <Badge variant="outline" className="text-xs">v{file.version}</Badge>
+                                        )}
+                                      </div>
+                                      <div className="flex justify-between items-center text-sm text-muted-foreground">
+                                        <div>
+                                          {file.size}
+                                          {file.release_date && (
+                                            <span className="ml-2">• Released: {new Date(file.release_date).toLocaleDateString()}</span>
+                                          )}
+                                        </div>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="flex items-center gap-1"
+                                          onClick={() => window.open(file.url, '_blank')}
+                                        >
+                                          <Download className="h-3 w-3" /> Download
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </AccordionContent>
+                            </AccordionItem>
+                          </Accordion>
                         ) : (
                           <p className="text-sm text-muted-foreground">No files available for download</p>
                         )}
