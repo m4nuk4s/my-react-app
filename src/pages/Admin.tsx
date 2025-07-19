@@ -45,9 +45,6 @@ const Admin = () => {
   
   // Models management state
   const [computerModels, setComputerModels] = useState([]);
-  
-  // Documents management state
-  const [documents, setDocuments] = useState([]);
 
   // App-specific table name for drivers
   const APP_DRIVERS_TABLE = 'app_8e3e8a4d8d0e442280110fd6f6c2cd95_drivers';
@@ -90,9 +87,6 @@ const Admin = () => {
       case "models":
         // Models are loaded with guides
         await loadGuides();
-        break;
-      case "documents":
-        loadDocuments();
         break;
       case "settings":
         // Settings are loaded from context
@@ -157,20 +151,6 @@ const Admin = () => {
       setIsLoading(false);
     }
   };
-
-const loadDocuments = () => {
-  setIsLoading(true);
-  try {
-    // Load documents from localStorage
-    const storedDocuments = localStorage.getItem('protectedDocuments') || '[]';
-    setDocuments(JSON.parse(storedDocuments));
-  } catch (error) {
-    console.error("Error loading documents:", error);
-    toast.error("Failed to load documents");
-  } finally {
-    setIsLoading(false);
-  }
-};
 
 const loadDrivers = async () => {
   setIsLoading(true);
@@ -391,11 +371,10 @@ const loadDrivers = async () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-6 mb-4">
+        <TabsList className="grid w-full grid-cols-5 mb-4">
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="guides">Guides</TabsTrigger>
           <TabsTrigger value="drivers">Drivers</TabsTrigger>
-          <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="models">Models</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
@@ -899,112 +878,6 @@ const loadDrivers = async () => {
           </Card>
         </TabsContent>
 
-        {/* Documents Tab */}
-        <TabsContent value="documents">
-          <Card>
-            <CardHeader>
-              <CardTitle>Protected Documents</CardTitle>
-              <CardDescription>Manage documents that are only visible to authenticated users</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-between items-center mb-4">
-                <div className="relative w-64">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search documents..."
-                    className="pl-8"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-                <Button onClick={() => navigate('/admin/documents/new')}>
-                  <Plus className="mr-2 h-4 w-4" /> Add New Document
-                </Button>
-              </div>
-
-              {isLoading ? (
-                <p>Loading documents...</p>
-              ) : documents.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Date Added</TableHead>
-                      <TableHead className="w-[100px]">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {documents
-                      .filter(doc => 
-                        doc.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                        doc.description.toLowerCase().includes(searchTerm.toLowerCase())
-                      )
-                      .map((doc) => (
-                        <TableRow key={doc.id}>
-                          <TableCell>{doc.title}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">
-                              {doc.category.charAt(0).toUpperCase() + doc.category.slice(1)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{doc.fileType.toUpperCase()}</TableCell>
-                          <TableCell>{doc.dateAdded}</TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button 
-                                size="icon" 
-                                variant="ghost"
-                                onClick={() => navigate(`/admin/documents/edit/${doc.id}`)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                size="icon" 
-                                variant="ghost"
-                                className="text-destructive hover:text-destructive"
-                                onClick={() => {
-                                  if(window.confirm(`Are you sure you want to delete "${doc.title}"?`)) {
-                                    try {
-                                      // Get existing documents
-                                      const storedDocuments = localStorage.getItem('protectedDocuments') || '[]';
-                                      const allDocuments = JSON.parse(storedDocuments);
-                                      
-                                      // Filter out the document to delete
-                                      const updatedDocuments = allDocuments.filter((d) => d.id !== doc.id);
-                                      
-                                      // Update localStorage
-                                      localStorage.setItem('protectedDocuments', JSON.stringify(updatedDocuments));
-                                      
-                                      // Update state
-                                      setDocuments(updatedDocuments);
-                                      toast.success("Document deleted successfully");
-                                    } catch (error) {
-                                      console.error("Error deleting document:", error);
-                                      toast.error("Failed to delete document");
-                                    }
-                                  }
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="text-center p-8">
-                  <p className="text-muted-foreground mb-4">No documents found</p>
-                  <Button onClick={() => navigate('/admin/documents/new')}>Add your first document</Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
         {/* Settings Tab */}
         <TabsContent value="settings">
           <Card>

@@ -17,8 +17,6 @@ import Admin from './pages/Admin';
 import GuideEditor from './pages/GuideEditor';
 import DriverEditor from './pages/DriverEditor';
 import UserEditor from './pages/UserEditor';
-import DocumentEditor from './pages/DocumentEditor';
-import Documents from './pages/Documents';
 import { AuthProvider } from './contexts/AuthContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 
@@ -44,7 +42,6 @@ const App = () => (
                 <Route path="/login" element={<Login />} />
                 <Route path="/disassembly-guides" element={<DisassemblyGuides />} />
                 <Route path="/disassembly/:id" element={<DisassemblyGuideDetail />} />
-                <Route path="/documents" element={<Documents />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/admin/guides" element={<Admin />} />
                 <Route path="/admin/guides/new" element={<GuideEditor />} />
@@ -53,9 +50,6 @@ const App = () => (
                 <Route path="/admin/drivers/edit/:id" element={<DriverEditor />} />
                 <Route path="/admin/users/new" element={<UserEditor />} />
                 <Route path="/admin/users/edit/:id" element={<UserEditor />} />
-                <Route path="/admin/documents" element={<Admin />} />
-                <Route path="/admin/documents/new" element={<DocumentEditor />} />
-                <Route path="/admin/documents/edit/:id" element={<DocumentEditor />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Layout>

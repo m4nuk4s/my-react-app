@@ -11,7 +11,7 @@ export default function Navbar() {
   const location = useLocation();
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
 
-  const publicNavigation = [
+  const navigation = [
     { name: "Home", href: "/" },
     { name: "Windows", href: "/windows" },
     { name: "Drivers", href: "/drivers" },
@@ -20,15 +20,6 @@ export default function Navbar() {
     { name: "Test Tools", href: "/test-tools" },
     { name: "Requests", href: "/requests" },
   ];
-  
-  const protectedNavigation = [
-    { name: "Documents", href: "/documents" },
-  ];
-  
-  // Combine navigation items based on authentication status
-  const navigation = isAuthenticated 
-    ? [...publicNavigation, ...protectedNavigation]
-    : publicNavigation;
 
   const isActive = (path: string) => {
     return location.pathname === path;
