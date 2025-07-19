@@ -107,7 +107,9 @@ export function Drivers() {
               name: driver.description || driver.name,
               url: driver.download_url,
               size: driver.size || 'Unknown',
-              type: 'driver'
+              type: 'driver',
+              version: driver.version,
+              release_date: driver.release_date || driver.date || driver.created || new Date().toISOString()
             });
           }
           
@@ -287,16 +289,13 @@ export function Drivers() {
                     <CardHeader>
                       <div className="flex justify-between items-start">
                         <CardTitle className="text-xl font-bold">{driver.name}</CardTitle>
-                        {driver.version && (
-                          <Badge variant="outline" className="text-sm font-semibold">Version {driver.version}</Badge>
-                        )}
                       </div>
                       <CardDescription>
                         {driver.manufacturer} • {driver.category}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="flex-grow">
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-2 font-medium">{driver.description}</p>
+
                       <div className="grid grid-cols-2 gap-4 text-sm mt-4">
                         <div>
                           <Label className="text-xs text-gray-500 dark:text-gray-400">Operating System</Label>
@@ -324,7 +323,6 @@ export function Drivers() {
                                   {driver.files.map((file) => (
                                     <div key={file.id} className="border rounded-md p-2 bg-slate-50 dark:bg-slate-900">
                                       <div className="flex justify-between items-center mb-1">
-                                        <div className="font-medium">{file.name}</div>
                                         {file.version && (
                                           <Badge variant="outline" className="text-xs">v{file.version}</Badge>
                                         )}
