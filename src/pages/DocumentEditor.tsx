@@ -1,204 +1,206 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
-import { ArrowLeft, Save, Trash } from 'lucide-react';
-import { Document, fetchDocuments, addDocument, updateDocument, deleteDocument } from '@/lib/supabase-docs';
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
+import { ArrowLeft, Upload } from "lucide-react";
+
+// Document model
+interface Document {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  fileType: string;
+  fileSize: string;
+  fileUrl: string;
+  dateAdded: string;
+}
 
 const DocumentEditor = () => {
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { id } = useParams();
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
-  const isEditMode = !!id;
+  const { isAdmin } = useAuth();
   
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [document, setDocument] = useState<Document>({
-    id: '',
-    title: '',
-    type: 'pdf',
-    desc: '',
-    down: '',
-    category: 'guides',
-    fileSize: '',
+    id: "",
+    title: "",
+    description: "",
+    category: "guides",
+    fileType: "pdf",
+    fileSize: "",
+    fileUrl: "",
     dateAdded: new Date().toISOString().split('T')[0]
   });
-
+  
+  const [file, setFile] = useState<File | null>(null);
+  
+  // Check if editing or creating a new document
+  const isEditing = !!id;
+  
   useEffect(() => {
-    // Check authentication and admin status
-    if (!isAuthenticated) {
-      toast.error('You must be logged in to access this page');
-      navigate('/login', { state: { from: `/admin/documents${id ? `/edit/${id}` : '/new'}` } });
-      return;
-    }
-    
+    // Check if user is admin
     if (!isAdmin) {
-      toast.error('You do not have permission to access this page');
-      navigate('/');
+      toast.error("You don't have permission to access this page");
+      navigate("/admin");
       return;
     }
     
-    // Load document data if in edit mode
-    async function loadDocument() {
-      if (isEditMode) {
-        setLoading(true);
+    // If editing, load the document data
+    if (isEditing) {
+      const loadDocument = () => {
         try {
-          const documents = await fetchDocuments();
-          const foundDocument = documents.find(doc => doc.id === id);
+          const storedDocuments = localStorage.getItem('protectedDocuments') || '[]';
+          const documents = JSON.parse(storedDocuments);
+          const foundDocument = documents.find((doc: Document) => doc.id === id);
           
           if (foundDocument) {
             setDocument(foundDocument);
           } else {
-            toast.error('Document not found');
-            navigate('/admin/documents');
+            toast.error("Document not found");
+            navigate("/admin");
           }
         } catch (error) {
-          console.error('Error loading document:', error);
-          toast.error('Failed to load document');
+          console.error("Error loading document:", error);
+          toast.error("Failed to load document");
         } finally {
-          setLoading(false);
+          setIsLoading(false);
         }
-      } else {
-        setLoading(false);
-      }
+      };
+      
+      loadDocument();
+    } else {
+      setIsLoading(false);
     }
-    
-    loadDocument();
-  }, [isAuthenticated, isAdmin, navigate, id, isEditMode]);
-
+  }, [id, isAdmin, navigate, isEditing]);
+  
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setDocument(prev => ({ ...prev, [name]: value }));
   };
-
+  
   const handleSelectChange = (name: string, value: string) => {
     setDocument(prev => ({ ...prev, [name]: value }));
   };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate required fields
-    if (!document.title || !document.type || !document.down) {
-      toast.error('Please fill in all required fields');
-      return;
+  
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const selectedFile = e.target.files[0];
+      setFile(selectedFile);
+      
+      // Update document with file information
+      setDocument(prev => ({ 
+        ...prev, 
+        fileType: selectedFile.name.split('.').pop() || 'unknown',
+        fileSize: `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB`
+      }));
     }
-    
-    setSaving(true);
-    
+  };
+  
+  const handleSave = () => {
     try {
-      if (isEditMode) {
-        // Update existing document
-        await updateDocument(document);
-        toast.success('Document updated successfully');
-      } else {
-        // Add new document
-        await addDocument({
-          title: document.title,
-          type: document.type,
-          desc: document.desc,
-          down: document.down,
-          category: document.category,
-          fileSize: document.fileSize || `${(Math.random() * 5 + 1).toFixed(1)} MB`
-        });
-        toast.success('Document added successfully');
+      // Validate required fields
+      if (!document.title || !document.description || !document.category) {
+        toast.error("Please fill in all required fields");
+        return;
       }
       
-      navigate('/admin/documents');
-    } catch (error) {
-      console.error('Error saving document:', error);
-      toast.error('Failed to save document');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (isEditMode && window.confirm('Are you sure you want to delete this document?')) {
-      try {
-        await deleteDocument(id);
-        toast.success('Document deleted successfully');
-        navigate('/admin/documents');
-      } catch (error) {
-        console.error('Error deleting document:', error);
-        toast.error('Failed to delete document');
+      // For a real application, we would upload the file here
+      // Since we're using localStorage for this demo, we'll simulate file storage
+      let fileUrl = document.fileUrl;
+      if (file) {
+        // In a real app, this would be a cloud storage URL
+        fileUrl = URL.createObjectURL(file);
       }
+      
+      // Get existing documents
+      const storedDocuments = localStorage.getItem('protectedDocuments') || '[]';
+      const documents = JSON.parse(storedDocuments);
+      
+      // Create or update document
+      if (isEditing) {
+        // Update existing document
+        const updatedDocuments = documents.map((doc: Document) => 
+          doc.id === id ? { ...document, fileUrl } : doc
+        );
+        localStorage.setItem('protectedDocuments', JSON.stringify(updatedDocuments));
+        toast.success("Document updated successfully");
+      } else {
+        // Create new document
+        const newDocument = {
+          ...document,
+          id: Date.now().toString(),
+          dateAdded: new Date().toISOString().split('T')[0],
+          fileUrl
+        };
+        localStorage.setItem('protectedDocuments', JSON.stringify([...documents, newDocument]));
+        toast.success("Document added successfully");
+      }
+      
+      // Navigate back to admin documents tab
+      navigate("/admin/documents");
+    } catch (error) {
+      console.error("Error saving document:", error);
+      toast.error("Failed to save document");
     }
   };
-
-  if (!isAuthenticated || !isAdmin) {
-    return null;
+  
+  if (isLoading) {
+    return <div className="container py-6">Loading...</div>;
   }
-
-  if (loading) {
-    return (
-      <div className="container py-8">
-        <div className="flex justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+  
+  return (
+    <div className="container py-6">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="mr-2" 
+            onClick={() => navigate("/admin/documents")}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-3xl font-bold">{isEditing ? "Edit Document" : "Add New Document"}</h1>
         </div>
       </div>
-    );
-  }
-
-  return (
-    <div className="container py-8 max-w-3xl mx-auto">
-      <div className="mb-6">
-        <Button variant="ghost" onClick={() => navigate('/admin/documents')}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Documents
-        </Button>
-      </div>
-
+      
       <Card>
         <CardHeader>
-          <CardTitle>{isEditMode ? 'Edit Document' : 'Add New Document'}</CardTitle>
+          <CardTitle>Document Details</CardTitle>
+          <CardDescription>
+            {isEditing 
+              ? "Update document information and upload a new file if needed" 
+              : "Fill in the document information and upload a file"}
+          </CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="title">Document Title*</Label>
-              <Input 
-                id="title" 
-                name="title" 
-                placeholder="Enter document title" 
-                value={document.title} 
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Title */}
+            <div className="space-y-2">
+              <Label htmlFor="title">Title <span className="text-red-500">*</span></Label>
+              <Input
+                id="title"
+                name="title"
+                value={document.title}
                 onChange={handleInputChange}
+                placeholder="Document Title"
                 required
               />
             </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="type">Document Type*</Label>
-              <Select 
-                name="type" 
-                value={document.type} 
-                onValueChange={(value) => handleSelectChange('type', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select document type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pdf">PDF</SelectItem>
-                  <SelectItem value="word">Word (DOCX)</SelectItem>
-                  <SelectItem value="excel">Excel (XLSX)</SelectItem>
-                  <SelectItem value="pptx">PowerPoint (PPTX)</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="category">Category</Label>
-              <Select 
-                name="category" 
-                value={document.category} 
-                onValueChange={(value) => handleSelectChange('category', value)}
+            
+            {/* Category */}
+            <div className="space-y-2">
+              <Label htmlFor="category">Category <span className="text-red-500">*</span></Label>
+              <Select
+                value={document.category}
+                onValueChange={(value) => handleSelectChange("category", value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
@@ -207,75 +209,65 @@ const DocumentEditor = () => {
                   <SelectItem value="guides">Guides</SelectItem>
                   <SelectItem value="templates">Templates</SelectItem>
                   <SelectItem value="reference">Reference</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="desc">Description</Label>
-              <Textarea 
-                id="desc" 
-                name="desc" 
-                placeholder="Enter document description" 
-                value={document.desc} 
-                onChange={handleInputChange}
-                rows={3}
-              />
-              <p className="text-sm text-muted-foreground">
-                A brief description of the document content
-              </p>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="down">Download URL*</Label>
-              <Input 
-                id="down" 
-                name="down" 
-                placeholder="https://example.com/document.pdf" 
-                value={document.down} 
-                onChange={handleInputChange}
-                required
-              />
-              <p className="text-sm text-muted-foreground">
-                Direct link to download the document
-              </p>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="fileSize">File Size</Label>
-              <Input 
-                id="fileSize" 
-                name="fileSize" 
-                placeholder="1.2 MB" 
-                value={document.fileSize} 
-                onChange={handleInputChange}
-              />
-              <p className="text-sm text-muted-foreground">
-                Size of the document file (e.g., 2.4 MB)
-              </p>
-            </div>
-          </CardContent>
+          </div>
           
-          <CardFooter className="flex justify-between">
-            {isEditMode && (
-              <Button type="button" variant="outline" onClick={handleDelete} className="text-destructive">
-                <Trash className="mr-2 h-4 w-4" />
-                Delete Document
-              </Button>
-            )}
-            <div className={`flex ${isEditMode ? 'justify-end' : 'justify-between'} flex-1 ${isEditMode ? 'ml-auto' : ''}`}>
-              <Button type="button" variant="outline" onClick={() => navigate('/admin/documents')}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={saving} className="ml-2">
-                {saving && <div className="animate-spin mr-2 h-4 w-4 border-2 border-current border-t-transparent rounded-full" />}
-                <Save className="mr-2 h-4 w-4" />
-                {isEditMode ? 'Update Document' : 'Save Document'}
-              </Button>
+          {/* Description */}
+          <div className="space-y-2">
+            <Label htmlFor="description">Description <span className="text-red-500">*</span></Label>
+            <Textarea
+              id="description"
+              name="description"
+              value={document.description}
+              onChange={handleInputChange}
+              placeholder="Brief description of the document"
+              rows={3}
+              required
+            />
+          </div>
+          
+          {/* File Upload */}
+          <div className="space-y-2">
+            <Label htmlFor="file">Document File</Label>
+            <div className="flex items-center gap-4">
+              <Input
+                id="file"
+                type="file"
+                onChange={handleFileChange}
+                className="max-w-md"
+              />
+              {document.fileUrl && !file && (
+                <div className="text-sm text-muted-foreground">
+                  Current file: {document.fileType.toUpperCase()} ({document.fileSize})
+                </div>
+              )}
             </div>
-          </CardFooter>
-        </form>
+            {file && (
+              <p className="text-sm text-muted-foreground">
+                Selected file: {file.name} ({(file.size / (1024 * 1024)).toFixed(1)} MB)
+              </p>
+            )}
+          </div>
+          
+          {/* Actions */}
+          <div className="flex justify-end gap-4 pt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate("/admin/documents")}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSave}
+              className="gap-2"
+            >
+              <Upload className="h-4 w-4" />
+              {isEditing ? "Update Document" : "Save Document"}
+            </Button>
+          </div>
+        </CardContent>
       </Card>
     </div>
   );
