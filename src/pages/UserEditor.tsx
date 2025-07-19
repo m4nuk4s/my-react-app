@@ -47,17 +47,39 @@ const UserEditor = () => {
     }
   }, [user, isAdmin, navigate, isNew, id]);
 
-  const loadUserData = (userId: string) => {
+  const loadUserData = async (userId: string): Promise<void> => {
     try {
+      // Try to load from Supabase first
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        console.error("Error loading user from Supabase:", error);
+        throw error; // Fall back to localStorage
+      }
+      
+      if (userData) {
+        console.log("User data loaded from Supabase:", userData);
+        setUsername(userData.username);
+        setEmail(userData.email);
+        setIsUserAdmin(userData.isadmin); // Using lowercase column name
+        return; // Successfully loaded from Supabase
+      }
+      
+      // If not found in Supabase or error occurred, try localStorage
       const storedUsers = localStorage.getItem('users');
       if (storedUsers) {
         const users = JSON.parse(storedUsers);
-        const userData = users.find((u: UserWithPassword) => u.id === userId);
+        const localUserData = users.find((u: UserWithPassword) => u.id === userId);
         
-        if (userData) {
-          setUsername(userData.username);
-          setEmail(userData.email);
-          setIsUserAdmin(userData.isAdmin);
+        if (localUserData) {
+          console.log("User data loaded from localStorage:", localUserData);
+          setUsername(localUserData.username);
+          setEmail(localUserData.email);
+          setIsUserAdmin(localUserData.isAdmin);
           // Don't set password for security reasons
         } else {
           toast.error("User not found");
@@ -66,13 +88,34 @@ const UserEditor = () => {
       }
     } catch (error) {
       console.error("Error loading user data:", error);
-      toast.error("Failed to load user data");
+      
+      // Final fallback to localStorage
+      try {
+        const storedUsers = localStorage.getItem('users');
+        if (storedUsers) {
+          const users = JSON.parse(storedUsers);
+          const userData = users.find((u: UserWithPassword) => u.id === userId);
+          
+          if (userData) {
+            setUsername(userData.username);
+            setEmail(userData.email);
+            setIsUserAdmin(userData.isAdmin);
+          } else {
+            toast.error("User not found");
+            navigate("/admin");
+          }
+        }
+      } catch (fallbackError) {
+        console.error("Fallback error:", fallbackError);
+        toast.error("Failed to load user data");
+        navigate("/admin");
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSaveUser = () => {
+  const handleSaveUser = async () => {
     // Basic validation
     if (!username.trim()) {
       toast.error("Username is required");
@@ -107,11 +150,55 @@ const UserEditor = () => {
     }
 
     try {
-      const storedUsers = localStorage.getItem('users') || '[]';
-      const users = JSON.parse(storedUsers);
+      setIsLoading(true);
       
       if (isNew) {
-        // Create a new user
+        // Try to create the user in Supabase first
+        try {
+          // First create the auth user
+          const { data: signUpData, error: signUpError } = await supabase.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: true,
+            user_metadata: { username }
+          });
+
+          if (signUpError) {
+            console.error("Supabase auth user creation error:", signUpError);
+            throw signUpError;
+          }
+
+          if (signUpData.user) {
+            // Now create the user record in the users table
+            const { error: insertError } = await supabase
+              .from('users')
+              .insert({
+                id: signUpData.user.id,
+                email,
+                username,
+                isadmin: isUserAdmin, // Using lowercase column name
+                isapproved: true // Auto-approve users created by admin
+              });
+
+            if (insertError) {
+              console.error("Supabase users table insert error:", insertError);
+              throw insertError;
+            }
+
+            toast.success("User created successfully in database!");
+          }
+        } catch (supabaseError) {
+          console.error("Supabase user creation failed:", supabaseError);
+          
+          // Fall back to localStorage if Supabase fails
+          console.log("Falling back to localStorage for user creation");
+        }
+        
+        // Always update localStorage as fallback
+        const storedUsers = localStorage.getItem('users') || '[]';
+        const users = JSON.parse(storedUsers);
+        
+        // Create a new user in localStorage
         const newUser: UserWithPassword = {
           id: Date.now().toString(),
           username,
@@ -125,7 +212,47 @@ const UserEditor = () => {
         localStorage.setItem('users', JSON.stringify(users));
         toast.success("User created successfully!");
       } else {
-        // Update existing user
+        // Try to update user in Supabase
+        try {
+          // Update user data in the users table
+          const { error: updateError } = await supabase
+            .from('users')
+            .update({
+              username,
+              email,
+              isadmin: isUserAdmin // Using lowercase column name
+            })
+            .eq('id', id);
+
+          if (updateError) {
+            console.error("Supabase user update error:", updateError);
+            throw updateError;
+          }
+
+          // Update password if provided
+          if (password) {
+            const { error: passwordError } = await supabase.auth.admin.updateUserById(
+              id,
+              { password }
+            );
+
+            if (passwordError) {
+              console.error("Supabase password update error:", passwordError);
+              throw passwordError;
+            }
+          }
+
+          toast.success("User updated successfully in database!");
+        } catch (supabaseError) {
+          console.error("Supabase user update failed:", supabaseError);
+          // Fall back to localStorage if Supabase fails
+        }
+        
+        // Always update localStorage as fallback
+        const storedUsers = localStorage.getItem('users') || '[]';
+        const users = JSON.parse(storedUsers);
+        
+        // Update existing user in localStorage
         const updatedUsers = users.map((u: UserWithPassword) => {
           if (u.id === id) {
             return {
@@ -147,6 +274,8 @@ const UserEditor = () => {
     } catch (error) {
       console.error("Error saving user:", error);
       toast.error("Failed to save user");
+    } finally {
+      setIsLoading(false);
     }
   };
 

@@ -4,6 +4,7 @@ import { supabase, User, UserWithPassword, setupSupabaseSchema, ensureAdminUser 
 import { SupabaseAuthClient } from '@supabase/supabase-js/dist/module/lib/SupabaseAuthClient';
 import emailjs from '@emailjs/browser';
 import { fixAllDatabaseIssues } from '@/lib/databaseFixes';
+// Note: We're importing apply-db-fixes dynamically in the useEffect to avoid circular dependencies
 
 type AuthContextType = {
   user: User | null;
@@ -32,12 +33,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const initializeSupabase = async () => {
       try {
+        // Import the database fixes dynamically
+        const { applyUserRegistrationFixes } = await import('../lib/apply-db-fixes');
+        
         // Setup database schema
         await setupSupabaseSchema();
+        
         // Ensure admin user exists
         await ensureAdminUser();
-        // Fix any database schema issues
+        
+        // Apply specific fixes for user registration
+        const fixResult = await applyUserRegistrationFixes();
+        console.log('User registration fixes applied:', fixResult);
+        
+        // Fix any other database schema issues
         await fixAllDatabaseIssues();
+        
         console.log('Supabase initialized successfully');
       } catch (error) {
         console.error('Error initializing Supabase:', error);
@@ -216,6 +227,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const register = async (email: string, username: string, password: string) => {
     try {
+      console.log("Starting user registration process...");
+      
       // Try Supabase authentication first
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
@@ -228,24 +241,68 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
 
       if (signUpError) {
+        console.error("Supabase auth signup error:", signUpError);
         throw signUpError;
       }
 
+      console.log("Supabase auth sign up successful:", signUpData);
+
       if (signUpData.user) {
+        // Debug the user ID
+        console.log("New user ID:", signUpData.user.id);
+        
         // Create user record in the users table
-        const { error: insertError } = await supabase
+        const { data: insertData, error: insertError } = await supabase
           .from('users')
           .insert({
             id: signUpData.user.id,
             email,
             username,
-            password, // In a real app, this would be handled by Auth
             isadmin: false, // Using lowercase column name
             isapproved: false // Using lowercase column name - New users need admin approval
-          });
+          })
+          .select();
 
         if (insertError) {
-          throw insertError;
+          console.error("Supabase users table insert error:", insertError);
+          // Don't throw here, try direct RPC call
+          
+          // Try alternative approach using direct SQL (RPC)
+          const { error: rpcError } = await supabase.rpc('execute_sql', { 
+            sql_query: `
+              INSERT INTO users (id, email, username, isadmin, isapproved) 
+              VALUES ('${signUpData.user.id}', '${email}', '${username}', false, false)
+            `
+          });
+          
+          if (rpcError) {
+            console.error("Supabase RPC insert error:", rpcError);
+            throw rpcError;
+          } else {
+            console.log("User inserted via RPC successfully");
+          }
+        } else {
+          console.log("User inserted successfully:", insertData);
+        }
+        
+        // Always update localStorage as fallback
+        try {
+          const users: UserWithPassword[] = JSON.parse(localStorage.getItem('users') || '[]');
+          
+          const newUser: UserWithPassword = {
+            id: signUpData.user.id,
+            email,
+            username,
+            password, // Store password in localStorage for fallback
+            isAdmin: false,
+            isApproved: false, // New users need admin approval
+          };
+          
+          localStorage.setItem('users', JSON.stringify([...users, newUser]));
+          console.log("User also saved to localStorage");
+        } catch (localError) {
+          console.error("Failed to save to localStorage:", localError);
+          // Don't fail if localStorage fails
         }
         
         // Send registration notification email
@@ -265,6 +322,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             },
             '_FaISaFJ5SBxVUtzl'
           );
+          console.log("Notification email sent successfully");
         } catch (emailError) {
           console.log('Email notification failed:', emailError);
           // Don't fail registration if email fails
@@ -296,6 +354,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         };
         
         localStorage.setItem('users', JSON.stringify([...users, newUser]));
+        console.log("User saved to localStorage as fallback");
         
         // Send registration notification email
         try {

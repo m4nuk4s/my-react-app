@@ -7,16 +7,10 @@ import logo from "@/assets/wtpth/logo.png";
 export default function Home() {
   const serviceCards = [
     {
-      title: "Windows 10 Support",
-      description: "Drivers, ISO downloads, and support for Windows 10",
-      link: "/windows10",
+      title: "Windows Support",
+      description: "Drivers and support for Windows 10 & 11",
+      link: "/windows",
       icon: "💻"
-    },
-    {
-      title: "Windows 11 Support",
-      description: "Drivers, ISO downloads, and support for Windows 11",
-      link: "/windows11",
-      icon: "🖥️"
     },
     {
       title: "Drivers",
