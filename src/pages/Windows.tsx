@@ -9,6 +9,8 @@ import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useLocation } from "react-router-dom";
+import emailjs from "@emailjs/browser";
+import { toast } from "sonner";
 import * as z from "zod";
 
 import {
@@ -39,6 +41,11 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
+
+// Your EmailJS service, template, and user IDs (same as used in Requests page)
+const SERVICE_ID = "service_3nte2w8";
+const TEMPLATE_ID = "template_ynyayik"; 
+const USER_ID = "_FaISaFJ5SBxVUtzl";
 
 const windowsRequestSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -81,16 +88,44 @@ export default function Windows() {
     { value: "win10-21h2", label: "Windows 10 21H2" },
   ];
 
-  function onSubmit(values: z.infer<typeof windowsRequestSchema>) {
-    console.log(values);
-    // In a real app, send this data to a server
-    // For now we just simulate a successful submission
-    setRequestSubmitted(true);
-    form.reset();
-    setTimeout(() => {
-      setDialogOpen(false);
-      setRequestSubmitted(false);
-    }, 3000);
+  async function onSubmit(values: z.infer<typeof windowsRequestSchema>) {
+    try {
+      // Find the label for the selected Windows version
+      const versionLabel = windowsVersions.find(
+        (version) => version.value === values.windowsVersion
+      )?.label || values.windowsVersion;
+
+      // Send email using EmailJS
+      await emailjs.send(
+        SERVICE_ID,
+        TEMPLATE_ID,
+        {
+          name: values.name,
+          email: values.email,
+          phone: values.phone || "N/A",
+          requestType: "Windows ISO Request", // Specific type for Windows requests
+          subject: `Windows ISO Request: ${versionLabel}`,
+          message: values.message,
+          deviceModel: values.deviceModel || "N/A",
+          osVersion: versionLabel,
+        },
+        USER_ID
+      );
+
+      // Show success state
+      toast.success("Windows ISO request submitted successfully!");
+      setRequestSubmitted(true);
+      form.reset();
+      
+      // Close dialog after a delay
+      setTimeout(() => {
+        setDialogOpen(false);
+        setRequestSubmitted(false);
+      }, 3000);
+    } catch (error) {
+      console.error("Failed to send email:", error);
+      toast.error("Failed to submit request. Please try again later.");
+    }
   }
 
   const win10IsoDetails = [
@@ -514,8 +549,17 @@ export default function Windows() {
                             </DialogDescription>
                           </DialogHeader>
                           
-                          <Form {...form}>
-                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                          {requestSubmitted ? (
+                            <div className="py-6 text-center space-y-4">
+                              <CheckCircle2 className="mx-auto h-12 w-12 text-green-500" />
+                              <h3 className="text-xl font-medium text-green-800">Request Submitted</h3>
+                              <p className="text-gray-600">
+                                We've received your request. Check your email for further instructions.
+                              </p>
+                            </div>
+                          ) : (
+                            <Form {...form}>
+                              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                               <FormField
                                 control={form.control}
                                 name="name"
@@ -618,6 +662,7 @@ export default function Windows() {
                               </DialogFooter>
                             </form>
                           </Form>
+                          )}
                         </DialogContent>
                       </Dialog>
                     </CardContent>
