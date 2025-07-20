@@ -8,7 +8,7 @@ import Panel from "@/assets/wtpth/panel.jpg";
 import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import * as z from "zod";
 
 import {
@@ -54,7 +54,6 @@ export default function Windows() {
   const [requestSubmitted, setRequestSubmitted] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
   
   // Set the active tab based on location state if available
   useEffect(() => {
@@ -209,9 +208,136 @@ export default function Windows() {
                     </CardHeader>
                     <CardContent>
                       <p className="text-sm text-gray-500 mb-4">Size: {iso.size}</p>
-                      <Button className="w-full" onClick={() => navigate("/requests", { state: { tab: "support", requestType: "windows-installation" } })}>
-                        <Send className="mr-2 h-4 w-4" /> Request Windows
-                      </Button>
+                      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button className="w-full">
+                            <Send className="mr-2 h-4 w-4" /> Request Windows
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[500px]">
+                          <DialogHeader>
+                            <DialogTitle>Request Windows 11 ISO</DialogTitle>
+                            <DialogDescription>
+                              Fill out this form to request the Windows 11 installation files. We'll send you download instructions via email.
+                            </DialogDescription>
+                          </DialogHeader>
+                          
+                          {requestSubmitted ? (
+                            <div className="py-6 text-center space-y-4">
+                              <CheckCircle2 className="mx-auto h-12 w-12 text-green-500" />
+                              <h3 className="text-xl font-medium text-green-800">Request Submitted</h3>
+                              <p className="text-gray-600">
+                                We've received your request. Check your email for further instructions.
+                              </p>
+                            </div>
+                          ) : (
+                            <Form {...form}>
+                              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                                <FormField
+                                  control={form.control}
+                                  name="name"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Your Name</FormLabel>
+                                      <FormControl>
+                                        <Input placeholder="Full name" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={form.control}
+                                  name="email"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Email</FormLabel>
+                                      <FormControl>
+                                        <Input type="email" placeholder="you@example.com" {...field} />
+                                      </FormControl>
+                                      <FormDescription>We'll send download instructions to this email.</FormDescription>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={form.control}
+                                  name="phone"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Phone (Optional)</FormLabel>
+                                      <FormControl>
+                                        <Input placeholder="Your phone number" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={form.control}
+                                  name="windowsVersion"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Windows Version</FormLabel>
+                                      <Select onValueChange={field.onChange} value={field.value}>
+                                        <FormControl>
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Select Windows version" />
+                                          </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                          {windowsVersions.map((version) => (
+                                            <SelectItem key={version.value} value={version.value}>
+                                              {version.label}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={form.control}
+                                  name="deviceModel"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Device Model</FormLabel>
+                                      <FormControl>
+                                        <Input placeholder="E.g., Thomson N17, Roxxor" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={form.control}
+                                  name="message"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Additional Information</FormLabel>
+                                      <FormControl>
+                                        <Textarea
+                                          placeholder="Any specific requirements or questions?"
+                                          className="min-h-24"
+                                          {...field}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <DialogFooter className="mt-6">
+                                  <DialogClose asChild>
+                                    <Button type="button" variant="outline">Cancel</Button>
+                                  </DialogClose>
+                                  <Button type="submit">Submit Request</Button>
+                                </DialogFooter>
+                              </form>
+                            </Form>
+                          )}
+                        </DialogContent>
+                      </Dialog>
                     </CardContent>
                   </Card>
                 ))}
@@ -374,9 +500,126 @@ export default function Windows() {
                     </CardHeader>
                     <CardContent>
                       <p className="text-sm text-gray-500 mb-4">Size: {iso.size}</p>
-                      <Button className="w-full" onClick={() => navigate("/requests", { state: { tab: "support", requestType: "windows-installation" } })}>
-                        <Send className="mr-2 h-4 w-4" /> Request Windows
-                      </Button>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button className="w-full">
+                            <Send className="mr-2 h-4 w-4" /> Request Windows
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[500px]">
+                          <DialogHeader>
+                            <DialogTitle>Request Windows 10 ISO</DialogTitle>
+                            <DialogDescription>
+                              Fill out this form to request the Windows 10 installation files. We'll send you download instructions via email.
+                            </DialogDescription>
+                          </DialogHeader>
+                          
+                          <Form {...form}>
+                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                              <FormField
+                                control={form.control}
+                                name="name"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Your Name</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="Full name" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name="email"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Email</FormLabel>
+                                    <FormControl>
+                                      <Input type="email" placeholder="you@example.com" {...field} />
+                                    </FormControl>
+                                    <FormDescription>We'll send download instructions to this email.</FormDescription>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name="phone"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Phone (Optional)</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="Your phone number" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name="windowsVersion"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Windows Version</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Select Windows version" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        {windowsVersions.map((version) => (
+                                          <SelectItem key={version.value} value={version.value}>
+                                            {version.label}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name="deviceModel"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Device Model</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="E.g., Thomson N17, Roxxor" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name="message"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Additional Information</FormLabel>
+                                    <FormControl>
+                                      <Textarea
+                                        placeholder="Any specific requirements or questions?"
+                                        className="min-h-24"
+                                        {...field}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <DialogFooter className="mt-6">
+                                <DialogClose asChild>
+                                  <Button type="button" variant="outline">Cancel</Button>
+                                </DialogClose>
+                                <Button type="submit">Submit Request</Button>
+                              </DialogFooter>
+                            </form>
+                          </Form>
+                        </DialogContent>
+                      </Dialog>
                     </CardContent>
                   </Card>
                 ))}
