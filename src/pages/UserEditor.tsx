@@ -8,6 +8,7 @@ import { Switch } from "../components/ui/switch";
 import { useAuth } from "../contexts/AuthContext";
 import { toast } from "sonner";
 import { ArrowLeft, Save } from "lucide-react";
+import { supabase } from "../lib/supabase";
 
 type UserWithPassword = {
   id: string;
@@ -155,37 +156,46 @@ const UserEditor = () => {
       if (isNew) {
         // Try to create the user in Supabase first
         try {
-          // First create the auth user
-          const { data: signUpData, error: signUpError } = await supabase.auth.admin.createUser({
+          // Attempt to sign up user via Supabase auth
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
             email,
             password,
-            email_confirm: true,
-            user_metadata: { username }
+            options: {
+              data: { 
+                username: username,
+                isAdmin: isUserAdmin
+              }
+            }
           });
-
+          
           if (signUpError) {
             console.error("Supabase auth user creation error:", signUpError);
-            throw signUpError;
-          }
+            // Don't throw error, just log it and continue with localStorage
+            console.log("Continuing with localStorage for user creation");
+          } else if (signUpData.user) {
+            console.log("User created in Supabase auth:", signUpData.user);
+            
+            // Try to create user in the users table
+            try {
+              const { error: insertError } = await supabase
+                .from('users')
+                .insert({
+                  id: signUpData.user.id,
+                  email,
+                  username,
+                  isadmin: isUserAdmin, // Using lowercase column name
+                  isapproved: true // Auto-approve users created by admin
+                });
 
-          if (signUpData.user) {
-            // Now create the user record in the users table
-            const { error: insertError } = await supabase
-              .from('users')
-              .insert({
-                id: signUpData.user.id,
-                email,
-                username,
-                isadmin: isUserAdmin, // Using lowercase column name
-                isapproved: true // Auto-approve users created by admin
-              });
-
-            if (insertError) {
-              console.error("Supabase users table insert error:", insertError);
-              throw insertError;
+              if (insertError) {
+                console.error("Supabase users table insert error:", insertError);
+                // Continue with localStorage if this fails
+              } else {
+                toast.success("User created successfully in database!");
+              }
+            } catch (insertError) {
+              console.error("Error adding user to database table:", insertError);
             }
-
-            toast.success("User created successfully in database!");
           }
         } catch (supabaseError) {
           console.error("Supabase user creation failed:", supabaseError);
