@@ -8,6 +8,7 @@ import { Switch } from "../components/ui/switch";
 import { useAuth } from "../contexts/AuthContext";
 import { toast } from "sonner";
 import { ArrowLeft, Save } from "lucide-react";
+import { supabase } from "../lib/supabase";
 
 type UserWithPassword = {
   id: string;
@@ -204,8 +205,10 @@ const UserEditor = () => {
           username,
           email,
           isAdmin: isUserAdmin,
+          isadmin: isUserAdmin, // Add lowercase version for consistency
           password,
-          isApproved: true // Auto-approve users created by admin
+          isApproved: true, // Auto-approve users created by admin
+          isapproved: true // Add lowercase version for consistency
         };
         
         users.push(newUser);
@@ -260,6 +263,7 @@ const UserEditor = () => {
               username,
               email,
               isAdmin: isUserAdmin,
+              isadmin: isUserAdmin, // Add lowercase version for consistency
               ...(password && { password }) // Only update password if provided
             };
           }
