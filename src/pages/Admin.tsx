@@ -96,32 +96,75 @@ const Admin = () => {
     }
   };
 
-  const loadUsers = () => {
+  const loadUsers = async () => {
     setIsLoading(true);
     try {
-      const storedUsers = localStorage.getItem('users') || '[]';
-      const parsedUsers = JSON.parse(storedUsers);
-      
-      // Separate users into approved and pending
+      // First try loading from Supabase
+      const { data: dbUsers, error } = await supabase
+        .from('users')
+        .select('*');
+
+      if (error) {
+        console.error("Error fetching users from Supabase:", error);
+        throw error; // This will trigger the fallback
+      }
+
+      // Process users from database
       const approved = [];
       const pending = [];
       
-      parsedUsers.forEach(user => {
+      dbUsers.forEach(user => {
         // Skip the password for security
         const { password, ...userWithoutPassword } = user;
         
-        if (user.isApproved === false) {
-          pending.push(userWithoutPassword);
+        // Transform database fields (lowercase) to match our app's structure
+        const processedUser = {
+          ...userWithoutPassword,
+          isAdmin: user.isadmin, // Transform lowercase db field
+          isApproved: user.isapproved // Transform lowercase db field
+        };
+        
+        if (!user.isapproved) {
+          pending.push(processedUser);
         } else {
-          approved.push(userWithoutPassword);
+          approved.push(processedUser);
         }
       });
       
+      console.log(`Loaded ${approved.length} approved users and ${pending.length} pending users from database`);
       setUsers(approved);
       setPendingUsers(pending);
     } catch (error) {
-      console.error("Error loading users:", error);
-      toast.error("Failed to load users");
+      console.error("Error loading users from database:", error);
+      
+      // Fallback to localStorage if database access fails
+      try {
+        console.log("Falling back to localStorage for users");
+        const storedUsers = localStorage.getItem('users') || '[]';
+        const parsedUsers = JSON.parse(storedUsers);
+        
+        // Separate users into approved and pending
+        const approved = [];
+        const pending = [];
+        
+        parsedUsers.forEach(user => {
+          // Skip the password for security
+          const { password, ...userWithoutPassword } = user;
+          
+          if (user.isApproved === false) {
+            pending.push(userWithoutPassword);
+          } else {
+            approved.push(userWithoutPassword);
+          }
+        });
+        
+        setUsers(approved);
+        setPendingUsers(pending);
+        toast.info("Using local user data (database connection unavailable)");
+      } catch (localError) {
+        console.error("Error loading users from localStorage:", localError);
+        toast.error("Failed to load users");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -283,19 +326,18 @@ const loadDrivers = async () => {
 };
 
   // Function to handle approving a pending user
-  const handleApproveUser = (userId) => {
+  const handleApproveUser = async (userId) => {
     try {
-      const storedUsers = localStorage.getItem('users') || '[]';
-      const parsedUsers = JSON.parse(storedUsers);
+      // Update user in Supabase first
+      const { error } = await supabase
+        .from('users')
+        .update({ isapproved: true }) // Use lowercase column name
+        .eq('id', userId);
       
-      const updatedUsers = parsedUsers.map(user => {
-        if (user.id === userId) {
-          return { ...user, isApproved: true };
-        }
-        return user;
-      });
-      
-      localStorage.setItem('users', JSON.stringify(updatedUsers));
+      if (error) {
+        console.error("Error approving user in database:", error);
+        throw error; // Will trigger fallback
+      }
       
       // Update state
       const approvedUser = pendingUsers.find(user => user.id === userId);
@@ -304,33 +346,110 @@ const loadDrivers = async () => {
         setUsers([...users, { ...approvedUser, isApproved: true }]);
       }
       
+      // Also update localStorage as fallback
+      try {
+        const storedUsers = localStorage.getItem('users') || '[]';
+        const parsedUsers = JSON.parse(storedUsers);
+        
+        const updatedUsers = parsedUsers.map(user => {
+          if (user.id === userId) {
+            return { ...user, isApproved: true };
+          }
+          return user;
+        });
+        
+        localStorage.setItem('users', JSON.stringify(updatedUsers));
+      } catch (localError) {
+        console.warn("Failed to update localStorage after approving user:", localError);
+        // Don't stop execution for localStorage errors
+      }
+      
       toast.success("User approved successfully");
     } catch (error) {
       console.error("Error approving user:", error);
-      toast.error("Failed to approve user");
+      
+      // Fallback to localStorage if database fails
+      try {
+        const storedUsers = localStorage.getItem('users') || '[]';
+        const parsedUsers = JSON.parse(storedUsers);
+        
+        const updatedUsers = parsedUsers.map(user => {
+          if (user.id === userId) {
+            return { ...user, isApproved: true };
+          }
+          return user;
+        });
+        
+        localStorage.setItem('users', JSON.stringify(updatedUsers));
+        
+        // Update state
+        const approvedUser = pendingUsers.find(user => user.id === userId);
+        if (approvedUser) {
+          setPendingUsers(pendingUsers.filter(user => user.id !== userId));
+          setUsers([...users, { ...approvedUser, isApproved: true }]);
+        }
+        
+        toast.success("User approved successfully (local only)");
+      } catch (fallbackError) {
+        console.error("Fallback error approving user:", fallbackError);
+        toast.error("Failed to approve user");
+      }
     }
   };
 
   // Function to handle rejecting a pending user
-  const handleRejectUser = (userId) => {
+  const handleRejectUser = async (userId) => {
     if (!window.confirm("Are you sure you want to reject this user?")) {
       return;
     }
     
     try {
-      const storedUsers = localStorage.getItem('users') || '[]';
-      const parsedUsers = JSON.parse(storedUsers);
+      // Delete the user from Supabase
+      const { error } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', userId);
       
-      const updatedUsers = parsedUsers.filter(user => user.id !== userId);
-      localStorage.setItem('users', JSON.stringify(updatedUsers));
+      if (error) {
+        console.error("Error rejecting user in database:", error);
+        throw error; // Will trigger fallback
+      }
       
       // Update state
       setPendingUsers(pendingUsers.filter(user => user.id !== userId));
       
+      // Also update localStorage as fallback
+      try {
+        const storedUsers = localStorage.getItem('users') || '[]';
+        const parsedUsers = JSON.parse(storedUsers);
+        
+        const updatedUsers = parsedUsers.filter(user => user.id !== userId);
+        localStorage.setItem('users', JSON.stringify(updatedUsers));
+      } catch (localError) {
+        console.warn("Failed to update localStorage after rejecting user:", localError);
+        // Don't stop execution for localStorage errors
+      }
+      
       toast.success("User rejected successfully");
     } catch (error) {
       console.error("Error rejecting user:", error);
-      toast.error("Failed to reject user");
+      
+      // Fallback to localStorage if database fails
+      try {
+        const storedUsers = localStorage.getItem('users') || '[]';
+        const parsedUsers = JSON.parse(storedUsers);
+        
+        const updatedUsers = parsedUsers.filter(user => user.id !== userId);
+        localStorage.setItem('users', JSON.stringify(updatedUsers));
+        
+        // Update state
+        setPendingUsers(pendingUsers.filter(user => user.id !== userId));
+        
+        toast.success("User rejected successfully (local only)");
+      } catch (fallbackError) {
+        console.error("Fallback error rejecting user:", fallbackError);
+        toast.error("Failed to reject user");
+      }
     }
   };
 
@@ -477,25 +596,61 @@ const loadDrivers = async () => {
                                 size="icon" 
                                 variant="ghost"
                                 className="text-destructive hover:text-destructive"
-                                onClick={() => {
+                                onClick={async () => {
                                   if(window.confirm(`Are you sure you want to delete ${user.username}?`)) {
                                     try {
-                                      // Get existing users
-                                      const storedUsers = localStorage.getItem('users') || '[]';
-                                      const allUsers = JSON.parse(storedUsers);
+                                      // Delete from Supabase first
+                                      const { error } = await supabase
+                                        .from('users')
+                                        .delete()
+                                        .eq('id', user.id);
                                       
-                                      // Filter out the user to delete
-                                      const updatedUsers = allUsers.filter((u) => u.id !== user.id);
-                                      
-                                      // Update localStorage
-                                      localStorage.setItem('users', JSON.stringify(updatedUsers));
+                                      if (error) {
+                                        console.error("Error deleting user from database:", error);
+                                        throw error; // Will trigger fallback
+                                      }
                                       
                                       // Update state
                                       setUsers(users.filter(u => u.id !== user.id));
+                                      
+                                      // Also update localStorage as fallback
+                                      try {
+                                        const storedUsers = localStorage.getItem('users') || '[]';
+                                        const allUsers = JSON.parse(storedUsers);
+                                        
+                                        // Filter out the user to delete
+                                        const updatedUsers = allUsers.filter((u) => u.id !== user.id);
+                                        
+                                        // Update localStorage
+                                        localStorage.setItem('users', JSON.stringify(updatedUsers));
+                                      } catch (localError) {
+                                        console.warn("Failed to update localStorage after deleting user:", localError);
+                                        // Don't stop execution for localStorage errors
+                                      }
+                                      
                                       toast.success("User deleted successfully");
                                     } catch (error) {
                                       console.error("Error deleting user:", error);
-                                      toast.error("Failed to delete user");
+                                      
+                                      // Fallback to localStorage if database fails
+                                      try {
+                                        // Get existing users
+                                        const storedUsers = localStorage.getItem('users') || '[]';
+                                        const allUsers = JSON.parse(storedUsers);
+                                        
+                                        // Filter out the user to delete
+                                        const updatedUsers = allUsers.filter((u) => u.id !== user.id);
+                                        
+                                        // Update localStorage
+                                        localStorage.setItem('users', JSON.stringify(updatedUsers));
+                                        
+                                        // Update state
+                                        setUsers(users.filter(u => u.id !== user.id));
+                                        toast.success("User deleted successfully (local only)");
+                                      } catch (fallbackError) {
+                                        console.error("Fallback error deleting user:", fallbackError);
+                                        toast.error("Failed to delete user");
+                                      }
                                     }
                                   }
                                 }}
