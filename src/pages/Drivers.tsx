@@ -322,25 +322,28 @@ export function Drivers() {
                                 <div className="space-y-2 mt-2">
                                   {driver.files.map((file) => (
                                     <div key={file.id} className="border rounded-md p-2 bg-slate-50 dark:bg-slate-900">
-                                      <div className="flex justify-between items-center mb-1">
+                                      <div className="flex justify-between items-center mb-2">
+                                        <div className="text-xs text-muted-foreground">File Info</div>
                                         {file.version && (
                                           <Badge variant="outline" className="text-xs">v{file.version}</Badge>
                                         )}
                                       </div>
                                       <div className="flex justify-between items-center text-sm text-muted-foreground">
-                                        <div>
-                                          {file.size}
-                                          {file.release_date && (
-                                            <span className="ml-2">• Released: {new Date(file.release_date).toLocaleDateString()}</span>
-                                          )}
-                                        </div>
+                                        <div>{file.size}</div>
+                                        {file.release_date && (
+                                          <div>Released: {new Date(file.release_date).toLocaleDateString()}</div>
+                                        )}
+                                      </div>
+                                      <div className="mt-2">
                                         <Button
                                           size="sm"
                                           variant="outline"
-                                          className="flex items-center gap-1"
+                                          className="flex items-center gap-1 w-full text-ellipsis overflow-hidden"
                                           onClick={() => window.open(file.url, '_blank')}
+                                          title={`Download ${file.name}`}
                                         >
-                                          <Download className="h-3 w-3" /> Download
+                                          <Download className="h-3 w-3 flex-shrink-0" /> 
+                                          <span className="truncate">{file.name}</span>
                                         </Button>
                                       </div>
                                     </div>
