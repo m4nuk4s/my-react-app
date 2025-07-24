@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MenuIcon, User, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import logo from "@/assets/wtpth/logo.png";
 
 export default function Navbar() {
@@ -31,13 +32,13 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-white shadow-sm border-b">
+    <nav className="bg-background shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center">
               <img src={logo} alt="Logo" className="h-10 w-10 mr-2" />
-              <span className="text-xl font-bold text-blue-600">Support Center</span>
+              <span className="text-xl font-bold text-primary">Support Center</span>
             </Link>
           </div>
 
@@ -48,12 +49,17 @@ export default function Navbar() {
                 key={item.name}
                 asChild
                 variant={isActive(item.href) ? "default" : "ghost"}
-                className={isActive(item.href) ? "bg-blue-600 text-white" : ""}
+                className={isActive(item.href) ? "" : ""}
                 size="sm"
               >
                 <Link to={item.href}>{item.name}</Link>
               </Button>
             ))}
+            
+            {/* Theme Toggle */}
+            <div className="ml-2">
+              <ThemeToggle />
+            </div>
             
             {/* Authentication buttons */}
             {isAuthenticated ? (
@@ -61,8 +67,8 @@ export default function Navbar() {
                 {isAdmin && (
                   <Button
                     asChild
-                    variant={isActive("/admin") ? "default" : "ghost"}
-                    className={isActive("/admin") ? "bg-blue-600 text-white" : ""}
+                    variant="destructive"
+                    className="bg-red-600 hover:bg-red-700 text-white font-bold"
                   >
                     <Link to="/admin">Admin</Link>
                   </Button>
@@ -80,7 +86,7 @@ export default function Navbar() {
               <Button
                 asChild
                 variant={isActive("/login") ? "default" : "outline"}
-                className={isActive("/login") ? "bg-blue-600 text-white" : ""}
+                className={isActive("/login") ? "" : ""}
               >
                 <Link to="/login">Login</Link>
               </Button>
@@ -105,12 +111,18 @@ export default function Navbar() {
                           key={item.name}
                           asChild
                           variant={isActive(item.href) ? "default" : "ghost"}
-                          className={`justify-start ${isActive(item.href) ? "bg-blue-600 text-white" : ""}`}
+                          className="justify-start"
                           onClick={() => setIsOpen(false)}
                         >
                           <Link to={item.href}>{item.name}</Link>
                         </Button>
                       ))}
+                      
+                      {/* Theme Toggle for mobile */}
+                      <div className="px-3 py-2 flex items-center justify-between">
+                        <span className="text-sm font-medium">Theme</span>
+                        <ThemeToggle />
+                      </div>
                       
                       {/* Auth buttons for mobile */}
                       <div className="pt-4 mt-4 border-t border-gray-200">
@@ -123,8 +135,8 @@ export default function Navbar() {
                             {isAdmin && (
                               <Button
                                 asChild
-                                variant={isActive("/admin") ? "default" : "ghost"}
-                                className={`justify-start ${isActive("/admin") ? "bg-blue-600 text-white" : ""}`}
+                                variant="destructive"
+                                className="justify-start bg-red-600 hover:bg-red-700 text-white font-bold"
                                 onClick={() => setIsOpen(false)}
                               >
                                 <Link to="/admin">Admin Dashboard</Link>

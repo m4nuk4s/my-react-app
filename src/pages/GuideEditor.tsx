@@ -86,23 +86,46 @@ const GuideEditor = () => {
   
   const loadComputerModels = async () => {
     try {
-      // First try to get models from Supabase
+      // First try to get unique models from down1 table
+      const { data: down1Models, error: down1Error } = await supabase
+        .from('down1')
+        .select('model')
+        .order('model');
+      
+      // Then try to get models from the models table
       const { data: supabaseModels, error } = await supabase
         .from(APP_MODELS_TABLE)
         .select('model_name');
       
-      if (error) {
-        console.error("Error fetching models from Supabase:", error);
-        // Fallback to local storage if Supabase fails
-        loadModelsFromLocalStorage();
-      } else if (supabaseModels && supabaseModels.length > 0) {
-        // Models found in Supabase
+      let allModels: string[] = [];
+      
+      // Process models from down1 table
+      if (!down1Error && down1Models && down1Models.length > 0) {
+        console.log("Found models in down1 table:", down1Models);
+        // Get unique models from down1 table
+        const down1ModelNames = [...new Set(down1Models.map(item => item.model))];
+        allModels = [...down1ModelNames];
+      }
+      
+      // Add models from models table if available
+      if (!error && supabaseModels && supabaseModels.length > 0) {
         const modelNames = supabaseModels.map(item => item.model_name);
-        setComputerModels(modelNames);
+        // Add models that aren't already in the list
+        modelNames.forEach(model => {
+          if (!allModels.includes(model)) {
+            allModels.push(model);
+          }
+        });
+      }
+      
+      if (allModels.length > 0) {
+        // Sort alphabetically
+        allModels.sort();
+        setComputerModels(allModels);
         // Also update localStorage for offline access
-        localStorage.setItem('computerModels', JSON.stringify(modelNames));
+        localStorage.setItem('computerModels', JSON.stringify(allModels));
       } else {
-        // No models found in Supabase, try local storage
+        // No models found in either table, try local storage
         loadModelsFromLocalStorage();
       }
     } catch (error) {
@@ -134,35 +157,97 @@ const GuideEditor = () => {
 
   const loadGuideData = async () => {
     try {
-      // First try to get the guide from Supabase
-      const { data: supabaseGuides, error } = await supabase
-        .from(APP_GUIDES_TABLE)
+      console.log("Loading guide data for ID:", id);
+      
+      // First try to get the main guide from disassembly-guides table
+      const { data: mainGuideData, error: mainGuideError } = await supabase
+        .from('disassembly-guides')
         .select('*')
         .eq('id', id);
       
-      if (error) {
-        console.error("Error fetching guide from Supabase:", error);
-        // Fallback to local storage if Supabase fails
-        loadFromLocalStorage();
-      } else if (supabaseGuides && supabaseGuides.length > 0) {
-        // Guide found in Supabase
-        const guide = supabaseGuides[0];
-        setGuideTitle(guide.title);
-        setGuideModel(guide.model);
-        setGuideCategory(guide.category);
-        setGuideDifficulty(guide.difficulty);
-        setGuideTime(guide.time);
-        setGuideDescription(guide.description);
-        setGuideSteps(guide.steps || [{ title: "Step 1", description: "", imageUrl: "" }]);
+      if (mainGuideError) {
+        console.error("Error fetching guide from disassembly-guides:", mainGuideError);
+        // Try old format as fallback
+        const { data: supabaseGuides, error } = await supabase
+          .from(APP_GUIDES_TABLE)
+          .select('*')
+          .eq('id', id);
+        
+        if (error) {
+          console.error("Error fetching guide from Supabase:", error);
+          // Fallback to local storage if Supabase fails
+          loadFromLocalStorage();
+        } else if (supabaseGuides && supabaseGuides.length > 0) {
+          // Guide found in Supabase
+          const guide = supabaseGuides[0];
+          setGuideTitle(guide.title);
+          setGuideModel(guide.model);
+          setGuideCategory(guide.category);
+          setGuideDifficulty(guide.difficulty);
+          setGuideTime(guide.time);
+          setGuideDescription(guide.description);
+          setGuideSteps(guide.steps || [{ title: "Step 1", description: "", imageUrl: "" }]);
+          setIsLoading(false);
+        } else {
+          // Guide not found in Supabase, try local storage
+          loadFromLocalStorage();
+        }
+        return;
+      }
+      
+      if (mainGuideData && mainGuideData.length > 0) {
+        // Guide found in disassembly-guides
+        const mainGuide = mainGuideData[0];
+        console.log("Found main guide in disassembly-guides:", mainGuide);
+        
+        // Set main guide details
+        setGuideTitle(mainGuide.guide_title || mainGuide.title || "");
+        setGuideModel(mainGuide.computer_model || mainGuide.model || "");
+        setGuideCategory(mainGuide.category || "");
+        setGuideDifficulty(mainGuide.difficulty?.toLowerCase() || "easy");
+        setGuideTime(mainGuide.estimated_time || mainGuide.time || "");
+        setGuideDescription(mainGuide.description || "");
+        
+        // Create step 1 from the main guide data
+        const step1 = {
+          title: mainGuide.step_des || "Step 1",
+          description: mainGuide.procedure || mainGuide.step_description || mainGuide.description || "",
+          imageUrl: mainGuide.image_url || ""
+        };
+        
+        // Now fetch additional steps from diss_table using guide_title
+        const { data: additionalSteps, error: stepsError } = await supabase
+          .from('diss_table')
+          .select('*')
+          .ilike('guide_title', `%${mainGuide.guide_title}%`)
+          .order('id', { ascending: true });
+        
+        console.log("Additional steps query result:", { data: additionalSteps, error: stepsError });
+        
+        let allSteps = [step1];
+        
+        if (!stepsError && additionalSteps && additionalSteps.length > 0) {
+          // Convert additional steps to match our Step format
+          const formattedAdditionalSteps = additionalSteps.map((step) => ({
+            title: step.step_des || `Step ${allSteps.length + 1}`,
+            description: step.procedure || step.step_description || "",
+            imageUrl: step.image_url || ""
+          }));
+          
+          allSteps = [...allSteps, ...formattedAdditionalSteps];
+        }
+        
+        setGuideSteps(allSteps);
         setIsLoading(false);
       } else {
-        // Guide not found in Supabase, try local storage
+        // No guide found in disassembly-guides, try local storage
+        console.log("No guide found in disassembly-guides, falling back to localStorage");
         loadFromLocalStorage();
       }
     } catch (error) {
       console.error("Error loading guide data:", error);
       toast.error("Failed to load guide data");
-      setIsLoading(false);
+      loadFromLocalStorage();
     }
   };
   
@@ -298,11 +383,95 @@ const GuideEditor = () => {
 
     try {
       setIsLoading(true);
+      
+      // First, save to disassembly-guides table (step 1)
+      const mainGuideData = {
+        guide_title: guideTitle,
+        computer_model: guideModel,
+        category: guideCategory,
+        difficulty: guideDifficulty,
+        estimated_time: guideTime,
+        description: guideDescription,
+        // First step details
+        step_des: guideSteps[0]?.title || "Step 1",
+        step_description: guideSteps[0]?.description || "",
+        procedure: guideSteps[0]?.description || "",
+        image_url: guideSteps[0]?.imageUrl || "",
+      };
+
+      console.log("Saving main guide data:", mainGuideData);
+      
+      let mainGuideId;
+      
+      if (isNew) {
+        // Insert new guide
+        const { data: newGuideData, error: insertError } = await supabase
+          .from('disassembly-guides')
+          .insert(mainGuideData)
+          .select();
+          
+        if (insertError) {
+          console.error("Error inserting guide to disassembly-guides:", insertError);
+          throw insertError;
+        }
+        
+        mainGuideId = newGuideData?.[0]?.id;
+        console.log("Created new guide with ID:", mainGuideId);
+      } else {
+        // Update existing guide
+        const { error: updateError } = await supabase
+          .from('disassembly-guides')
+          .update(mainGuideData)
+          .eq('id', id);
+          
+        if (updateError) {
+          console.error("Error updating guide in disassembly-guides:", updateError);
+          throw updateError;
+        }
+        
+        mainGuideId = id;
+        console.log("Updated existing guide with ID:", mainGuideId);
+      }
+
+      // Delete any existing additional steps for this guide
+      const { error: deleteError } = await supabase
+        .from('diss_table')
+        .delete()
+        .eq('guide_title', guideTitle);
+        
+      if (deleteError) {
+        console.warn("Error deleting existing steps from diss_table:", deleteError);
+        // Continue anyway since this might be a new guide
+      }
+      
+      // Add all additional steps to diss_table (step 2+)
+      if (guideSteps.length > 1) {
+        const additionalSteps = guideSteps.slice(1).map((step, index) => ({
+          guide_title: guideTitle,
+          step_des: step.title || `Step ${index + 2}`,
+          step_description: step.description,
+          procedure: step.description,
+          image_url: step.imageUrl || "",
+        }));
+        
+        console.log("Saving additional steps:", additionalSteps);
+        
+        const { error: stepsError } = await supabase
+          .from('diss_table')
+          .insert(additionalSteps);
+          
+        if (stepsError) {
+          console.error("Error inserting steps to diss_table:", stepsError);
+          throw stepsError;
+        }
+      }
+      
+      // Also maintain compatibility with the old system
       const storedGuides = localStorage.getItem('disassemblyGuides') || '[]';
       const guides = JSON.parse(storedGuides);
       
       const newGuide: Guide = {
-        id: isNew ? uuidv4() : id as string,
+        id: isNew ? (mainGuideId?.toString() || uuidv4()) : id as string,
         title: guideTitle,
         model: guideModel,
         category: guideCategory,
@@ -322,22 +491,17 @@ const GuideEditor = () => {
         );
       }
       
-      // Save to localStorage
+      // Save to localStorage for backwards compatibility
       localStorage.setItem('disassemblyGuides', JSON.stringify(updatedGuides));
       
-      // Save to Supabase
+      // For legacy app_guides table compatibility
       const result = await saveGuideToSupabase(newGuide);
       
-      if (result.success) {
-        toast.success(`Guide ${isNew ? "created" : "updated"} successfully and saved to Supabase!`);
-        navigate("/admin");
-      } else {
-        toast.warning(`Guide saved locally but failed to sync with Supabase: ${result.error?.message || 'Unknown error'}`);
-        navigate("/admin");
-      }
+      toast.success(`Guide ${isNew ? "created" : "updated"} successfully!`);
+      navigate("/admin");
     } catch (error) {
       console.error("Error saving guide:", error);
-      toast.error("Failed to save guide");
+      toast.error(`Failed to save guide: ${error.message || 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }
@@ -395,16 +559,28 @@ const GuideEditor = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="model">Computer Model</Label>
-                  <Select value={guideModel} onValueChange={setGuideModel}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a model" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {computerModels.map((model) => (
-                        <SelectItem key={model} value={model}>{model}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex gap-2">
+                    <div className="flex-grow">
+                      <Input 
+                        id="model" 
+                        placeholder="Type or select a model name" 
+                        value={guideModel}
+                        onChange={(e) => setGuideModel(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex-shrink-0">
+                      <Select onValueChange={(value) => setGuideModel(value)}>
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue placeholder="Select" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {computerModels.map((model) => (
+                            <SelectItem key={model} value={model}>{model}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 </div>
                 
                 <div>

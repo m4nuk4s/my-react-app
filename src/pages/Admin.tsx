@@ -37,8 +37,34 @@ const Admin = () => {
   const [users, setUsers] = useState([]);
   const [pendingUsers, setPendingUsers] = useState([]);
 
+  // Type definition for guides
+  type Step = {
+    title: string;
+    description: string;
+    imageUrl?: string;
+    videoUrl?: string;
+    step_des?: string; 
+    step_description?: string; 
+    image_url?: string; 
+    step_number?: number; 
+    procedure?: string;
+  };
+
+  type Guide = {
+    id: string;
+    title: string;
+    guide_title?: string;
+    model: string;
+    category: string;
+    difficulty: string;
+    time: string;
+    description: string;
+    steps: Step[];
+    createdBy: string;
+  };
+
   // Guide management state
-  const [guides, setGuides] = useState([]);
+  const [guides, setGuides] = useState<Guide[]>([]);
 
   // Driver management state
   const [drivers, setDrivers] = useState([]);
@@ -173,9 +199,53 @@ const Admin = () => {
   const loadGuides = async () => {
     setIsLoading(true);
     try {
-      // Load guides
-      const storedGuides = localStorage.getItem('disassemblyGuides') || '[]';
-      setGuides(JSON.parse(storedGuides));
+      // First try to load guides from Supabase
+      try {
+        // First get unique guides from disassembly-guides table
+        const { data, error } = await supabase
+          .from('disassembly-guides')
+          .select('*');
+
+        if (error) {
+          console.error("Error fetching guides from disassembly-guides:", error);
+          throw error; // Will trigger fallback to localStorage
+        }
+
+        if (data && data.length > 0) {
+          console.log("Guides from disassembly-guides table:", data.length);
+          
+          // Transform data to match Guide type 
+          const formattedGuides = data.map(item => {
+            return {
+              id: item.id || String(item.id),
+              title: item.title || item.guide_title || "Untitled Guide",
+              guide_title: item.guide_title || item.title,
+              model: item.model || item.device_model || item.computer_model || "Generic Model",
+              category: item.category || "Uncategorized",
+              difficulty: item.difficulty?.toLowerCase() || "medium",
+              time: item.time || item.estimated_time || "30 minutes",
+              description: item.description || "",
+              steps: [], // Steps will be loaded when needed for editing
+              createdBy: item.created_by || item.author_id || "admin"
+            };
+          });
+          
+          setGuides(formattedGuides);
+          
+          // Update localStorage with the latest data for offline use
+          localStorage.setItem('disassemblyGuides', JSON.stringify(formattedGuides));
+        } else {
+          // No data found in Supabase, load from localStorage
+          console.log("No guides found in Supabase, loading from localStorage");
+          const storedGuides = localStorage.getItem('disassemblyGuides') || '[]';
+          setGuides(JSON.parse(storedGuides));
+        }
+      } catch (supabaseError) {
+        console.error("Error loading guides from Supabase:", supabaseError);
+        // Fallback to localStorage
+        const storedGuides = localStorage.getItem('disassemblyGuides') || '[]';
+        setGuides(JSON.parse(storedGuides));
+      }
       
       // Load computer models using modelManager - now async
       try {
@@ -737,10 +807,47 @@ const loadDrivers = async () => {
                                 size="icon" 
                                 variant="ghost"
                                 className="text-destructive hover:text-destructive"
-                                onClick={() => {
+                                onClick={async () => {
                                   if(window.confirm(`Are you sure you want to delete "${guide.title}"?`)) {
                                     try {
-                                      // Get existing guides
+                                      // First delete from Supabase
+                                      try {
+                                        // Delete from disassembly-guides table
+                                        const { error: guideError } = await supabase
+                                          .from('disassembly-guides')
+                                          .delete()
+                                          .eq('id', guide.id);
+                                        
+                                        if (guideError) {
+                                          console.error("Error deleting guide from Supabase:", guideError);
+                                          // Continue with localStorage deletion even if Supabase fails
+                                        } else {
+                                          console.log("Guide deleted from Supabase successfully");
+                                        }
+                                        
+                                        // Delete associated steps from diss_table if needed
+                                        const { error: stepsError } = await supabase
+                                          .from('diss_table')
+                                          .delete()
+                                          .eq('guide_id', guide.id);
+                                        
+                                        if (stepsError) {
+                                          console.warn("Error deleting associated steps from diss_table:", stepsError);
+                                          // Try with guide_title
+                                          const { error: titleError } = await supabase
+                                            .from('diss_table')
+                                            .delete()
+                                            .eq('guide_title', guide.guide_title || guide.title);
+                                          
+                                          if (titleError) {
+                                            console.warn("Error deleting steps by guide_title:", titleError);
+                                          }
+                                        }
+                                      } catch (supabaseError) {
+                                        console.error("Failed to delete from Supabase:", supabaseError);
+                                      }
+                                      
+                                      // Then update localStorage
                                       const storedGuides = localStorage.getItem('disassemblyGuides') || '[]';
                                       const allGuides = JSON.parse(storedGuides);
                                       

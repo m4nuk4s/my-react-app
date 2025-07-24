@@ -55,11 +55,11 @@ export default function Home() {
 >
   <div className="max-w-5xl mx-auto bg-red/50 p-6 rounded-lg">
     <div className="flex justify-center items-center mb-6 space-x-4">
-     <img
-  src={logo}
-  alt="Tech Support Logo"
-  className="h-32 w-32 md:h-40 md:w-40"
-/>
+      <img
+        src={logo}
+        alt="Tech Support Logo"
+        className="h-20 w-20 md:h-24 md:w-24"
+      />
       <h1 className="text-4xl md:text-6xl font-extrabold text-white">
         Tech Support Center
       </h1>
