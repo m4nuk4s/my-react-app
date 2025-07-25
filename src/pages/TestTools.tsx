@@ -12,12 +12,16 @@ import kbc from "@/assets/wtpth/kbc.jpg";
 import Serial from "@/assets/wtpth/Serial.jpg";
 import sound from "@/assets/wtpth/sound.jpg";
 import Panel from "@/assets/wtpth/panel.jpg"
+import { useAuth } from "@/contexts/AuthContext";
 
 
 
 
 
 export default function TestTools() {
+  // Use the auth context hook at the component level, not within a callback
+  const { isAuthenticated } = useAuth();
+
   const featuredTool = {
     name: "WTPTH",
     version: "2.5.1",
@@ -151,13 +155,23 @@ export default function TestTools() {
               <p className="text-gray-600">Version {featuredTool.version}</p>
             </div>
             <div className="mt-4 md:mt-0">
-              {/* Download button - always visible now, no auth check */}
-              <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700">
-                <a href={featuredTool.downloadLink} target="_blank" rel="noreferrer">
-                  <Download className="mr-2 h-5 w-5" />
-                  Download Now
-                </a>
-              </Button>
+              {isAuthenticated ? (
+                // User is logged in, show download button
+                <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700">
+                  <a href={featuredTool.downloadLink} target="_blank" rel="noreferrer">
+                    <Download className="mr-2 h-5 w-5" />
+                    Download Now
+                  </a>
+                </Button>
+              ) : (
+                // User is not logged in, show login message
+                <Button asChild size="lg" className="bg-gray-400 hover:bg-gray-500">
+                  <a href="/login" className="flex items-center">
+                    <Download className="mr-2 h-5 w-5" />
+                    Login to Download
+                  </a>
+                </Button>
+              )}
             </div>
           </div>
 
