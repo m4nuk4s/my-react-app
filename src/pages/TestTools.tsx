@@ -13,6 +13,7 @@ import Serial from "@/assets/wtpth/Serial.jpg";
 import sound from "@/assets/wtpth/sound.jpg";
 import Panel from "@/assets/wtpth/panel.jpg"
 import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
 
 
 
@@ -166,10 +167,10 @@ export default function TestTools() {
               ) : (
                 // User is not logged in, show login message
                 <Button asChild size="lg" className="bg-gray-400 hover:bg-gray-500">
-                  <a href="/login" className="flex items-center">
+                  <Link to="/login" className="flex items-center">
                     <Download className="mr-2 h-5 w-5" />
                     Login to Download
-                  </a>
+                  </Link>
                 </Button>
               )}
             </div>
