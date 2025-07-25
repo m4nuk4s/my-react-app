@@ -3,9 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { Download, ExternalLink, Check, Info, AlertTriangle, CheckCircle2, Lock } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { Download, ExternalLink, Check, Info, AlertTriangle, CheckCircle2 } from "lucide-react";
 import Home from "@/assets/wtpth/Home.jpg";
 import maininf from "@/assets/wtpth/maininf.jpg";
 import final from "@/assets/wtpth/final.jpg";
@@ -20,8 +18,6 @@ import Panel from "@/assets/wtpth/panel.jpg"
 
 
 export default function TestTools() {
-  const { user, isAuthenticated } = useAuth();
-  const navigate = useNavigate();
   const featuredTool = {
     name: "WTPTH",
     version: "2.5.1",
@@ -155,23 +151,13 @@ export default function TestTools() {
               <p className="text-gray-600">Version {featuredTool.version}</p>
             </div>
             <div className="mt-4 md:mt-0">
-              {isAuthenticated ? (
-                <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700">
-                  <a href={featuredTool.downloadLink} target="_blank" rel="noreferrer">
-                    <Download className="mr-2 h-5 w-5" />
-                    Download Now
-                  </a>
-                </Button>
-              ) : (
-                <Button 
-                  size="lg" 
-                  className="bg-gray-600 hover:bg-gray-700"
-                  onClick={() => navigate("/login")}
-                >
-                  <Lock className="mr-2 h-5 w-5" />
-                  Login to Download
-                </Button>
-              )}
+              {/* Download button - always visible now, no auth check */}
+              <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700">
+                <a href={featuredTool.downloadLink} target="_blank" rel="noreferrer">
+                  <Download className="mr-2 h-5 w-5" />
+                  Download Now
+                </a>
+              </Button>
             </div>
           </div>
 
