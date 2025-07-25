@@ -15,6 +15,7 @@ export default function Navbar() {
   const { settings } = useSettings();
 
   const navigation = [
+    { name: "Home", href: "/" },
     { name: "Windows", href: "/windows" },
     { name: "Drivers", href: "/drivers" },
     { name: "Guides", href: "/guides" },
@@ -37,13 +38,6 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <div className="mr-4">
-              {/* Theme Toggle button positioned at the true top left */}
-              {settings?.showThemeButton && (
-                <EnhancedThemeToggle />
-              )}
-            </div>
-            
             <Link to="/" className="flex-shrink-0 flex items-center">
               <img src={logo} alt="Logo" className="h-10 w-10 mr-2" />
               <span className="text-xl font-bold text-primary">Support Center</span>
@@ -66,7 +60,10 @@ export default function Navbar() {
             
 
             
-            {/* Theme Toggle button moved to top left */}
+            {/* Theme Toggle button if enabled */}
+            {settings?.showThemeButton && (
+              <EnhancedThemeToggle />
+            )}
 
             {/* Authentication buttons */}
             {isAuthenticated ? (
