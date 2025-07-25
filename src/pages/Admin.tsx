@@ -79,6 +79,9 @@ const Admin = () => {
   const [assistantEnabled, setAssistantEnabled] = useState(
     settings?.showGuideAssistant !== undefined ? settings.showGuideAssistant : true
   );
+  const [themeButtonEnabled, setThemeButtonEnabled] = useState(
+    settings?.showThemeButton !== undefined ? settings.showThemeButton : false
+  );
 
   useEffect(() => {
     // Check if user is admin, if not redirect to home
@@ -93,9 +96,10 @@ const Admin = () => {
   }, [user, isAdmin, navigate, activeTab]);
 
   useEffect(() => {
-    // Update assistant enabled state when settings change
+    // Update settings state when settings context changes
     if (settings) {
       setAssistantEnabled(settings.showGuideAssistant);
+      setThemeButtonEnabled(settings.showThemeButton);
     }
   }, [settings]);
 
@@ -532,6 +536,17 @@ const loadDrivers = async () => {
     updateSettings({ showGuideAssistant: newValue });
     
     toast.success(`Assistant ${newValue ? 'enabled' : 'disabled'} successfully`);
+  };
+
+  // Function to toggle the theme button
+  const handleToggleThemeButton = () => {
+    const newValue = !themeButtonEnabled;
+    setThemeButtonEnabled(newValue);
+    
+    // Update settings in context
+    updateSettings({ showThemeButton: newValue });
+    
+    toast.success(`Theme button ${newValue ? 'enabled' : 'disabled'} successfully`);
   };
 
   // Function to redirect to Add Driver page
@@ -1157,6 +1172,18 @@ const loadDrivers = async () => {
                 <Switch
                   checked={assistantEnabled}
                   onCheckedChange={handleToggleAssistant}
+                />
+              </div>
+
+              {/* Theme Button Toggle */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-medium">Theme Button</h3>
+                  <p className="text-sm text-muted-foreground">Show or hide the theme toggle button in the header</p>
+                </div>
+                <Switch
+                  checked={themeButtonEnabled}
+                  onCheckedChange={handleToggleThemeButton}
                 />
               </div>
               

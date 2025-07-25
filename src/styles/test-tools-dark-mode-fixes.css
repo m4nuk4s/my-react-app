@@ -1,0 +1,69 @@
+/* TestTools page dark mode fixes */
+
+/* Fix white backgrounds in Featured Tool section */
+.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 {
+  background: linear-gradient(to bottom right, hsl(var(--card)), hsl(var(--background)));
+  border-color: hsl(var(--border));
+}
+
+/* Fix white card backgrounds */
+.dark .bg-white {
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Fix featured tool Quick Facts card */
+.dark .bg-white.p-6.rounded-lg.shadow-sm.border {
+  background-color: hsl(var(--card)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Fix features section cards */
+.dark .bg-white.p-4.rounded-lg.border {
+  background-color: hsl(var(--card)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Fix blue backgrounds in features */
+.dark .bg-blue-100 {
+  background-color: hsl(var(--primary) / 0.15) !important;
+}
+
+.dark .text-blue-700 {
+  color: hsl(var(--primary)) !important;
+}
+
+/* Fix screenshot background and card backgrounds */
+.dark .bg-gray-100 {
+  background-color: hsl(var(--muted)) !important;
+}
+
+.dark .bg-gray-200 {
+  background-color: hsl(var(--muted) / 0.7) !important;
+}
+
+.dark .p-4.bg-white {
+  background-color: hsl(var(--card)) !important;
+}
+
+/* Fix text colors for better visibility */
+.dark .text-gray-600,
+.dark .text-gray-700,
+.dark li.text-gray-600 {
+  color: hsl(var(--foreground) / 0.8) !important;
+}
+
+/* Fix badge colors */
+.dark .text-blue-800,
+.dark .text-blue-700 {
+  color: hsl(210 80% 75%) !important;
+}
+
+.dark .bg-blue-100 {
+  background-color: hsl(210 50% 30%) !important;
+}
+
+/* Fix support section background */
+.dark .bg-gray-50 {
+  background-color: hsl(var(--muted)) !important;
+}

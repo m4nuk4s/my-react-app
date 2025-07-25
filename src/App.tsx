@@ -20,6 +20,9 @@ import UserEditor from './pages/UserEditor';
 import { AuthProvider } from './contexts/AuthContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { ThemeProvider } from './components/ui/theme-provider';
+import './styles/soft-dark-mode.css';
+import './styles/soft-dark-mode-overrides.css';
+import './styles/test-tools-dark-mode-fixes.css';
 
 const queryClient = new QueryClient();
 

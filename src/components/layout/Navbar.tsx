@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MenuIcon, User, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { EnhancedThemeToggle } from "@/components/ui/enhanced-theme-toggle";
+import { useSettings } from "@/contexts/SettingsContext";
 import logo from "@/assets/wtpth/logo.png";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const { settings } = useSettings();
 
   const navigation = [
     { name: "Home", href: "/" },
@@ -56,11 +58,13 @@ export default function Navbar() {
               </Button>
             ))}
             
-            {/* Theme Toggle */}
-            <div className="ml-2">
-              <ThemeToggle />
-            </div>
+
             
+            {/* Theme Toggle button if enabled */}
+            {settings?.showThemeButton && (
+              <EnhancedThemeToggle />
+            )}
+
             {/* Authentication buttons */}
             {isAuthenticated ? (
               <>
@@ -118,12 +122,16 @@ export default function Navbar() {
                         </Button>
                       ))}
                       
-                      {/* Theme Toggle for mobile */}
-                      <div className="px-3 py-2 flex items-center justify-between">
-                        <span className="text-sm font-medium">Theme</span>
-                        <ThemeToggle />
-                      </div>
+
                       
+                      {/* Theme toggle button for mobile if enabled */}
+                      {settings?.showThemeButton && (
+                        <div className="flex justify-start px-3 py-2">
+                          <EnhancedThemeToggle />
+                          <span className="ml-2">Toggle theme</span>
+                        </div>
+                      )}
+                        
                       {/* Auth buttons for mobile */}
                       <div className="pt-4 mt-4 border-t border-gray-200">
                         {isAuthenticated ? (

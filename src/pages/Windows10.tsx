@@ -111,8 +111,8 @@ export default function Windows10() {
             ))}
           </div>
           <div className="mt-8 bg-blue-50 p-6 rounded-lg">
-            <h3 className="text-lg font-medium text-blue-800 mb-2">How to create bootable Windows 10 media</h3>
-            <ol className="list-decimal list-inside space-y-2 text-gray-700">
+            <h3 className="text-lg font-medium text-blue-800 dark:text-blue-200 mb-2">How to create bootable Windows 10 media</h3>
+            <ol className="list-decimal list-inside space-y-2 text-gray-700 dark:text-gray-300">
               <li>Download your preferred Windows 10 ISO file</li>
               <li>Download the Media Creation Tool from Microsoft</li>
               <li>Run the Media Creation Tool and select &quot;Create installation media&quot;</li>
@@ -124,7 +124,7 @@ export default function Windows10() {
         <TabsContent value="drivers" className="pt-6">
           <div className="mb-6">
             <h2 className="text-2xl font-semibold mb-4">Essential Windows 10 Drivers</h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
               These are the most commonly needed drivers for Windows 10. For specific hardware drivers, please use the search tool on our Drivers page.
             </p>
           </div>
@@ -136,7 +136,7 @@ export default function Windows10() {
                   <CardDescription>Version: {driver.version} ({driver.date})</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-gray-500 mb-4">{driver.description}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-300 mb-4">{driver.description}</p>
                   <Button asChild variant="outline" className="w-full">
                     <a href={driver.link} download>
                       <Download className="mr-2 h-4 w-4" /> Download Driver
@@ -156,7 +156,7 @@ export default function Windows10() {
                   <CardTitle>{tool.name}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-gray-500 mb-4">{tool.description}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-300 mb-4">{tool.description}</p>
                   <Button asChild className="w-full">
                     <a href={tool.link} download>
                       <Download className="mr-2 h-4 w-4" /> Download Tool
@@ -179,19 +179,19 @@ export default function Windows10() {
                 <div className="space-y-4">
                   <div>
                     <h4 className="font-medium">Windows 10 Update Problems</h4>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
                       Run the Windows Update Troubleshooter from Settings &gt; Update &amp; Security &gt; Troubleshoot
                     </p>
                   </div>
                   <div>
                     <h4 className="font-medium">Blue Screen Errors</h4>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
                       Update all drivers, run SFC /scannow in Command Prompt, check for hardware issues
                     </p>
                   </div>
                   <div>
                     <h4 className="font-medium">Performance Issues</h4>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
                       Disable startup programs, run Disk Cleanup, check for malware, consider adding more RAM
                     </p>
                   </div>

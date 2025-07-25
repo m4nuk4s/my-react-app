@@ -4,12 +4,14 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 type Settings = {
   showGuideAssistant: boolean;
   assistantEnabled: boolean;
+  showThemeButton: boolean;
 };
 
 // Default settings
 const defaultSettings: Settings = {
   showGuideAssistant: true,
   assistantEnabled: true,
+  showThemeButton: false,
 };
 
 // Create context

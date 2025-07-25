@@ -1,0 +1,83 @@
+/* Fix Home page white background in dark mode */
+.dark .min-h-screen.bg-gradient-to-b.from-blue-50.to-red-100 {
+  background: linear-gradient(to bottom, hsl(var(--background)) 0%, hsl(var(--muted)) 100%) !important;
+}
+
+/* Fix Features section white background in Home page */
+.dark .bg-white.rounded-lg.shadow-sm {
+  background-color: hsl(var(--background)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+}
+
+/* Improve difficulty label visibility in dark mode */
+.dark .bg-green-100.text-green-800 {
+  background-color: hsl(142 70% 20% / 0.5) !important;
+  color: hsl(142 70% 70%) !important;
+  border-color: hsl(142 70% 40%) !important;
+}
+
+.dark .bg-yellow-100.text-yellow-800 {
+  background-color: hsl(48 96% 20% / 0.5) !important;
+  color: hsl(48 96% 70%) !important;
+  border-color: hsl(48 96% 40%) !important;
+}
+
+.dark .bg-red-100.text-red-800 {
+  background-color: hsl(0 72% 20% / 0.5) !important;
+  color: hsl(0 72% 70%) !important;
+  border-color: hsl(0 72% 40%) !important;
+}
+
+.dark .bg-gray-100.text-gray-800 {
+  background-color: hsl(220 14% 20% / 0.5) !important;
+  color: hsl(220 14% 70%) !important;
+  border-color: hsl(220 14% 40%) !important;
+}
+
+/* Enhance show more text visibility in accordions */
+.dark .text-blue-600.font-medium.px-2.py-1.bg-white\/50.rounded.whitespace-nowrap {
+  background-color: hsl(var(--primary) / 0.3) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  font-weight: 500;
+}
+
+/* Fix accordion content in dark mode */
+.dark .bg-white.px-4.py-4.rounded-b-lg.border.border-t-0.border-blue-100 {
+  background-color: hsl(var(--card)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Fix for React-Bootstrap accordions used in Guides page */
+.dark .accordion {
+  --bs-accordion-bg: hsl(var(--card)) !important;
+  --bs-accordion-border-color: hsl(var(--border)) !important;
+  --bs-accordion-btn-bg: hsl(var(--muted)) !important;
+  --bs-accordion-btn-color: hsl(var(--foreground)) !important;
+  --bs-accordion-active-bg: hsl(var(--primary) / 0.2) !important;
+  --bs-accordion-active-color: hsl(var(--primary-foreground)) !important;
+}
+
+.dark .accordion-button {
+  color: hsl(var(--foreground)) !important;
+  background-color: hsl(var(--muted)) !important;
+}
+
+.dark .accordion-button:not(.collapsed) {
+  color: hsl(var(--primary-foreground)) !important;
+  background-color: hsl(var(--primary) / 0.2) !important;
+}
+
+.dark .accordion-body {
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--card-foreground)) !important;
+}
+
+/* Fix accordion button focus and hover states */
+.dark .accordion-button:focus {
+  box-shadow: 0 0 0 0.25rem hsla(var(--primary) / 0.25) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+.dark .accordion-button:not(.collapsed)::after {
+  filter: brightness(2); /* Make the icon visible in dark mode */
+}

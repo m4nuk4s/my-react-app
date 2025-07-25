@@ -118,8 +118,8 @@ export default function TestTools() {
       title: "Understanding test results",
       steps: [
         "Green checkmarks indicate passed tests with no issues detected",
-        "Red alerts indicate critical issues that need immediate attention",
-        "Please check for every Red alert for a Software or Hardware issue like a Keyboard faulty key",
+        "Orange alerts indicate critical issues that need immediate attention",
+        "Please check for every Orange alert for a Software or Hardware issue like a Keyboard faulty key",
         "Use the 'Export Report' button to save a copy of the results for future reference"
       ]
     }
@@ -286,7 +286,7 @@ export default function TestTools() {
                     <AccordionContent>
                       <ol className="list-decimal list-inside space-y-2 pl-4">
                         {guide.steps.map((step, stepIndex) => (
-                          <li key={stepIndex} className="text-gray-600">{step}</li>
+                          <li key={stepIndex} className={step.includes("Red alerts") ? "dark:text-amber-300 text-gray-600" : "text-gray-600"}>{step}</li>
                         ))}
                       </ol>
                     </AccordionContent>
