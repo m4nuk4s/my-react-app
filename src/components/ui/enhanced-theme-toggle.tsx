@@ -24,7 +24,7 @@ export function EnhancedThemeToggle() {
             <span className="sr-only">Toggle theme</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuContent align="start" className="w-56">
           <DropdownMenuLabel>Theme Preference</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem 
