@@ -953,7 +953,7 @@ const newDriver = {
                 <Label htmlFor="category">Category</Label>
                 <select 
                   id="category"
-                  className="w-full p-2 border border-input rounded-md"
+                  className="w-full p-2 border border-input rounded-md bg-background text-foreground"
                   value={driverCategory}
                   onChange={(e) => setDriverCategory(e.target.value)}
                 >
