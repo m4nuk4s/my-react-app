@@ -3,6 +3,8 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/layout/Layout';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import PublicRoute from './components/auth/PublicRoute';
 import Home from './pages/Home';
 import Windows from './pages/Windows';
 import Drivers from './pages/Drivers';
@@ -36,25 +38,28 @@ const App = () => (
             <BrowserRouter>
               <Layout>
                 <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/windows" element={<Windows />} />
-                  <Route path="/windows10" element={<Navigate to="/windows" state={{ tab: "win10" }} />} />
-                  <Route path="/windows11" element={<Navigate to="/windows" state={{ tab: "win11" }} />} />
-                  <Route path="/drivers" element={<Drivers />} />
-                  <Route path="/guides" element={<Guides />} />
-                  <Route path="/test-tools" element={<TestTools />} />
-                  <Route path="/requests" element={<Requests />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/disassembly-guides" element={<DisassemblyGuides />} />
-                  <Route path="/disassembly/:id" element={<DisassemblyGuideDetail />} />
-                  <Route path="/admin" element={<Admin />} />
-                  <Route path="/admin/guides" element={<Admin />} />
-                  <Route path="/admin/guides/new" element={<GuideEditor />} />
-                  <Route path="/admin/guides/edit/:id" element={<GuideEditor />} />
-                  <Route path="/admin/drivers/new" element={<DriverEditor />} />
-                  <Route path="/admin/drivers/edit/:id" element={<DriverEditor />} />
-                  <Route path="/admin/users/new" element={<UserEditor />} />
-                  <Route path="/admin/users/edit/:id" element={<UserEditor />} />
+                  {/* Public route with authentication check */}
+                  <Route path="/login" element={<PublicRoute restricted>{<Login />}</PublicRoute>} />
+                  
+                  {/* Protected routes - require authentication */}
+                  <Route path="/" element={<ProtectedRoute>{<Home />}</ProtectedRoute>} />
+                  <Route path="/windows" element={<ProtectedRoute>{<Windows />}</ProtectedRoute>} />
+                  <Route path="/windows10" element={<ProtectedRoute>{<Navigate to="/windows" state={{ tab: "win10" }} />}</ProtectedRoute>} />
+                  <Route path="/windows11" element={<ProtectedRoute>{<Navigate to="/windows" state={{ tab: "win11" }} />}</ProtectedRoute>} />
+                  <Route path="/drivers" element={<ProtectedRoute>{<Drivers />}</ProtectedRoute>} />
+                  <Route path="/guides" element={<ProtectedRoute>{<Guides />}</ProtectedRoute>} />
+                  <Route path="/test-tools" element={<ProtectedRoute>{<TestTools />}</ProtectedRoute>} />
+                  <Route path="/requests" element={<ProtectedRoute>{<Requests />}</ProtectedRoute>} />
+                  <Route path="/disassembly-guides" element={<ProtectedRoute>{<DisassemblyGuides />}</ProtectedRoute>} />
+                  <Route path="/disassembly/:id" element={<ProtectedRoute>{<DisassemblyGuideDetail />}</ProtectedRoute>} />
+                  <Route path="/admin" element={<ProtectedRoute>{<Admin />}</ProtectedRoute>} />
+                  <Route path="/admin/guides" element={<ProtectedRoute>{<Admin />}</ProtectedRoute>} />
+                  <Route path="/admin/guides/new" element={<ProtectedRoute>{<GuideEditor />}</ProtectedRoute>} />
+                  <Route path="/admin/guides/edit/:id" element={<ProtectedRoute>{<GuideEditor />}</ProtectedRoute>} />
+                  <Route path="/admin/drivers/new" element={<ProtectedRoute>{<DriverEditor />}</ProtectedRoute>} />
+                  <Route path="/admin/drivers/edit/:id" element={<ProtectedRoute>{<DriverEditor />}</ProtectedRoute>} />
+                  <Route path="/admin/users/new" element={<ProtectedRoute>{<UserEditor />}</ProtectedRoute>} />
+                  <Route path="/admin/users/edit/:id" element={<ProtectedRoute>{<UserEditor />}</ProtectedRoute>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Layout>

@@ -15,7 +15,6 @@ export default function Navbar() {
   const { settings } = useSettings();
 
   const navigation = [
-    { name: "Home", href: "/" },
     { name: "Windows", href: "/windows" },
     { name: "Drivers", href: "/drivers" },
     { name: "Guides", href: "/guides" },
@@ -46,19 +45,22 @@ export default function Navbar() {
 
           {/* Desktop navigation */}
           <div className="hidden md:ml-6 md:flex md:space-x-2 md:items-center">
-            {navigation.map((item) => (
-              <Button
-                key={item.name}
-                asChild
-                variant={isActive(item.href) ? "default" : "ghost"}
-                className={isActive(item.href) ? "" : ""}
-                size="sm"
-              >
-                <Link to={item.href}>{item.name}</Link>
-              </Button>
-            ))}
-            
-
+            {/* Show navigation items only when authenticated */}
+            {isAuthenticated && (
+              <>
+                {navigation.map((item) => (
+                  <Button
+                    key={item.name}
+                    asChild
+                    variant={isActive(item.href) ? "default" : "ghost"}
+                    className={isActive(item.href) ? "" : ""}
+                    size="sm"
+                  >
+                    <Link to={item.href}>{item.name}</Link>
+                  </Button>
+                ))}
+              </>
+            )}
             
             {/* Theme Toggle button if enabled */}
             {settings?.showThemeButton && (
@@ -110,19 +112,22 @@ export default function Navbar() {
                 <div className="mt-6 flow-root">
                   <div className="py-4">
                     <div className="flex flex-col gap-2">
-                      {navigation.map((item) => (
-                        <Button
-                          key={item.name}
-                          asChild
-                          variant={isActive(item.href) ? "default" : "ghost"}
-                          className="justify-start"
-                          onClick={() => setIsOpen(false)}
-                        >
-                          <Link to={item.href}>{item.name}</Link>
-                        </Button>
-                      ))}
-                      
-
+                      {/* Show navigation items only when authenticated */}
+                      {isAuthenticated && (
+                        <>
+                          {navigation.map((item) => (
+                            <Button
+                              key={item.name}
+                              asChild
+                              variant={isActive(item.href) ? "default" : "ghost"}
+                              className="justify-start"
+                              onClick={() => setIsOpen(false)}
+                            >
+                              <Link to={item.href}>{item.name}</Link>
+                            </Button>
+                          ))}
+                        </>
+                      )}
                       
                       {/* Theme toggle button for mobile if enabled */}
                       {settings?.showThemeButton && (
