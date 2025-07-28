@@ -670,7 +670,7 @@ finalSteps.sort((a, b) => (a.step_number || 0) - (b.step_number || 0));
         <img
           src={guide.steps[0].image_url || guide.steps[0].imageUrl}
           alt={`Preview of ${guide.title}`}
-          className="w-full h-48 md:h-full object-cover transition-transform hover:scale-105"
+              className="w-full h-full object-cover max-h-80 md:max-h-[300px]" // 🔧 Add max height
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.onerror = null;
@@ -763,11 +763,9 @@ finalSteps.sort((a, b) => (a.step_number || 0) - (b.step_number || 0));
                       )}
 
                       <div className={(step.image_url || step.imageUrl || step.videoUrl) ? 'md:w-1/2' : 'w-full'}>
-                        <div className="prose max-w-none text-blue-800">
-                          <p className="text-base leading-relaxed">
-                            {step.procedure || step.step_description || step.description}
-                          </p>
-                        </div>
+                        <div className="text-blue-800 text-base leading-relaxed whitespace-pre-line">
+  {step.procedure || step.step_description || step.description}
+</div>
                       </div>
                     </div>
                   </AccordionContent>
