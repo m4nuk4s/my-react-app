@@ -611,16 +611,15 @@ finalSteps.sort((a, b) => (a.step_number || 0) - (b.step_number || 0));
           <Card className="mb-8">
             <CardContent className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="search"
-                    placeholder="Search guides..."
-                    className="pl-8"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
+                <div className="flex items-center gap-2">
+  <Search className="h-5 w-5 text-muted-foreground" />
+  <Input
+    type="search"
+    placeholder="Search guides..."
+    value={searchTerm}
+    onChange={(e) => setSearchTerm(e.target.value)}
+  />
+</div>
                 
                 <Select value={selectedModel} onValueChange={(value) => setSelectedModel(value === "All Models" ? "all" : value)}>
                   <SelectTrigger>
@@ -667,16 +666,16 @@ finalSteps.sort((a, b) => (a.step_number || 0) - (b.step_number || 0));
     {/* Preview Image Column */}
     {guide.steps && guide.steps.length > 0 && (guide.steps[0].image_url || guide.steps[0].imageUrl) && (
       <div className="md:w-1/3 bg-gray-50 flex items-center justify-center overflow-hidden border-r border-blue-200">
-        <img
-          src={guide.steps[0].image_url || guide.steps[0].imageUrl}
-          alt={`Preview of ${guide.title}`}
-              className="w-full h-full object-cover max-h-80 md:max-h-[300px]" // 🔧 Add max height
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.onerror = null;
-            target.src = '/images/placeholder.jpg';
-          }}
-        />
+      <img
+  src={guide.steps[0].image_url || guide.steps[0].imageUrl}
+  alt={`Preview of ${guide.title}`}
+  className="w-full h-full max-h-80 md:max-h-[300px] object-contain p-2"
+  onError={(e) => {
+    const target = e.target as HTMLImageElement;
+    target.onerror = null;
+    target.src = '/images/placeholder.jpg';
+  }}
+/>
       </div>
     )}
     
