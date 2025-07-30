@@ -235,16 +235,16 @@ export function Drivers() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
           </div>
-          <div className="relative z-10 px-4 py-20">
-            <h1 className="text-4xl font-bold text-white mb-0">
+          <div className="relative z-10 px-4 py-16">
+            <h1 className="text-4xl font-bold text-white mb-2">
               Drivers/Recovery Images/Firmware
-              <p className="text-xl text-blue-50 mb-10 max-w-2xl text-center mx-auto drop-shadow">
+              <p className="text-xl text-blue-50 mb-4 max-w-2xl text-center mx-auto drop-shadow">
                 Find and download the latest drivers/firmwares for your devices
               </p>
             </h1>
           </div>
         </div>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4 mt-6">
           <div className="flex-1">
             <Input
               placeholder="Search drivers..."
