@@ -198,15 +198,25 @@ export default function Windows() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-10 space-y-10">
       <div className="text-center">
-        <h1
-          className="text-4xl font-bold text-white mb-0 px-6 py-20 rounded bg-cover bg-center"
-          style={{ backgroundImage: `url(${Panel})`, display: 'block' }}
-        >
-          Windows Operating Systems
-          <p className="text-xl text-blue-100 mb-8">
-            Find everything you need for Windows - installation files, drivers, and support tools.
-          </p>
-        </h1>
+        <div className="relative rounded overflow-hidden">
+          <div className="absolute inset-0 z-0">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
+            <img 
+              src={Panel} 
+              alt="Background" 
+              className="absolute inset-0 w-full h-full object-cover object-center opacity-60" 
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+          </div>
+          <div className="relative z-10 px-6 py-20">
+            <h1 className="text-4xl font-bold text-white mb-0">
+              Windows Operating Systems
+              <p className="text-xl text-blue-50 mb-8 max-w-2xl text-center mx-auto drop-shadow">
+                Find everything you need for Windows - installation files, drivers, and support tools.
+              </p>
+            </h1>
+          </div>
+        </div>
       </div>
 
       <Tabs defaultValue="win11" value={activeTab} onValueChange={setActiveTab} className="w-full">

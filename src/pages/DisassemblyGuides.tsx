@@ -575,19 +575,30 @@ finalSteps.sort((a, b) => (a.step_number || 0) - (b.step_number || 0));
   return (
     <div className="max-w-7xl mx-auto px-4 py-10 space-y-10">
       <div className="text-center">
-        <div>
-          <h1
-            className="text-4xl font-bold text-white mb-0 px-4 py-20 rounded bg-cover bg-center"
-            style={{ backgroundImage: `url(${Panel})`, display: 'block' }}
-          >
-            Disassembly Guides
-            <p className="text-xl text-blue-100 mb-8">
-              Step-by-step guides for disassembling and repairing common computer models
-            </p>
-          </h1>
+        <div className="relative rounded overflow-hidden">
+          <div className="absolute inset-0 z-0">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
+            <img 
+              src={Panel} 
+              alt="Background" 
+              className="absolute inset-0 w-full h-full object-cover object-center opacity-60" 
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+          </div>
+          <div className="relative z-10 px-4 py-20">
+            <h1 className="text-4xl font-bold text-white mb-0">
+              Disassembly Guides
+              <p className="text-xl text-blue-50 mb-10 max-w-2xl text-center mx-auto drop-shadow">
+                Step-by-step guides for disassembling and repairing common computer models
+              </p>
+            </h1>
+          </div>
         </div>
         {isAuthenticated && (
-          <Button asChild className="mt-4 md:mt-0">
+          <Button 
+            asChild 
+            className="mt-4 md:mt-0 rounded-full bg-gradient-to-r from-primary to-purple-600 hover:from-purple-600 hover:to-primary transition-all duration-300 shadow-lg"
+          >
             <Link to="/admin/guides">Manage Guides</Link>
           </Button>
         )}

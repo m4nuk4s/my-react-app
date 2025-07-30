@@ -4,8 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
-import WelcomePreview from "@/components/auth/WelcomePreview";
+
 import AnimatedWelcome from "@/components/auth/AnimatedWelcome";
+import { motion } from "framer-motion";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Mail, Lock, User, AlertCircle, CheckCircle2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -15,7 +20,7 @@ export default function Login() {
   const [registrationError, setRegistrationError] = useState("");
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [showWelcomeAnimation, setShowWelcomeAnimation] = useState(true);
+  const [showWelcomeAnimation, setShowWelcomeAnimation] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from || '/';
@@ -30,15 +35,12 @@ export default function Login() {
   }, []);
 
   const handleWelcomeComplete = () => {
-    console.log("handleWelcomeComplete called");
     // Force update with a setTimeout to break out of any React rendering cycles
     window.setTimeout(() => {
       setShowWelcomeAnimation(false);
-      console.log("setShowWelcomeAnimation(false) executed after timeout");
     }, 0);
     // Already saved in the AnimatedWelcome component as a backup
     localStorage.setItem('hasSeenWelcome', 'true');
-    console.log("localStorage updated with hasSeenWelcome");
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -77,7 +79,6 @@ export default function Login() {
     }
     
     try {
-      // Fix parameter order to match AuthContext register function
       const result = await register(email, username, password);
       if (result === "pending") {
         setRegistrationSuccess(true);
@@ -95,121 +96,228 @@ export default function Login() {
     }
   };
 
+  // Animation variants for elements
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: { duration: 0.5 },
+    },
+  };
+
   return (
     <>
       {showWelcomeAnimation && (
         <AnimatedWelcome onContinue={handleWelcomeComplete} />
       )}
-      <main className="container max-w-md mx-auto py-10">
-        <h1 className="text-2xl font-bold mb-2">Account Access</h1>
-        <div className="mb-6">
-          <p className="text-muted-foreground mb-2">
-            Login or create an account to access TechSuptet support resources.
-          </p>
-          {location.state?.from && location.state.from !== '/' && (
-            <p className="text-sm p-3 border rounded-md bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200">
-              You need to login to access <strong>{location.state.from}</strong>
+      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background to-background/80">
+        <motion.div 
+          className="w-full max-w-md space-y-8"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.div variants={itemVariants} className="text-center">
+            <h1 className="text-3xl font-bold tracking-tight mb-2 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+              Welcome Back
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Login or create an account to access Tech Support resources
             </p>
+          </motion.div>
+          
+          {/* Redirect notice */}
+          {location.state?.from && location.state.from !== '/' && (
+            <motion.div variants={itemVariants}>
+              <Alert variant="warning" className="bg-amber-50/50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800">
+                <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                <AlertDescription>
+                  You need to login to access <strong>{location.state.from}</strong>
+                </AlertDescription>
+              </Alert>
+            </motion.div>
           )}
-        </div>
-        
-        <Tabs defaultValue="login">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">Login</TabsTrigger>
-            <TabsTrigger value="register">Register</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="login">
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Email
-                </label>
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Password
-                </label>
-                <Input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              
-              {loginError && <p className="text-red-500 text-sm">{loginError}</p>}
-              
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Logging in..." : "Login"}
-              </Button>
-          
-            </form>
-          </TabsContent>
-          
-          <TabsContent value="register">
-            <form onSubmit={handleRegister} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Username
-                </label>
-                <Input
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Email
-                </label>
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Password
-                </label>
-                <Input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              
-              {registrationError && (
-                <p className="text-red-500 text-sm">{registrationError}</p>
-              )}
-              
-              {registrationSuccess && (
-                <p className="text-green-500 text-sm">
-                  Registration successful! Your account is pending approval. Once approved, you'll be able to login.
-                </p>
-              )}
-              
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Registering..." : "Register"}
-              </Button>
-            </form>
-          </TabsContent>
-        </Tabs>
-        {/* Welcome Preview Component */}
-        <WelcomePreview />
-      </main>
+
+          <motion.div variants={itemVariants}>
+            <Card className="border-primary/10 shadow-lg bg-card/95 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <CardDescription>
+                  Access your tech support account
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Tabs defaultValue="login" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-6">
+                    <TabsTrigger value="login" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                      Login
+                    </TabsTrigger>
+                    <TabsTrigger value="register" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                      Register
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="login">
+                    <form onSubmit={handleLogin} className="space-y-5">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium flex items-center gap-1.5">
+                          <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                          Email
+                        </label>
+                        <Input
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="border-primary/20 focus-visible:ring-primary/30"
+                          placeholder="you@example.com"
+                          required
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium flex items-center gap-1.5">
+                          <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                          Password
+                        </label>
+                        <Input
+                          type="password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="border-primary/20 focus-visible:ring-primary/30"
+                          placeholder="••••••••"
+                          required
+                        />
+                      </div>
+                      
+                      {loginError && (
+                        <div className="flex items-start gap-2 text-red-500 text-sm p-2 rounded-md bg-red-50/50 dark:bg-red-950/50">
+                          <AlertCircle className="h-4 w-4 mt-0.5" />
+                          <span>{loginError}</span>
+                        </div>
+                      )}
+                      
+                      <Button 
+                        type="submit" 
+                        className={cn(
+                          "w-full relative overflow-hidden transition-all",
+                          "bg-gradient-to-r from-primary to-purple-600",
+                          "hover:from-purple-600 hover:to-primary"
+                        )}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <span className="flex items-center">
+                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Logging in...
+                          </span>
+                        ) : "Sign in"}
+                      </Button>
+                    </form>
+                  </TabsContent>
+                  
+                  <TabsContent value="register">
+                    <form onSubmit={handleRegister} className="space-y-5">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium flex items-center gap-1.5">
+                          <User className="h-3.5 w-3.5 text-muted-foreground" />
+                          Username
+                        </label>
+                        <Input
+                          value={username}
+                          onChange={(e) => setUsername(e.target.value)}
+                          className="border-primary/20 focus-visible:ring-primary/30"
+                          placeholder="johnsmith"
+                          required
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium flex items-center gap-1.5">
+                          <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                          Email
+                        </label>
+                        <Input
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="border-primary/20 focus-visible:ring-primary/30"
+                          placeholder="you@example.com"
+                          required
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium flex items-center gap-1.5">
+                          <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                          Password
+                        </label>
+                        <Input
+                          type="password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="border-primary/20 focus-visible:ring-primary/30"
+                          placeholder="••••••••"
+                          required
+                        />
+                      </div>
+                      
+                      {registrationError && (
+                        <div className="flex items-start gap-2 text-red-500 text-sm p-2 rounded-md bg-red-50/50 dark:bg-red-950/50">
+                          <AlertCircle className="h-4 w-4 mt-0.5" />
+                          <span>{registrationError}</span>
+                        </div>
+                      )}
+                      
+                      {registrationSuccess && (
+                        <div className="flex items-start gap-2 text-green-500 text-sm p-2 rounded-md bg-green-50/50 dark:bg-green-950/50">
+                          <CheckCircle2 className="h-4 w-4 mt-0.5" />
+                          <span>Registration successful! Your account is pending approval. Once approved, you'll be able to login.</span>
+                        </div>
+                      )}
+                      
+                      <Button 
+                        type="submit" 
+                        className={cn(
+                          "w-full relative overflow-hidden transition-all",
+                          "bg-gradient-to-r from-primary to-purple-600",
+                          "hover:from-purple-600 hover:to-primary"
+                        )}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <span className="flex items-center">
+                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Registering...
+                          </span>
+                        ) : "Create Account"}
+                      </Button>
+                    </form>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+              {/* Footer removed as requested */}
+            </Card>
+          </motion.div>
+
+          {/* Welcome Preview removed as requested */}
+        </motion.div>
+      </div>
     </>
   );
 }

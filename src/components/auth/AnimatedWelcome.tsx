@@ -1,20 +1,28 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Laptop, Shield, Rocket, Code } from "lucide-react";
+import { Laptop, Shield, Rocket, Code, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export default function AnimatedWelcome({ onContinue }: { onContinue: () => void }) {
   const [currentStep, setCurrentStep] = useState(0);
   const totalSteps = 4;
   
   const handleContinueClick = () => {
-    console.log("handleContinueClick executed");
     // Force direct DOM manipulation to ensure localStorage is set
     localStorage.setItem('hasSeenWelcome', 'true');
     // Force a manual callback
     window.setTimeout(() => {
-      console.log("Forcing onContinue via setTimeout");
       onContinue();
     }, 100);
+  };
+
+  const handleNextStep = () => {
+    if (currentStep < totalSteps - 1) {
+      setCurrentStep(prev => prev + 1);
+    } else {
+      handleContinueClick();
+    }
   };
 
   useEffect(() => {
@@ -24,11 +32,10 @@ export default function AnimatedWelcome({ onContinue }: { onContinue: () => void
       } else {
         // On the last slide, automatically continue to login after a delay
         setTimeout(() => {
-          console.log("Auto-continuing to login after final slide");
           handleContinueClick();
-        }, 2000);
+        }, 3000);
       }
-    }, 2000);
+    }, 3000);
     
     return () => clearTimeout(timer);
   }, [currentStep]);
@@ -74,81 +81,135 @@ export default function AnimatedWelcome({ onContinue }: { onContinue: () => void
 
   const slides = [
     {
-      title: "Welcome to TechSupport",
+      title: "Welcome to Tech Support",
       description: "Your comprehensive resource for hardware and software support",
-      icon: <Laptop size={48} className="text-primary" />,
-      color: "from-blue-500 to-purple-600"
+      icon: <Laptop className="h-16 w-16 text-white" />,
+      color: "from-blue-500 to-indigo-600",
+      accent: "bg-blue-500"
     },
     {
       title: "Secure Access",
       description: "Login to unlock our full suite of technical resources and tools",
-      icon: <Shield size={48} className="text-primary" />,
-      color: "from-green-500 to-blue-600"
+      icon: <Shield className="h-16 w-16 text-white" />,
+      color: "from-emerald-500 to-green-600",
+      accent: "bg-emerald-500"
     },
     {
       title: "Advanced Tools",
       description: "Diagnostic software, disassembly guides, and driver repositories",
-      icon: <Code size={48} className="text-primary" />,
-      color: "from-yellow-500 to-red-600"
+      icon: <Code className="h-16 w-16 text-white" />,
+      color: "from-amber-500 to-yellow-600",
+      accent: "bg-amber-500"
     },
     {
       title: "Ready to Start?",
       description: "Login or register to begin your tech support journey",
-      icon: <Rocket size={48} className="text-primary" />,
-      color: "from-purple-500 to-pink-600"
+      icon: <Rocket className="h-16 w-16 text-white" />,
+      color: "from-purple-500 to-pink-600",
+      accent: "bg-purple-500"
     }
   ];
 
   const currentSlide = slides[currentStep];
 
   return (
-    <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center p-4" style={{ pointerEvents: 'auto' }} onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
       <AnimatePresence mode="wait">
         <motion.div 
           key={currentStep}
-          className="bg-card rounded-xl shadow-2xl max-w-md w-full p-8 relative overflow-hidden"
+          className="bg-card rounded-2xl shadow-2xl max-w-md w-full relative overflow-hidden border border-primary/20"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
           exit="exit"
-          style={{ pointerEvents: 'auto' }}
         >
-          <div className={`absolute inset-0 bg-gradient-to-br ${currentSlide.color} opacity-10`}></div>
+          {/* Gradient background */}
+          <div className={cn(
+            "absolute inset-0 bg-gradient-to-br opacity-20",
+            currentSlide.color
+          )}></div>
           
-          <motion.div 
-            className="flex justify-center mb-6"
-            variants={iconVariants}
-          >
-            {currentSlide.icon}
-          </motion.div>
+          {/* Top colored band */}
+          <div className={cn(
+            "h-2 w-full",
+            currentSlide.accent
+          )}></div>
           
-          <motion.h2 
-            className="text-2xl font-bold text-center mb-4"
-            variants={itemVariants}
-          >
-            {currentSlide.title}
-          </motion.h2>
-          
-          <motion.p 
-            className="text-center text-muted-foreground mb-8"
-            variants={itemVariants}
-          >
-            {currentSlide.description}
-          </motion.p>
-          
-          <div className="flex justify-center mb-6">
-            {slides.map((_, index) => (
-              <motion.div 
-                key={index}
-                className={`h-2 w-2 rounded-full mx-1 ${index === currentStep ? 'bg-primary' : 'bg-muted'}`}
-                initial={{ scale: index === currentStep ? 0 : 1 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.3 }}
-              />
-            ))}
+          <div className="p-8">
+            {/* Icon */}
+            <motion.div 
+              className="flex justify-center mb-8"
+              variants={iconVariants}
+            >
+              <div className={cn(
+                "w-24 h-24 rounded-full flex items-center justify-center bg-gradient-to-br shadow-lg",
+                currentSlide.color
+              )}>
+                {currentSlide.icon}
+              </div>
+            </motion.div>
+            
+            {/* Content */}
+            <motion.h2 
+              className="text-2xl font-bold text-center mb-4 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent"
+              variants={itemVariants}
+            >
+              {currentSlide.title}
+            </motion.h2>
+            
+            <motion.p 
+              className="text-center text-muted-foreground mb-8"
+              variants={itemVariants}
+            >
+              {currentSlide.description}
+            </motion.p>
+            
+            {/* Progress indicators */}
+            <div className="flex justify-center mb-6">
+              {slides.map((_, index) => (
+                <motion.div 
+                  key={index}
+                  className={cn(
+                    "h-1.5 rounded-full mx-1 transition-all duration-300",
+                    index === currentStep 
+                      ? cn("bg-primary w-8", currentSlide.accent) 
+                      : "bg-muted w-4"
+                  )}
+                  initial={{ scale: index === currentStep ? 0 : 1 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.3 }}
+                />
+              ))}
+            </div>
+            
+            {/* Controls */}
+            <div className="flex justify-between items-center">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleContinueClick}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Skip
+              </Button>
+              
+              <Button 
+                onClick={handleNextStep}
+                className={cn(
+                  "rounded-full group",
+                  "bg-gradient-to-r from-primary to-purple-600",
+                  "hover:from-purple-600 hover:to-primary"
+                )}
+              >
+                {currentStep < totalSteps - 1 ? (
+                  <>
+                    Next
+                    <ChevronRight className="ml-1 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                  </>
+                ) : "Get Started"}
+              </Button>
+            </div>
           </div>
-          
-          {/* Skip button has been removed completely */}
         </motion.div>
       </AnimatePresence>
     </div>

@@ -225,16 +225,24 @@ export function Drivers() {
   return (
     <div className="container py-6">
       <div className="text-center">
-        <div>
-          <h1
-            className="text-4xl font-bold text-white mb-0 px-4 py-20 rounded bg-cover bg-center"
-            style={{ backgroundImage: `url(${Panel})`, display: 'block' }}
-          >
-            Drivers/Recovery Images/Firmware
-            <p className="text-xl text-blue-100 mb-8">
-              Find and download the latest drivers/firmwares for your devices
-            </p>
-          </h1>
+        <div className="relative rounded overflow-hidden">
+          <div className="absolute inset-0 z-0">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
+            <img 
+              src={Panel} 
+              alt="Background" 
+              className="absolute inset-0 w-full h-full object-cover object-center opacity-60" 
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+          </div>
+          <div className="relative z-10 px-4 py-20">
+            <h1 className="text-4xl font-bold text-white mb-0">
+              Drivers/Recovery Images/Firmware
+              <p className="text-xl text-blue-50 mb-10 max-w-2xl text-center mx-auto drop-shadow">
+                Find and download the latest drivers/firmwares for your devices
+              </p>
+            </h1>
+          </div>
         </div>
         <div className="flex items-center space-x-4">
           <div className="flex-1">
@@ -338,7 +346,7 @@ export function Drivers() {
                                         <Button
                                           size="sm"
                                           variant="outline"
-                                          className="flex items-center gap-1 w-full text-ellipsis overflow-hidden"
+                                          className="flex items-center gap-1 w-full text-ellipsis overflow-hidden bg-gradient-to-r from-primary/10 to-purple-600/10 hover:from-primary/20 hover:to-purple-600/20 transition-all duration-300"
                                           onClick={() => window.open(file.url, '_blank')}
                                           title={`Download ${file.name}`}
                                         >

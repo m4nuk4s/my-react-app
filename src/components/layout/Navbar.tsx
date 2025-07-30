@@ -1,18 +1,42 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { MenuIcon, User, LogOut } from "lucide-react";
+import { MenuIcon, User, LogOut, ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { EnhancedThemeToggle } from "@/components/ui/enhanced-theme-toggle";
 import { useSettings } from "@/contexts/SettingsContext";
+import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import logo from "@/assets/wtpth/logo.png";
+import { motion } from "framer-motion";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const { settings } = useSettings();
+
+  // Handle scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      const isScrolled = window.scrollY > 10;
+      if (isScrolled !== scrolled) {
+        setScrolled(isScrolled);
+      }
+    };
+    
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [scrolled]);
 
   const navigation = [
     { name: "Windows", href: "/windows" },
@@ -33,82 +57,125 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-background shadow-sm border-b">
+    <motion.nav 
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className={cn(
+        "sticky top-0 z-40 w-full backdrop-blur-md transition-all duration-200",
+        scrolled 
+          ? "bg-background/95 shadow-md border-b" 
+          : "bg-background border-b border-transparent"
+      )}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <Link to="/" className="flex-shrink-0 flex items-center">
-              <img src={logo} alt="Logo" className="h-10 w-10 mr-2" />
-              <span className="text-xl font-bold text-primary">Support Center</span>
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="flex items-center"
+          >
+            <Link to="/" className="flex-shrink-0 flex items-center group">
+              <motion.img 
+                whileHover={{ rotate: 10, scale: 1.1 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                src={logo} 
+                alt="Logo" 
+                className="h-10 w-10 mr-2" 
+              />
+              <span className="text-xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:to-primary transition-all duration-300">Support Center</span>
             </Link>
-          </div>
+          </motion.div>
 
           {/* Desktop navigation */}
-          <div className="hidden md:ml-6 md:flex md:space-x-2 md:items-center">
+          <div className="hidden md:ml-6 md:flex md:space-x-1 md:items-center">
             {/* Show navigation items only when authenticated */}
             {isAuthenticated && (
-              <>
-                {navigation.map((item) => (
-                  <Button
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ staggerChildren: 0.1, delayChildren: 0.2 }}
+                className="flex space-x-1 items-center"
+              >
+                {navigation.map((item, index) => (
+                  <motion.div
                     key={item.name}
-                    asChild
-                    variant={isActive(item.href) ? "default" : "ghost"}
-                    className={isActive(item.href) ? "" : ""}
-                    size="sm"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 * index }}
                   >
-                    <Link to={item.href}>{item.name}</Link>
-                  </Button>
+                    <Button
+                      asChild
+                      variant={isActive(item.href) ? "default" : "ghost"}
+                      className={cn(
+                        "rounded-full px-4 transition-all",
+                        isActive(item.href) 
+                          ? "bg-primary/90 text-primary-foreground hover:bg-primary/80" 
+                          : "hover:bg-accent hover:text-accent-foreground"
+                      )}
+                      size="sm"
+                    >
+                      <Link to={item.href}>{item.name}</Link>
+                    </Button>
+                  </motion.div>
                 ))}
-              </>
+              </motion.div>
             )}
             
-            {/* Theme Toggle button if enabled */}
-            {settings?.showThemeButton && (
-              <EnhancedThemeToggle />
-            )}
+            <div className="flex items-center ml-4 space-x-2">
+              {/* Theme Toggle button if enabled */}
+              {settings?.showThemeButton && (
+                <EnhancedThemeToggle />
+              )}
 
-            {/* Authentication buttons */}
-            {isAuthenticated ? (
-              <>
-                {isAdmin && (
-                  <Button
-                    asChild
-                    variant="destructive"
-                    className="bg-red-600 hover:bg-red-700 text-white font-bold"
-                  >
-                    <Link to="/admin">Admin</Link>
-                  </Button>
-                )}
-                <Button variant="outline" onClick={handleLogout} className="flex items-center">
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
+              {/* Authentication buttons */}
+              {isAuthenticated ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="ml-2 rounded-full border-primary/30 hover:border-primary">
+                      <User className="h-4 w-4 mr-2 text-primary" />
+                      <span className="max-w-[100px] truncate">{user?.username}</span>
+                      <ChevronDown className="h-4 w-4 ml-1 opacity-70" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 animate-in fade-in-80 shadow-lg">
+                    {isAdmin && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin" className="w-full cursor-pointer text-red-600 font-semibold">
+                          Admin Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button
+                  asChild
+                  variant="default"
+                  size="sm"
+                  className="rounded-full bg-gradient-to-r from-primary to-purple-600 hover:from-purple-600 hover:to-primary transition-all duration-300"
+                >
+                  <Link to="/login">Login</Link>
                 </Button>
-                <div className="flex items-center ml-2 text-sm font-medium">
-                  <User className="h-4 w-4 mr-1" />
-                  {user?.username}
-                </div>
-              </>
-            ) : (
-              <Button
-                asChild
-                variant={isActive("/login") ? "default" : "outline"}
-                className={isActive("/login") ? "" : ""}
-              >
-                <Link to="/login">Login</Link>
-              </Button>
-            )}
+              )}
+            </div>
           </div>
 
           {/* Mobile menu button */}
           <div className="flex items-center md:hidden">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="rounded-full">
                   <MenuIcon className="h-6 w-6" />
                   <span className="sr-only">Open menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+              <SheetContent side="right" className="w-[300px] sm:w-[400px] border-l border-primary/20">
                 <div className="mt-6 flow-root">
                   <div className="py-4">
                     <div className="flex flex-col gap-2">
@@ -120,7 +187,12 @@ export default function Navbar() {
                               key={item.name}
                               asChild
                               variant={isActive(item.href) ? "default" : "ghost"}
-                              className="justify-start"
+                              className={cn(
+                                "justify-start",
+                                isActive(item.href) 
+                                  ? "bg-primary/90 text-primary-foreground" 
+                                  : ""
+                              )}
                               onClick={() => setIsOpen(false)}
                             >
                               <Link to={item.href}>{item.name}</Link>
@@ -131,25 +203,25 @@ export default function Navbar() {
                       
                       {/* Theme toggle button for mobile if enabled */}
                       {settings?.showThemeButton && (
-                        <div className="flex justify-start px-3 py-2">
+                        <div className="flex items-center px-3 py-2">
                           <EnhancedThemeToggle />
-                          <span className="ml-2">Toggle theme</span>
+                          <span className="ml-2 text-sm font-medium">Toggle theme</span>
                         </div>
                       )}
                         
                       {/* Auth buttons for mobile */}
-                      <div className="pt-4 mt-4 border-t border-gray-200">
+                      <div className="pt-4 mt-4 border-t border-primary/20">
                         {isAuthenticated ? (
                           <>
                             <div className="flex items-center px-3 py-2 text-sm font-medium mb-2">
-                              <User className="h-4 w-4 mr-2" />
-                              {user?.username}
+                              <User className="h-4 w-4 mr-2 text-primary" />
+                              <span className="max-w-[200px] truncate">{user?.username}</span>
                             </div>
                             {isAdmin && (
                               <Button
                                 asChild
                                 variant="destructive"
-                                className="justify-start bg-red-600 hover:bg-red-700 text-white font-bold"
+                                className="justify-start w-full font-bold"
                                 onClick={() => setIsOpen(false)}
                               >
                                 <Link to="/admin">Admin Dashboard</Link>
@@ -167,8 +239,8 @@ export default function Navbar() {
                         ) : (
                           <Button
                             asChild
-                            variant={isActive("/login") ? "default" : "outline"}
-                            className={`w-full justify-start ${isActive("/login") ? "bg-blue-600 text-white" : ""}`}
+                            variant="default"
+                            className="w-full justify-start bg-gradient-to-r from-primary to-purple-600"
                             onClick={() => setIsOpen(false)}
                           >
                             <Link to="/login">Login</Link>
@@ -183,6 +255,6 @@ export default function Navbar() {
           </div>
         </div>
       </div>
-    </nav>
+    </motion.nav>
   );
 }
