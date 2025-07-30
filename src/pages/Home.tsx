@@ -220,7 +220,7 @@ export default function Home() {
             size="lg"
             className="rounded-full bg-gradient-to-r from-primary to-purple-600 hover:from-purple-600 hover:to-primary transition-all duration-300 shadow-lg"
           >
-            <Link to="/guides">Explore Resources</Link>
+            <Link to="/drivers">Explore Resources</Link>
           </Button>
         </div>
       </motion.section>

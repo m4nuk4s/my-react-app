@@ -386,19 +386,7 @@ export default function Requests() {
         </CardFooter>
       </Card>
 
-      <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Email Support</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-600 mb-4">
-              For direct support, you can also email us at:
-            </p>
-            <p className="font-medium">support@example.com</p>
-          </CardContent>
-        </Card>
-
+      <div className="mt-10">
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Response Time</CardTitle>
@@ -408,16 +396,6 @@ export default function Requests() {
               We typically respond to all requests within 24-48 hours during business
               days.
             </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Support</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-600 mb-4">For support requiring immediate attention:</p>
-            <p className="font-medium">Call: +1 (800) 123-4567</p>
           </CardContent>
         </Card>
       </div>

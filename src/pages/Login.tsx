@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Mail, Lock, User, AlertCircle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import Panel from "@/assets/wtpth/panel.jpg";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -121,18 +122,27 @@ export default function Login() {
       {showWelcomeAnimation && (
         <AnimatedWelcome onContinue={handleWelcomeComplete} />
       )}
-      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background to-background/80">
+      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative">
+        <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
+          <img 
+            src={Panel} 
+            alt="Background" 
+            className="absolute inset-0 w-full h-full object-cover object-center opacity-60" 
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+        </div>
         <motion.div 
-          className="w-full max-w-md space-y-8"
+          className="w-full max-w-md space-y-8 relative z-10"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
           <motion.div variants={itemVariants} className="text-center">
-            <h1 className="text-3xl font-bold tracking-tight mb-2 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-bold tracking-tight mb-3 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent drop-shadow-lg transition-all duration-300 hover:scale-105 cursor-default">
               Welcome Back
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-white font-medium drop-shadow">
               Login or create an account to access Tech Support resources
             </p>
           </motion.div>
@@ -140,7 +150,7 @@ export default function Login() {
           {/* Redirect notice */}
           {location.state?.from && location.state.from !== '/' && (
             <motion.div variants={itemVariants}>
-              <Alert variant="warning" className="bg-amber-50/50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800">
+              <Alert variant="warning" className="bg-amber-50/70 dark:bg-amber-950/70 border border-amber-200 dark:border-amber-800 backdrop-blur-sm">
                 <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                 <AlertDescription>
                   You need to login to access <strong>{location.state.from}</strong>
@@ -150,7 +160,7 @@ export default function Login() {
           )}
 
           <motion.div variants={itemVariants}>
-            <Card className="border-primary/10 shadow-lg bg-card/95 backdrop-blur-sm">
+            <Card className="border-primary/20 shadow-xl bg-card/95 backdrop-blur-sm">
               <CardHeader className="pb-4">
                 <CardDescription>
                   Access your tech support account
