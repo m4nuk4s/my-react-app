@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocation } from "react-router-dom";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import GuideAssistant from "@/components/GuideAssistant";
@@ -9,6 +10,9 @@ interface LayoutProps {
 }
 
 export default function Layout({ children }: LayoutProps) {
+  const location = useLocation();
+  const isLoginPage = location.pathname === '/login';
+
   // Animation variants for page transitions
   const pageVariants = {
     initial: {
@@ -43,7 +47,7 @@ export default function Layout({ children }: LayoutProps) {
         </motion.main>
       </AnimatePresence>
       <Footer />
-      <GuideAssistant />
+      {!isLoginPage && <GuideAssistant />}
     </div>
   );
 }

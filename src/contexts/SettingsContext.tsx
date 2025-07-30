@@ -9,8 +9,8 @@ type Settings = {
 
 // Default settings
 const defaultSettings: Settings = {
-  showGuideAssistant: true,
-  assistantEnabled: true,
+  showGuideAssistant: false,
+  assistantEnabled: false,
   showThemeButton: false,
 };
 

@@ -391,7 +391,7 @@ export default function TestTools() {
             our technical support team is ready to help.
           </p>
           <Button asChild>
-            <a href="/requests">Get Technical Support</a>
+            <Link to="/requests">Get Technical Support</Link>
           </Button>
         </div>
       </div>
