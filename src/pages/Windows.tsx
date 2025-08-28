@@ -259,7 +259,12 @@ export default function Windows() {
                             <Send className="mr-2 h-4 w-4" /> Request Windows
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-[500px]">
+						
+<Button asChild variant="default" className="w-full mt-2">
+  <a href="http://gofile.me/5wnJP/iR1i1ILRr" download>
+    Download Windows 11
+  </a>
+</Button>                    <DialogContent className="sm:max-w-[500px]">
                           <DialogHeader>
                             <DialogTitle>Request Windows 11 ISO</DialogTitle>
                             <DialogDescription>
@@ -550,6 +555,8 @@ export default function Windows() {
                           <Button className="w-full">
                             <Send className="mr-2 h-4 w-4" /> Request Windows
                           </Button>
+						  
+						  
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[500px]">
                           <DialogHeader>
@@ -558,6 +565,8 @@ export default function Windows() {
                               Fill out this form to request the Windows 10 installation files. We'll send you download instructions via email.
                             </DialogDescription>
                           </DialogHeader>
+						  
+						  
                           
                           {requestSubmitted ? (
                             <div className="py-6 text-center space-y-4">
