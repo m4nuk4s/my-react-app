@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import Panel from "@/assets/wtpth/panel.jpg";
-import logo from "@/assets/wtpth/logo.png";
+import logo from "@/assets/wtpth/Thomson-Logo.png";
 import { motion } from "framer-motion";
 import { ArrowRight, Laptop, Cog, FileText, Wrench, Settings, FileQuestion, Shield, Zap, Library } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -105,14 +105,14 @@ export default function Home() {
             className="flex flex-col items-center"
           >
             <motion.div 
-              whileHover={{ rotate: 5, scale: 1.1 }}
-              transition={{ type: "spring", stiffness: 300, damping: 10 }}
+              whileHover={{ rotate: 0, scale: 1.1 }}
+              transition={{ type: "mass", stiffness: 300, damping: 10 }}
               className="mb-6"
             >
               <img
                 src={logo}
                 alt="Tech Support Logo"
-                className="h-20 w-20 md:h-24 md:w-24 drop-shadow-xl"
+                className="h-70 w-199 md:h-20 md:w-30 drop-shadow-xl"
               />
             </motion.div>
             <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-6 text-center drop-shadow-md">

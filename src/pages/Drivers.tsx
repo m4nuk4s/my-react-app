@@ -244,15 +244,16 @@ export function Drivers() {
             </h1>
           </div>
         </div>
-        <div className="flex items-center space-x-4 mt-6">
-          <div className="flex-1">
-            <Input
-              placeholder="Search drivers..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full"
-            />
-          </div>
+       <div className="flex items-center space-x-4 mt-6">
+  <div className="flex-1">
+    <Input
+      placeholder="🔎 Search drivers..."
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      className="w-full !border !border-red-500 !focus:border-blue-50 !focus:ring-2"
+    />
+  </div>
+
         </div>
         <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid grid-cols-3 md:grid-cols-6 gap-2">

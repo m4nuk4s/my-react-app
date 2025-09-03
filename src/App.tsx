@@ -11,6 +11,7 @@ import Drivers from './pages/Drivers';
 import Guides from './pages/Guides';
 import TestTools from './pages/TestTools';
 import Requests from './pages/Requests';
+import Docs from './pages/Docs';
 import NotFound from './pages/NotFound';
 import Login from './pages/Login';
 import DisassemblyGuides from './pages/DisassemblyGuides';
@@ -48,6 +49,7 @@ const App = () => (
                   <Route path="/windows11" element={<ProtectedRoute>{<Navigate to="/windows" state={{ tab: "win11" }} />}</ProtectedRoute>} />
                   <Route path="/drivers" element={<ProtectedRoute>{<Drivers />}</ProtectedRoute>} />
                   <Route path="/guides" element={<ProtectedRoute>{<Guides />}</ProtectedRoute>} />
+                  <Route path="/docs" element={<ProtectedRoute>{<Docs />}</ProtectedRoute>} />
                   <Route path="/test-tools" element={<ProtectedRoute>{<TestTools />}</ProtectedRoute>} />
                   <Route path="/requests" element={<ProtectedRoute>{<Requests />}</ProtectedRoute>} />
                   <Route path="/disassembly-guides" element={<ProtectedRoute>{<DisassemblyGuides />}</ProtectedRoute>} />

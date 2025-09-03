@@ -31,7 +31,7 @@ export default function Navbar() {
         setScrolled(isScrolled);
       }
     };
-    
+
     window.addEventListener("scroll", handleScroll);
     return () => {
       window.removeEventListener("scroll", handleScroll);
@@ -39,12 +39,13 @@ export default function Navbar() {
   }, [scrolled]);
 
   const navigation = [
-    { name: "Windows", href: "/windows" },
-    { name: "Drivers", href: "/drivers" },
-    { name: "Guides", href: "/guides" },
-    { name: "Disassembly Guides", href: "/disassembly-guides" },
-    { name: "Test Tools", href: "/test-tools" },
-    { name: "Requests", href: "/requests" },
+    { name: "💻Windows", href: "/windows" },
+    { name: "🛠️Drivers", href: "/drivers" },
+    { name: "🗒Guides", href: "/guides" },
+    { name: "📜Docs", href: "/docs" },
+    { name: "🪛Disassembly Guides", href: "/disassembly-guides" },
+    { name: "📊Test Tools", href: "/test-tools" },
+    { name: "❓Requests", href: "/requests" },
   ];
 
   const isActive = (path: string) => {
@@ -57,117 +58,132 @@ export default function Navbar() {
   };
 
   return (
-    <motion.nav 
+    <motion.nav
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className={cn(
         "sticky top-0 z-40 w-full backdrop-blur-md transition-all duration-200",
-        scrolled 
-          ? "bg-background/95 shadow-md border-b" 
+        scrolled
+          ? "bg-background/95 shadow-md border-b"
           : "bg-background border-b border-transparent"
       )}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <motion.div 
+      <div className="w-full px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center relative w-full">
+          {/* Left: Logo + Support Center */}
+          <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="flex items-center"
+            className="flex items-center absolute left-4"
           >
             <Link to="/" className="flex-shrink-0 flex items-center group">
-              <motion.img 
-                whileHover={{ rotate: 10, scale: 1.1 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                src={logo} 
-                alt="Logo" 
-                className="h-10 w-10 mr-2" 
+              <motion.img
+                whileHover={{ rotate: 0, scale: 1.1 }}
+                transition={{ type: "mass", stiffness: 400, damping: 10 }}
+                src={logo}
+                alt="Logo"
+                className="h-10 w-10 mr-2"
               />
-              <span className="text-xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:to-primary transition-all duration-300">Support Center</span>
+              <span className="text-xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:to-primary transition-all duration-300">
+                Support Center
+              </span>
             </Link>
           </motion.div>
 
-          {/* Desktop navigation */}
-          <div className="hidden md:ml-6 md:flex md:space-x-1 md:items-center">
-            {/* Show navigation items only when authenticated */}
-            {isAuthenticated && (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ staggerChildren: 0.1, delayChildren: 0.2 }}
-                className="flex space-x-1 items-center"
-              >
-                {navigation.map((item, index) => (
-                  <motion.div
-                    key={item.name}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 * index }}
-                  >
-                    <Button
-                      asChild
-                      variant={isActive(item.href) ? "default" : "ghost"}
-                      className={cn(
-                        "rounded-full px-4 transition-all",
-                        isActive(item.href) 
-                          ? "bg-primary/90 text-primary-foreground hover:bg-primary/80" 
-                          : "hover:bg-accent hover:text-accent-foreground"
-                      )}
-                      size="sm"
+          {/* Center: Navigation + Auth */}
+          <div className="flex-1 flex justify-center items-center">
+            <div className="hidden md:flex md:space-x-1 md:items-center">
+              {isAuthenticated && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ staggerChildren: 0.1, delayChildren: 0.2 }}
+                  className="flex space-x-1 items-center"
+                >
+                  {navigation.map((item, index) => (
+                    <motion.div
+                      key={item.name}
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 * index }}
                     >
-                      <Link to={item.href}>{item.name}</Link>
-                    </Button>
-                  </motion.div>
-                ))}
-              </motion.div>
-            )}
-            
-            <div className="flex items-center ml-4 space-x-2">
-              {/* Theme Toggle button if enabled */}
-              {settings?.showThemeButton && (
-                <EnhancedThemeToggle />
+                      <Button
+                        asChild
+                        variant={isActive(item.href) ? "default" : "ghost"}
+                        className={cn(
+                          "rounded-full px-4 transition-all",
+                          isActive(item.href)
+                            ? "bg-primary/90 text-primary-foreground hover:bg-primary/80"
+                            : "hover:bg-accent hover:text-accent-foreground"
+                        )}
+                        size="sm"
+                      >
+                        <Link to={item.href}>{item.name}</Link>
+                      </Button>
+                    </motion.div>
+                  ))}
+                </motion.div>
               )}
 
-              {/* Authentication buttons */}
-              {isAuthenticated ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="ml-2 rounded-full border-primary/30 hover:border-primary">
-                      <User className="h-4 w-4 mr-2 text-primary" />
-                      <span className="max-w-[100px] truncate">{user?.username}</span>
-                      <ChevronDown className="h-4 w-4 ml-1 opacity-70" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56 animate-in fade-in-80 shadow-lg">
-                    {isAdmin && (
-                      <DropdownMenuItem asChild>
-                        <Link to="/admin" className="w-full cursor-pointer text-red-600 font-semibold">
-                          Admin Dashboard
-                        </Link>
+              <div className="flex items-center ml-4 space-x-2">
+                {settings?.showThemeButton && <EnhancedThemeToggle />}
+
+                {isAuthenticated ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="ml-2 rounded-full border-primary/30 hover:border-primary"
+                      >
+                        <User className="h-4 w-4 mr-2 text-primary" />
+                        <span className="max-w-[100px] truncate">
+                          {user?.username}
+                        </span>
+                        <ChevronDown className="h-4 w-4 ml-1 opacity-70" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      className="w-56 animate-in fade-in-80 shadow-lg"
+                    >
+                      {isAdmin && (
+                        <DropdownMenuItem asChild>
+                          <Link
+                            to="/admin"
+                            className="w-full cursor-pointer text-red-600 font-semibold"
+                          >
+                            Admin Dashboard
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem
+                        onClick={handleLogout}
+                        className="cursor-pointer"
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Logout
                       </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Logout
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Button
-                  asChild
-                  variant="default"
-                  size="sm"
-                  className="rounded-full bg-gradient-to-r from-primary to-purple-600 hover:from-purple-600 hover:to-primary transition-all duration-300"
-                >
-                  <Link to="/login">Login</Link>
-                </Button>
-              )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <Button
+                    asChild
+                    variant="default"
+                    size="sm"
+                    className="rounded-full bg-gradient-to-r from-primary to-purple-600 hover:from-purple-600 hover:to-primary transition-all duration-300"
+                  >
+                    <Link to="/login">Login</Link>
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Mobile menu button */}
-          <div className="flex items-center md:hidden">
+          {/* Right: Mobile menu button */}
+          <div className="flex items-center md:hidden absolute right-4">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
@@ -175,11 +191,13 @@ export default function Navbar() {
                   <span className="sr-only">Open menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] sm:w-[400px] border-l border-primary/20">
+              <SheetContent
+                side="right"
+                className="w-[300px] sm:w-[400px] border-l border-primary/20"
+              >
                 <div className="mt-6 flow-root">
                   <div className="py-4">
                     <div className="flex flex-col gap-2">
-                      {/* Show navigation items only when authenticated */}
                       {isAuthenticated && (
                         <>
                           {navigation.map((item) => (
@@ -189,8 +207,8 @@ export default function Navbar() {
                               variant={isActive(item.href) ? "default" : "ghost"}
                               className={cn(
                                 "justify-start",
-                                isActive(item.href) 
-                                  ? "bg-primary/90 text-primary-foreground" 
+                                isActive(item.href)
+                                  ? "bg-primary/90 text-primary-foreground"
                                   : ""
                               )}
                               onClick={() => setIsOpen(false)}
@@ -200,22 +218,24 @@ export default function Navbar() {
                           ))}
                         </>
                       )}
-                      
-                      {/* Theme toggle button for mobile if enabled */}
+
                       {settings?.showThemeButton && (
                         <div className="flex items-center px-3 py-2">
                           <EnhancedThemeToggle />
-                          <span className="ml-2 text-sm font-medium">Toggle theme</span>
+                          <span className="ml-2 text-sm font-medium">
+                            Toggle theme
+                          </span>
                         </div>
                       )}
-                        
-                      {/* Auth buttons for mobile */}
+
                       <div className="pt-4 mt-4 border-t border-primary/20">
                         {isAuthenticated ? (
                           <>
                             <div className="flex items-center px-3 py-2 text-sm font-medium mb-2">
                               <User className="h-4 w-4 mr-2 text-primary" />
-                              <span className="max-w-[200px] truncate">{user?.username}</span>
+                              <span className="max-w-[200px] truncate">
+                                {user?.username}
+                              </span>
                             </div>
                             {isAdmin && (
                               <Button
