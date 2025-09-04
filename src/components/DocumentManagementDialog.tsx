@@ -112,11 +112,11 @@ const DocumentManagementDialog = ({
   ];
 
   const categories = [
-    { value: 'general', label: 'General' },
-    { value: 'guides', label: 'Guides' },
-    { value: 'templates', label: 'Templates' },
+    { value: 'General', label: 'General' },
+    { value: 'Guides', label: 'Guides' },
+    { value: 'Templates', label: 'Templates' },
     { value: 'Reworks', label: 'Reworks' },
-    { value: 'manuals', label: 'Manuals' },
+    { value: 'Manual', label: 'Manuals' },
     { value: 'Issue FIX', label: 'Issue FIX' }
   ];
 

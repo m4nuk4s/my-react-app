@@ -278,7 +278,7 @@ const Docs = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Documents</h1>
           <p className="text-muted-foreground mt-1">
-            Available Document 
+            Available Documents 
           </p>
           {error && (
             <p className="text-red-500 text-sm mt-2">
@@ -290,7 +290,7 @@ const Docs = () => {
        <div className="relative">
   <Input
     type="search"
-    placeholder="🔍 Search documents..."
+    placeholder="🔍 Search Documents..."
     className="pl-2 w-[200px] sm:w-[300px] !border !border-red-500 !focus:border-red-500 !focus:ring-0"
     value={searchTerm}
     onChange={(e) => setSearchTerm(e.target.value)}
@@ -333,12 +333,12 @@ const Docs = () => {
           </TabsList>
           
           <TabsContent value={activeCategory} className="mt-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1">
               {filteredDocuments.length > 0 ? (
                 filteredDocuments.map((document) => (
                   <Card key={document.id} className="hover:shadow-lg transition-shadow">
                     <CardHeader className="pb-3">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         {getFileIcon(document.type)}
                         <CardTitle className="text-lg line-clamp-2">{document.title}</CardTitle>
                       </div>
@@ -364,7 +364,7 @@ const Docs = () => {
                         </div>
                       )}
                     </CardContent>
-                    <CardFooter className="flex justify-between gap-2">
+                    <CardFooter className="flex justify-center gap-1">
                       <Button 
                         variant="default" 
                         size="sm" 

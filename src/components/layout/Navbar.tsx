@@ -128,7 +128,7 @@ export default function Navbar() {
               )}
 
               <div className="flex items-center ml-4 space-x-2">
-                {settings?.showThemeButton && <EnhancedThemeToggle />}
+                <EnhancedThemeToggle />
 
                 {isAuthenticated ? (
                   <DropdownMenu>
@@ -219,14 +219,12 @@ export default function Navbar() {
                         </>
                       )}
 
-                      {settings?.showThemeButton && (
-                        <div className="flex items-center px-3 py-2">
-                          <EnhancedThemeToggle />
-                          <span className="ml-2 text-sm font-medium">
-                            Toggle theme
-                          </span>
-                        </div>
-                      )}
+                      <div className="flex items-center px-3 py-2">
+                        <EnhancedThemeToggle />
+                        <span className="ml-2 text-sm font-medium">
+                          Toggle theme
+                        </span>
+                      </div>
 
                       <div className="pt-4 mt-4 border-t border-primary/20">
                         {isAuthenticated ? (

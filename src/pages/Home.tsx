@@ -128,16 +128,27 @@ export default function Home() {
                 size="lg"
                 className="rounded-full bg-gradient-to-r from-primary to-purple-600 hover:from-purple-600 hover:to-primary transition-all duration-300 shadow-lg"
               >
-                <Link to="/guides">Browse Guides</Link>
+                <Link to="/guides">🗒Browse Guides</Link>
               </Button>
               <Button 
                 asChild 
                 size="lg"
                 className="rounded-full bg-gradient-to-r from-purple-600 to-primary hover:from-primary hover:to-purple-600 transition-all duration-300 shadow-lg"
               >
-                <Link to="/requests">Get Support</Link>
+                <Link to="/requests">❓Get Support</Link>
               </Button>
+			  
+			   <Button 
+                asChild 
+                size="lg"
+                className="rounded-full bg-gradient-to-r from-purple-600 to-primary hover:from-primary hover:to-purple-600 transition-all duration-300 shadow-lg"
+              >
+                <Link to="/docs">📜Documents</Link>
+              </Button>
+			  
             </div>
+			
+
           </motion.div>
         </div>
       </motion.section>
