@@ -10,6 +10,7 @@ import { FileText, Eye, Search, Loader2, Plus, Edit, Trash2 } from 'lucide-react
 import { supabase } from '@/lib/supabase';
 import { fetchDocuments, deleteDocument, Document } from '@/lib/supabase-docs';
 import DocumentManagementDialog from '@/components/DocumentManagementDialog';
+import BackVideo from "@/assets/wtpth/backvi.mp4"; // Import the video
 import {
   AlertDialog,
   AlertDialogAction,
@@ -273,198 +274,228 @@ const Docs = () => {
   }
 
   return (
-    <div className="container py-8 max-w-6xl mx-auto">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Documents</h1>
-          <p className="text-muted-foreground mt-1">
-            Available Documents 
-          </p>
-          {error && (
-            <p className="text-red-500 text-sm mt-2">
-              {error}
-            </p>
-          )}
-        </div>
-        <div className="flex items-center gap-2 mt-4 md:mt-0">
-       <div className="relative">
-  <Input
-    type="search"
-    placeholder="🔍 Search Documents..."
-    className="pl-2 w-[200px] sm:w-[300px] !border !border-red-500 !focus:border-red-500 !focus:ring-0"
-    value={searchTerm}
-    onChange={(e) => setSearchTerm(e.target.value)}
-  />
-</div>
-          {isAdmin && (
-            <Button 
-              onClick={() => setIsAddDialogOpen(true)}
-              size="sm"
-              className="ml-2"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Document
-            </Button>
-          )}
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={loadDocuments}
-            disabled={loading}
+    <div>
+      {/* Hero Section */}
+      <div className="relative overflow-hidden text-center">
+        <div className="absolute inset-0 z-0">
+          <video
+            className="absolute inset-0 w-full h-full object-cover object-center opacity-60"
+            autoPlay
+            loop
+            muted
+            playsInline
           >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Refresh'}
-          </Button>
+            <source src={BackVideo} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 py-20">
+          <h1 className="text-5xl font-bold text-white">
+            Technical Documents
+          </h1>
+          <p className="text-xl text-blue-50 mt-2 max-w-2xl text-center mx-auto drop-shadow">
+            Access guides, reference tools, and templates for all your technical needs.
+          </p>
         </div>
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <span className="ml-2">Loading documents...</span>
-        </div>
-      ) : (
-        <Tabs defaultValue="all" value={activeCategory} onValueChange={setActiveCategory}>
-          <TabsList className="mb-6">
-            {categories.map(category => (
-              <TabsTrigger key={category} value={category}>
-                {category === 'all' ? 'All Documents' : category.charAt(0).toUpperCase() + category.slice(1)}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          
-          <TabsContent value={activeCategory} className="mt-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1">
-              {filteredDocuments.length > 0 ? (
-                filteredDocuments.map((document) => (
-                  <Card key={document.id} className="hover:shadow-lg transition-shadow">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center gap-1">
-                        {getFileIcon(document.type)}
-                        <CardTitle className="text-lg line-clamp-2">{document.title}</CardTitle>
-                      </div>
-                      <CardDescription className="mt-2 line-clamp-3">{document.desc}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="pb-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">
-                          {document.type.toUpperCase()}
-                          {document.fileSize && ` • ${document.fileSize}`}
-                        </span>
-                        {document.dateAdded && (
-                          <span className="text-muted-foreground">
-                            {new Date(document.dateAdded).toLocaleDateString()}
-                          </span>
-                        )}
-                      </div>
-                      {document.category && (
-                        <div className="mt-2">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                            {document.category}
-                          </span>
-                        </div>
-                      )}
-                    </CardContent>
-                    <CardFooter className="flex justify-center gap-1">
-                      <Button 
-                        variant="default" 
-                        size="sm" 
-                        onClick={() => handlePreviewDocument(document)}
-                        className="flex-1"
-                      >
-                        <Eye className="mr-2 h-4 w-4" />
-                        Preview
-                      </Button>
-                      {isAdmin && (
-                        <div className="flex gap-1">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditDocument(document)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDeleteDocument(document)}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
-                    </CardFooter>
-                  </Card>
-                ))
-              ) : (
-                <div className="col-span-full text-center py-8">
-                  <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-xl font-medium">No documents found</h3>
-                  <p className="text-muted-foreground mt-2">
-                    {searchTerm ? 'Try a different search term or category' : 'There are no documents in the database'}
-                  </p>
-                  {!error && isAdmin && (
-                    <Button 
-                      onClick={() => setIsAddDialogOpen(true)}
-                      className="mt-4"
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add First Document
-                    </Button>
-                  )}
-                </div>
-              )}
+      {/* Main Content */}
+      <div className="container py-10 max-w-6xl mx-auto">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Document Library</h2>
+            <p className="text-muted-foreground mt-1">
+              Search, filter, and manage all available documents.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 mt-4 md:mt-0">
+            <div className="relative">
+              
+              <Input
+                type="search"
+                placeholder="🔎Search Documents..."
+                className="pl-9 w-[200px] sm:w-[300px]"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
-          </TabsContent>
-        </Tabs>
-      )}
-
-      {/* Add Document Dialog */}
-      <DocumentManagementDialog
-        isOpen={isAddDialogOpen}
-        onClose={() => setIsAddDialogOpen(false)}
-        onSuccess={handleDialogSuccess}
-        mode="add"
-      />
-
-      {/* Edit Document Dialog */}
-      <DocumentManagementDialog
-        isOpen={isEditDialogOpen}
-        onClose={() => {
-          setIsEditDialogOpen(false);
-          setSelectedDocument(null);
-        }}
-        onSuccess={handleDialogSuccess}
-        document={selectedDocument}
-        mode="edit"
-      />
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the document
-              "{selectedDocument?.title}" from the database.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => {
-              setIsDeleteDialogOpen(false);
-              setSelectedDocument(null);
-            }}>
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDeleteDocument}
-              className="bg-red-600 hover:bg-red-700"
+            {isAdmin && (
+              <Button 
+                onClick={() => setIsAddDialogOpen(true)}
+                size="sm"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Document
+              </Button>
+            )}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={loadDocuments}
+              disabled={loading}
             >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Refresh'}
+            </Button>
+          </div>
+        </div>
+
+        {error && (
+            <p className="text-red-500 text-sm mb-4 text-center bg-red-50 p-3 rounded-md">
+              {error}
+            </p>
+          )}
+
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <span className="ml-2">Loading documents...</span>
+          </div>
+        ) : (
+          <Tabs defaultValue="all" value={activeCategory} onValueChange={setActiveCategory}>
+            <TabsList className="mb-6">
+              {categories.map(category => (
+                <TabsTrigger key={category} value={category}>
+                  {category === 'all' ? 'All Documents' : category.charAt(0).toUpperCase() + category.slice(1)}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            
+            <TabsContent value={activeCategory} className="mt-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                {filteredDocuments.length > 0 ? (
+                  filteredDocuments.map((document) => (
+                    <Card key={document.id} className="hover:shadow-lg transition-shadow flex flex-col">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start gap-3">
+                          {getFileIcon(document.type)}
+                          <CardTitle className="text-lg leading-snug">{document.title}</CardTitle>
+                        </div>
+                        <CardDescription className="mt-2 line-clamp-3 h-[60px]">{document.desc}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="pb-3 flex-grow">
+                        <div className="flex items-center justify-between text-sm text-muted-foreground">
+                          <span>
+                            {document.type.toUpperCase()}
+                            {document.fileSize && ` • ${document.fileSize}`}
+                          </span>
+                          {document.dateAdded && (
+                            <span>
+                              {new Date(document.dateAdded).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
+                        {document.category && (
+                          <div className="mt-2">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                              {document.category}
+                            </span>
+                          </div>
+                        )}
+                      </CardContent>
+                      <CardFooter className="flex justify-center gap-2">
+                        <Button 
+                          variant="default" 
+                          size="sm" 
+                          onClick={() => handlePreviewDocument(document)}
+                          className="flex-1"
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          Preview
+                        </Button>
+                        {isAdmin && (
+                          <div className="flex gap-1">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => handleEditDocument(document)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => handleDeleteDocument(document)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </CardFooter>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="col-span-full text-center py-8">
+                    <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-xl font-medium">No documents found</h3>
+                    <p className="text-muted-foreground mt-2">
+                      {searchTerm ? 'Try a different search term or category' : 'There are no documents in this category'}
+                    </p>
+                    {isAdmin && (
+                      <Button 
+                        onClick={() => setIsAddDialogOpen(true)}
+                        className="mt-4"
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add First Document
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+        )}
+
+        {/* Add Document Dialog */}
+        <DocumentManagementDialog
+          isOpen={isAddDialogOpen}
+          onClose={() => setIsAddDialogOpen(false)}
+          onSuccess={handleDialogSuccess}
+          mode="add"
+        />
+
+        {/* Edit Document Dialog */}
+        <DocumentManagementDialog
+          isOpen={isEditDialogOpen}
+          onClose={() => {
+            setIsEditDialogOpen(false);
+            setSelectedDocument(null);
+          }}
+          onSuccess={handleDialogSuccess}
+          document={selectedDocument}
+          mode="edit"
+        />
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the document
+                "{selectedDocument?.title}" from the database.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => {
+                setIsDeleteDialogOpen(false);
+                setSelectedDocument(null);
+              }}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDeleteDocument}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </div>
   );
 };

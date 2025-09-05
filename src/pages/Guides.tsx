@@ -9,7 +9,7 @@ import Accordion from 'react-bootstrap/Accordion';
 import 'bootstrap/dist/css/bootstrap.min.css'; // Ensure this is loaded in your app
 import fnImg from '../assets/wtpth/fn.jpg';
 import mtImg from '../assets/wtpth/mute.jpg';
-import panelImage from '@/assets/wtpth/panel.jpg';
+import BackVideo from "@/assets/wtpth/backvi.mp4"; // Import the video
 import camimg from '../assets/wtpth/cam.jpg';
 import btimg from '../assets/wtpth/bt.jpg';
 import micimg from '../assets/wtpth/mic.jpg';
@@ -18,200 +18,150 @@ import fnesc from '../assets/wtpth/fnesc.jpg';
 import nlk from '../assets/wtpth/nlk.jpg';
 import plane from '../assets/wtpth/plane.jpg';
 
-
-
-
-
-
-
-
-
 export default function Guides() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
   const guides = [
-
-
-
-
-{// ID 1
-  id: 1,
-  title: "🔇No sound is produced",
-  category: "Hardware",
-  difficulty: "easy",
-
-  time: "10 minutes",
+	{// ID 1
+	  id: 1,
+	  title: "🔇No sound is produced",
+	  category: "Hardware",
+	  difficulty: "easy",
+	  time: "10 minutes",
 	  description:
 		"This page summarizes the steps to be followed in the case of a sound malfunction.\n\nYou can carry out level 1 steps directly with the customer (remote or face-to-face).	\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center."
-    
-
-},
-{// ID 2 
-      id: 2,
-      title: "Camera doesn't work",
-      category: "Hardware",
-      difficulty: "moderate",
-      time: "10 minutes",
-      description: "This page summarizes the steps to be followed in the case of a camera malfunction. You can carry out level 1 steps directly with the customer (remote or face-to-face). \n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.  ",
-      thumbnail: "",
-     
-    },
-{// ID 3	
-      id: 3,
-      title: "Device can't connect to Bluetooth",
-      category: "Hardware",
-      difficulty: "moderate",
-      time: "10 minutes",
-      description: "This page summarizes the steps to be followed in the case of a bluetooth malfunction. \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
-     
-     
-    },
-{// ID 4	
-      id: 4,
-      title: "Device doesn't start up correctly",
-      category: "Hardware",
-      difficulty: "moderate",
-      time: "10 minutes",
-      description: "This page summarizes the steps to be followed in the case of a bluetooth malfunction. \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
-     
-     
-    },
-{// ID 5	
-      id: 5,
-      title: "Microphone doesn't work",
-      category: "Hardware",
-      difficulty: "moderate",
-      time: "15 minutes",
-      description: "This page summarizes the steps to be followed in the case of a microphone malfunction. \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
-     
-     
-    },
-{// ID 6	
-      id: 6,
-      title: "Screen doesn't work",
-      category: "Hardware",
-      difficulty: "hard",
-      time: "20 minutes",
-      description: "This page summarizes the steps to be followed in the case of a screen malfunction.  \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
-     
-     
-    },
-{// ID 7	
-      id: 7,
-      title: "Touchpad doesn't work",
-      category: "Hardware",
-      difficulty: "moderate",
-      time: "20 minutes",
-      description: "This page summarizes the steps to be followed in the case of a touchpad malfunction. \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
-     
-     
-    },
-{// ID 8	
-      id: 8,
-      title: "Keyboard doesn't work",
-      category: "Hardware",
-      difficulty: "easy",
-      time: "10 minutes",
-      description: "This page summarizes the steps to be followed in the case of a Keyboard malfunction. \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
-     
-     
-    },
-{// ID 9	
-      id: 9,
-      title: "Device can't connect to Wi-Fi or a network",
-      category: "Hardware",
-      difficulty: "easy",
-      time: "10 minutes",
-      description: "This page summarizes the steps to be followed in the case of a  Wi-Fi  malfunction. \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
-     
-     
-    },
-{// ID 10	
-      id: 10,
-      title: "Device doesn't switch on",
-      category: "Hardware",
-      difficulty: "moderate",
-      time: "20 minutes",
-      description: "This page summarizes the steps to be followed in the case of a power on/off  malfunction. \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
-     
-     
-    },
-{// ID 11	
-      id: 11,
-      title: "Device doesn't recharge. Battery life is limited",
-      category: "Hardware",
-      difficulty: "moderate",
-      time: "10 minutes",
-      description: "This page summarizes the steps to be followed in the case of a battery charging  malfunction. \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
-     
-     
-    },
-{// ID 12	
-      id: 12,
-      title: "Device turns off unexpectedly",
-      category: "Hardware",
-      difficulty: "moderate",
-      time: "10 minutes",
-      description: "This page summarizes the steps to be followed in the case of a device malfunction. . \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
-     
-     
-    },
-{// ID 13	
-      id: 13,
-      title: "Windows doesn't activate",
-      category: "software",
-      difficulty: "easy",
-      time: "5 minutes",
-      description: "This page summarizes the steps to be followed in the case of a Windows Activation malfunction. \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
-     
-     
-    },
-{// ID 14	
-      id: 14,
-      title: "Windows runs abnormally",
-      category: "Windows",
-      difficulty: "easy",
-      time: "5 minutes",
-      description: "This page summarizes the steps to be followed in the case of a Windows malfunction. \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
-     
-     
-    },
-{// ID 15	
-      id: 15,
-      title: "Blocking on shell",
-      category: "software",
-      difficulty: "easy",
-      time: "5 minutes",
-      description: "This page summarizes the steps to be followed in the case of a Windows boot malfunction. \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
-     
-     
-    },
-{// ID 16	
-      id: 16,
-      title: "Password not working",
-      category: "software",
-      difficulty: "easy",
-      time: "5 minutes",
-      description: "This page summarizes the steps to be followed in the case of a password malfunction.  \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
-     
-     
-    },
-{// ID 17	
-      id: 17,
-      title: "TOUCHPAD FIRMWARE UPDATE",
-      category: "Firmares",
-      difficulty: "easy",
-      time: "5 minutes",
-      description: "This touchpad update brings an important fix to the touchpad on Thomson  \n\n (XX)N15I310-8GR256, (XX)N15I510-16GR512 notebooks, which in some cases can produce unintended cursor movements.\n\n ",
-     
-    },
-
-	  ];
-
-
-  
-
+	},
+	{// ID 2 
+	  id: 2,
+	  title: "Camera doesn't work",
+	  category: "Hardware",
+	  difficulty: "moderate",
+	  time: "10 minutes",
+	  description: "This page summarizes the steps to be followed in the case of a camera malfunction. You can carry out level 1 steps directly with the customer (remote or face-to-face). \n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.  ",
+	  thumbnail: "",
+	},
+	{// ID 3	
+	  id: 3,
+	  title: "Device can't connect to Bluetooth",
+	  category: "Hardware",
+	  difficulty: "moderate",
+	  time: "10 minutes",
+	  description: "This page summarizes the steps to be followed in the case of a bluetooth malfunction. \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
+	},
+	{// ID 4	
+	  id: 4,
+	  title: "Device doesn't start up correctly",
+	  category: "Hardware",
+	  difficulty: "moderate",
+	  time: "10 minutes",
+	  description: "This page summarizes the steps to be followed in the case of a bluetooth malfunction. \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
+	},
+	{// ID 5	
+	  id: 5,
+	  title: "Microphone doesn't work",
+	  category: "Hardware",
+	  difficulty: "moderate",
+	  time: "15 minutes",
+	  description: "This page summarizes the steps to be followed in the case of a microphone malfunction. \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
+	},
+	{// ID 6	
+	  id: 6,
+	  title: "Screen doesn't work",
+	  category: "Hardware",
+	  difficulty: "hard",
+	  time: "20 minutes",
+	  description: "This page summarizes the steps to be followed in the case of a screen malfunction.  \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
+	},
+	{// ID 7	
+	  id: 7,
+	  title: "Touchpad doesn't work",
+	  category: "Hardware",
+	  difficulty: "moderate",
+	  time: "20 minutes",
+	  description: "This page summarizes the steps to be followed in the case of a touchpad malfunction. \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
+	},
+	{// ID 8	
+	  id: 8,
+	  title: "Keyboard doesn't work",
+	  category: "Hardware",
+	  difficulty: "easy",
+	  time: "10 minutes",
+	  description: "This page summarizes the steps to be followed in the case of a Keyboard malfunction. \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
+	},
+	{// ID 9	
+	  id: 9,
+	  title: "Device can't connect to Wi-Fi or a network",
+	  category: "Hardware",
+	  difficulty: "easy",
+	  time: "10 minutes",
+	  description: "This page summarizes the steps to be followed in the case of a  Wi-Fi  malfunction. \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
+	},
+	{// ID 10	
+	  id: 10,
+	  title: "Device doesn't switch on",
+	  category: "Hardware",
+	  difficulty: "moderate",
+	  time: "20 minutes",
+	  description: "This page summarizes the steps to be followed in the case of a power on/off  malfunction. \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
+	},
+	{// ID 11	
+	  id: 11,
+	  title: "Device doesn't recharge. Battery life is limited",
+	  category: "Hardware",
+	  difficulty: "moderate",
+	  time: "10 minutes",
+	  description: "This page summarizes the steps to be followed in the case of a battery charging  malfunction. \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
+	},
+	{// ID 12	
+	  id: 12,
+	  title: "Device turns off unexpectedly",
+	  category: "Hardware",
+	  difficulty: "moderate",
+	  time: "10 minutes",
+	  description: "This page summarizes the steps to be followed in the case of a device malfunction. . \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
+	},
+	{// ID 13	
+	  id: 13,
+	  title: "Windows doesn't activate",
+	  category: "software",
+	  difficulty: "easy",
+	  time: "5 minutes",
+	  description: "This page summarizes the steps to be followed in the case of a Windows Activation malfunction. \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
+	},
+	{// ID 14	
+	  id: 14,
+	  title: "Windows runs abnormally",
+	  category: "Windows",
+	  difficulty: "easy",
+	  time: "5 minutes",
+	  description: "This page summarizes the steps to be followed in the case of a Windows malfunction. \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
+	},
+	{// ID 15	
+	  id: 15,
+	  title: "Blocking on shell",
+	  category: "software",
+	  difficulty: "easy",
+	  time: "5 minutes",
+	  description: "This page summarizes the steps to be followed in the case of a Windows boot malfunction. \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
+	},
+	{// ID 16	
+	  id: 16,
+	  title: "Password not working",
+	  category: "software",
+	  difficulty: "easy",
+	  time: "5 minutes",
+	  description: "This page summarizes the steps to be followed in the case of a password malfunction.  \n\n You can carry out level 1 steps directly with the customer (remote or face-to-face).\n\n If the Level 1 steps do not fix the malfunction, please complete the Level 2 steps in the repair center.    ",
+	},
+	{// ID 17	
+	  id: 17,
+	  title: "TOUCHPAD FIRMWARE UPDATE",
+	  category: "Firmares",
+	  difficulty: "easy",
+	  time: "5 minutes",
+	  description: "This touchpad update brings an important fix to the touchpad on Thomson  \n\n (XX)N15I310-8GR256, (XX)N15I510-16GR512 notebooks, which in some cases can produce unintended cursor movements.\n\n ",
+	},
+  ];
 
   const filteredGuides = guides.filter((guide) => {
     const matchesSearch =
@@ -246,117 +196,117 @@ export default function Guides() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10 space-y-10">
-      <div className="text-center">
-        <div className="relative rounded overflow-hidden">
-          <div className="absolute inset-0 z-0">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
-            <img 
-              src={panelImage} 
-              alt="Background" 
-              className="absolute inset-0 w-full h-full object-cover object-center opacity-60" 
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-          </div>
-          <div className="relative z-10 px-4 py-20">
-            <h1 className="text-4xl font-bold text-white mb-0">
-              Computer Repair Guides
-            </h1>
-            <p className="text-xl text-blue-50 mb-10 max-w-2xl text-center mx-auto drop-shadow">
-              Step-by-step disassembly and repair guides for your devices
-            </p>
-          </div>
+    <div>
+      {/* Hero Section */}
+      <div className="relative overflow-hidden text-center">
+        <div className="absolute inset-0 z-0">
+          <video
+            className="absolute inset-0 w-full h-full object-cover object-center opacity-60"
+            autoPlay
+            loop
+            muted
+            playsInline
+          >
+            <source src={BackVideo} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 py-20">
+          <h1 className="text-5xl font-bold text-white mb-0">
+            Computer Repair Guides
+          </h1>
+          <p className="text-xl text-blue-50 mb-10 max-w-2xl text-center mx-auto drop-shadow">
+            Step-by-step disassembly and repair guides for your devices
+          </p>
         </div>
       </div>
 
-
-
-
-
-
-      {/* Featured Guide */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl overflow-hidden shadow-xl">
-        <div className="md:flex">
-          <div className="md:w-3/5 p-8 md:p-12 flex flex-col justify-center">
-            <Badge variant="outline" className="w-fit text-white border-white mb-4">
-              Featured Guide
-            </Badge>
-            <h2 className="text-3xl font-bold mb-4">PC Troubleshooting Master Guide</h2>
-            <p className="mb-6">
-              Our comprehensive troubleshooting guide covers everything from boot issues to performance
-              problems. Learn how to diagnose and fix the most common computer problems by yourself.
-            </p>
-            
-          </div>
-          <div className="md:w-2/5 bg-blue-900 flex items-center justify-center p-8">
-            <div className="text-8xl">🔧</div>
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 py-10 space-y-10">
+        {/* Featured Guide */}
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl overflow-hidden shadow-xl">
+          <div className="md:flex">
+            <div className="md:w-3/5 p-8 md:p-12 flex flex-col justify-center">
+              <Badge variant="outline" className="w-fit text-white border-white mb-4">
+                Featured Guide
+              </Badge>
+              <h2 className="text-3xl font-bold mb-4">Troubleshooting Guides</h2>
+              <p className="mb-6">
+                Our comprehensive troubleshooting guides covers everything from boot issues to performance
+                problems. Learn how to diagnose and fix the most common computer problems by yourself.
+              </p>
+              
+            </div>
+            <div className="md:w-2/5 bg-blue-900 flex items-center justify-center p-8">
+              <div className="text-8xl">🔧</div>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Search and Filter Section */}
-      <div className="grid grid-cols-4 md:grid-cols-5 gap-2">
-        <div className="md:col-span-4">
-          <div className="relative">
-            <Search className="absolute left0 top-1/2 transform -translate-y-1/2 text-gray-500" />
-            <Input
-              placeholder="   Search for guides..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+        {/* Search and Filter Section */}
+        <div className="grid grid-cols-4 md:grid-cols-5 gap-2">
+          <div className="md:col-span-4">
+            <div className="relative">
+              
+              <Input
+                placeholder="🔎Search for guides..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+          <div>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category.value} value={category.value} className="flex items-center">
+                    <div className="flex items-center">
+                      <span className="mr-2">{category.icon}</span>
+                      {category.label}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
+
+        {/* Guide Results */}
         <div>
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger>
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((category) => (
-                <SelectItem key={category.value} value={category.value} className="flex items-center">
-                  <div className="flex items-center">
-                    <span className="mr-2">{category.icon}</span>
-                    {category.label}
+          {filteredGuides.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-2">
+              {filteredGuides.map((guide) => (
+                <Card key={guide.id} className="overflow-hidden flex flex-col h-full">
+                  <div className="aspect-video bg-gray-100 flex items-center justify-center text-gray-400">
+                    <span className="text-5xl">{/* texto */}</span>
                   </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Guide Results */}
-      <div>
-        {filteredGuides.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4">
-            {filteredGuides.map((guide) => (
-              <Card key={guide.id} className="overflow-hidden flex flex-col h-full">
-                <div className="aspect-video bg-gray-100 flex items-center justify-center text-gray-400">
-                  <span className="text-5xl">{/* texto */}</span>
-                </div>
-                <CardHeader>
-                  <div className="flex justify-between items-start text-lg text-blue-800 pointer-events-none">
-                    <CardTitle className="text-lg">{guide.title}</CardTitle>
-                    <Badge className={getDifficultyColor(guide.difficulty)}>
-                      {guide.difficulty.charAt(0).toUpperCase() + guide.difficulty.slice(1)}
-                    </Badge>
-                  </div>
-				  <CardTitle className="text-lg">{guide.title2}</CardTitle>
-                  <CardDescription className="flex items-center mt-1">
-                    <span className="mr-1">⏱️</span> {guide.time}
-                  </CardDescription>
-                </CardHeader>
-               
-  <CardContent>
-  
-  {guide.description.split('\n').map((line, index) => (
-    <p key={index} className="mb-2">{line}</p>
-  ))}
-</CardContent>
-                {/* Accordion added here for each guide */}{/* Accordion added here for each guide */}{/* Accordion added here for each guide */}
-                <div className="bg-white rounded-xl shadow p-4 mt-4">
-                 <Accordion defaultActiveKey={null}>
+                  <CardHeader>
+                    <div className="flex justify-between items-start text-lg text-blue-800 pointer-events-none">
+                      <CardTitle className="text-lg">{guide.title}</CardTitle>
+                      <Badge className={getDifficultyColor(guide.difficulty)}>
+                        {guide.difficulty.charAt(0).toUpperCase() + guide.difficulty.slice(1)}
+                      </Badge>
+                    </div>
+                    <CardDescription className="flex items-center mt-1">
+                      <span className="mr-1">⏱️</span> {guide.time}
+                    </CardDescription>
+                  </CardHeader>
+                
+                    <CardContent>
+                    
+                    {guide.description.split('\n').map((line, index) => (
+                      <p key={index} className="mb-2">{line}</p>
+                    ))}
+                  </CardContent>
+                  {/* Accordion added here for each guide */}{/* Accordion added here for each guide */}{/* Accordion added here for each guide */}
+                  <div className="bg-white rounded-xl shadow p-4 mt-4">
+                  <Accordion defaultActiveKey={null}>
 				 
 			 
 				 
@@ -2279,32 +2229,29 @@ WHOSE SERIAL NUMBER BEGINS WITH:
 {/* Add more accordion groups for other IDs as needed */}
 </Accordion>
 
-                </div>	
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12 bg-gray-50 rounded-lg">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No guides found</h3>
-            <p className="text-gray-600">
-              Try adjusting your search or filter criteria to find what you're looking for.
-            </p>
-          </div>
-        )}
-      </div>
+                  </div>	
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No guides found</h3>
+              <p className="text-gray-600">
+                Try adjusting your search or filter criteria to find what you're looking for.
+              </p>
+            </div>
+          )}
+        </div>
 
-      {/* Your existing Quick Help accordion and other content below... */}
+        {/* Your existing Quick Help accordion and other content below... */}
 
-      {/* Quick Help Accordion */}
-      <div className="bg-white rounded-xl shadow p-6 space-y-4">
-       
+        {/* Quick Help Accordion */}
+        <div className="bg-white rounded-xl shadow p-6 space-y-4">
+        
 
-       
+        
+        </div>
       </div>
     </div>
-	
-	
-	
-	
   );
 }

@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 
+
 import AnimatedWelcome from "@/components/auth/AnimatedWelcome";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +13,7 @@ import { Mail, Lock, User, AlertCircle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Panel from "@/assets/wtpth/panel.jpg";
+import BackVideo from "@/assets/wtpth/backvi.mp4"; // ⬅️ add this next to Panel import
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -123,15 +125,20 @@ export default function Login() {
         <AnimatedWelcome onContinue={handleWelcomeComplete} />
       )}
       <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative">
-        <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
-          <img 
-            src={Panel} 
-            alt="Background" 
-            className="absolute inset-0 w-full h-full object-cover object-center opacity-60" 
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-        </div>
+       <div className="absolute inset-0 z-0">
+  <video
+    className="absolute inset-0 w-full h-full object-cover object-center opacity-60"
+    autoPlay
+    loop
+    muted
+    playsInline
+  >
+    <source src={BackVideo} type="video/mp4" />
+    Your browser does not support the video tag.
+  </video>
+  <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
+  <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+</div>
         <motion.div 
           className="w-full max-w-md space-y-8 relative z-10"
           variants={containerVariants}
@@ -143,7 +150,7 @@ export default function Login() {
               Welcome Back
             </h1>
             <p className="text-sm text-white font-medium drop-shadow">
-              Login or create an account to access Tech Support resources
+              Login or create an account to access Tech Support 
             </p>
           </motion.div>
           

@@ -3,16 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Laptop, Wrench, Clock } from "lucide-react";
+import { Search, Laptop, Wrench, Clock, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
-import Panel from "@/assets/wtpth/panel.jpg";
+import BackVideo from "@/assets/wtpth/backvi.mp4"; // Import the video
 import { supabase } from "@/lib/supabase";
 
 // Type definitions for guides from diss_table
 type Step = {
+  id?: string;
   title: string;
   description: string;
   imageUrl?: string;
@@ -253,7 +254,6 @@ procedure: step.procedure || '', // ✅ explicitly store procedure
         imageUrl: step.image_url || undefined,
         videoUrl: step.video_url || undefined,
         step_number: step.step_number || index + 2,
-        step_description: step.step_description || step.description || '',
         step_des: step.step_des || step.title || '',
         image_url: step.image_url
       };
@@ -424,7 +424,8 @@ finalSteps.sort((a, b) => (a.step_number || 0) - (b.step_number || 0));
               imageUrl: "/assets/disassembly-guides/thinkpad/keyboard-removal.svg"
             },
           ],
-          createdBy: "admin"
+          createdBy: "admin",
+          guide_title: "ThinkPad T490 Keyboard Replacement"
         },
         {
           id: "2",
@@ -477,7 +478,8 @@ finalSteps.sort((a, b) => (a.step_number || 0) - (b.step_number || 0));
               imageUrl: "/assets/disassembly-guides/dell/battery-removal.svg"
             },
           ],
-          createdBy: "admin"
+          createdBy: "admin",
+          guide_title: "Dell XPS 13 Battery Replacement"
         },
         {
           id: "3",
@@ -540,7 +542,8 @@ finalSteps.sort((a, b) => (a.step_number || 0) - (b.step_number || 0));
               imageUrl: "/assets/disassembly-guides/macbook/display-assembly.svg"
             },
           ],
-          createdBy: "admin"
+          createdBy: "admin",
+          guide_title: "MacBook Pro 13 Display Assembly Replacement"
         }
       ];
 
@@ -573,233 +576,240 @@ finalSteps.sort((a, b) => (a.step_number || 0) - (b.step_number || 0));
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10 space-y-10">
-      <div className="text-center">
-        <div className="relative rounded overflow-hidden">
-          <div className="absolute inset-0 z-0">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
-            <img 
-              src={Panel} 
-              alt="Background" 
-              className="absolute inset-0 w-full h-full object-cover object-center opacity-60" 
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-          </div>
-          <div className="relative z-10 px-4 py-20">
-            <h1 className="text-4xl font-bold text-white mb-0">
-              Disassembly Guides
-              <p className="text-xl text-blue-50 mb-10 max-w-2xl text-center mx-auto drop-shadow">
-                Step-by-step guides for disassembling and repairing common computer models
-              </p>
-            </h1>
-          </div>
-        </div>
-        {isAuthenticated && (
-          <Button 
-            asChild 
-            className="mt-4 md:mt-0 rounded-full bg-gradient-to-r from-primary to-purple-600 hover:from-purple-600 hover:to-primary transition-all duration-300 shadow-lg"
+    <div>
+      {/* Hero Section */}
+      <div className="relative overflow-hidden text-center">
+        <div className="absolute inset-0 z-0">
+          <video
+            className="absolute inset-0 w-full h-full object-cover object-center opacity-60"
+            autoPlay
+            loop
+            muted
+            playsInline
           >
-            <Link to="/admin/guides">Manage Guides</Link>
-          </Button>
-        )}
+            <source src={BackVideo} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 py-20">
+          <h1 className="text-5xl font-bold text-white">
+            Disassembly Guides
+          </h1>
+          <p className="text-xl text-blue-50 mt-2 mb-8 max-w-2xl text-center mx-auto drop-shadow">
+            Step-by-step guides for disassembling and repairing common computer models
+          </p>
+          {isAuthenticated && (
+            <Button 
+              asChild 
+              className="rounded-full bg-gradient-to-r from-primary to-purple-600 hover:from-purple-600 hover:to-primary transition-all duration-300 shadow-lg"
+            >
+              <Link to="/admin/guides">Manage Guides</Link>
+            </Button>
+          )}
+        </div>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-        </div>
-      ) : error ? (
-        <Card className="bg-red-50">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-red-500 mb-4">{error}</p>
-              <Button onClick={() => window.location.reload()}>Try Again</Button>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          <Card className="mb-8">
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex items-center gap-2">
-  <Search className="h-5 w-5 text-muted-foreground" />
-  <Input
-    type="search"
-    placeholder="Search guides..."
-    value={searchTerm}
-    onChange={(e) => setSearchTerm(e.target.value)}
-  />
-</div>
-                
-                <Select value={selectedModel} onValueChange={(value) => setSelectedModel(value === "All Models" ? "all" : value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Model" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Models</SelectItem>
-                    {computerModels.map((model) => (
-                      <SelectItem key={model} value={model}>
-                        {model}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                
-                <Select value={selectedCategory} onValueChange={(value) => setSelectedCategory(value === "All Categories" ? "all" : value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {categories.filter(cat => cat !== "All Categories").map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 py-10 space-y-10">
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          </div>
+        ) : error ? (
+          <Card className="bg-red-50 border-red-200">
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <p className="text-red-600 font-medium mb-4">{error}</p>
+                <Button onClick={() => window.location.reload()}>Try Again</Button>
               </div>
             </CardContent>
           </Card>
-          
-          {filteredGuides.length === 0 ? (
-            <div className="text-center py-10">
-              <Laptop className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <h2 className="text-xl font-semibold">No guides found</h2>
-              <p className="text-muted-foreground">Try adjusting your search or filters</p>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {filteredGuides.map((guide) => (
-                <Card key={guide.id} className="border border-blue-200 shadow-sm rounded-xl overflow-hidden bg-white">
-  <div className="flex flex-col md:flex-row">
-    {/* Preview Image Column */}
-    {guide.steps && guide.steps.length > 0 && (guide.steps[0].image_url || guide.steps[0].imageUrl) && (
-      <div className="md:w-1/3 bg-gray-50 flex items-center justify-center overflow-hidden border-r border-blue-200">
-      <img
-  src={guide.steps[0].image_url || guide.steps[0].imageUrl}
-  alt={`Preview of ${guide.title}`}
-  className="w-full h-full max-h-80 md:max-h-[300px] object-contain p-2"
-  onError={(e) => {
-    const target = e.target as HTMLImageElement;
-    target.onerror = null;
-    target.src = '/images/placeholder.jpg';
-  }}
-/>
-      </div>
-    )}
-    
-    {/* Guide Information Column */}
-    <div className={`${guide.steps && guide.steps.length > 0 && (guide.steps[0].image_url || guide.steps[0].imageUrl) ? 'md:w-2/3' : 'w-full'}`}>
-      <CardHeader className="bg-blue-50 px-6 py-4 border-b border-blue-200">
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-2xl text-blue-900">{guide.title}</CardTitle>
-            <CardDescription className="text-blue-700 mt-1">{guide.model}</CardDescription>
-          </div>
-          <Badge className={`text-xs ${getDifficultyColor(guide.difficulty)} border`}>
-            {guide.difficulty}
-          </Badge>
-        </div>
-        <div className="flex items-center text-sm text-blue-600 mt-2 space-x-4">
-          <div className="flex items-center gap-1">
-            <Clock className="h-4 w-4" />
-            <span>{guide.time}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Laptop className="h-4 w-4" />
-            <span>{guide.model}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Wrench className="h-4 w-4" />
-            <span>{guide.category}</span>
-          </div>
-        </div>
-        <p className="text-sm text-blue-700 mt-2">{guide.description}</p>
-      </CardHeader>
-
-      <CardContent className="p-6 bg-blue-25">
-        {guide.steps && guide.steps.length > 0 ? (
+        ) : (
           <>
-            <h4 className="font-semibold mb-4 text-blue-900 text-lg">Steps ({guide.steps.length})</h4>
-            <Accordion type="single" collapsible={true} className="w-full">
-              {guide.steps.map((step, index) => (
-                <AccordionItem key={step.id || index} value={`step-${index}`}>
-                  <AccordionTrigger className="text-left bg-blue-100 hover:bg-blue-200 px-4 py-2 rounded-md">
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center gap-2 flex-1">
-                        <Badge variant="outline" className="text-xs bg-white text-blue-800 border-blue-300">
-                          Step {step.step_number || index + 1}
-                        </Badge>
-                        {/* Display the title/description only if it's not a generic "Step X" title */}
-                        {(!/^step\s*\d+$/i.test(step.step_des || step.title || '')) && (
-                          <div className="text-sm font-semibold text-blue-900">
-                            {step.step_des || step.title || step.step_description || step.description}
-                          </div>
-                        )}
-                      </div>
-                      <span className="text-xs text-blue-600 font-medium px-2 py-1 bg-white/50 rounded whitespace-nowrap ml-3">Show more</span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="bg-white px-4 py-4 rounded-b-lg border border-t-0 border-blue-100">
-                    <div className="flex flex-col md:flex-row gap-6">
-                      {(step.image_url || step.imageUrl || step.videoUrl) && (
-                        <div className="w-full md:w-1/2">
-                          {(step.image_url || step.imageUrl) && (
-                            <div className="rounded-lg overflow-hidden border shadow-sm mb-4">
-                              <img
-                                src={step.image_url || step.imageUrl}
-                                alt={step.title || `Step ${index + 1}`}
-                                className="w-full h-auto object-cover"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.onerror = null;
-                                  target.src = '/images/placeholder.jpg';
-                                }}
-                              />
-                            </div>
-                          )}
-
-                          {step.videoUrl && (
-                            <div className="rounded-lg overflow-hidden border shadow-sm">
-                              <video controls className="w-full h-auto" preload="metadata">
-                                <source src={step.videoUrl} type="video/mp4" />
-                                Your browser does not support the video tag.
-                              </video>
-                            </div>
-                          )}
+            <Card>
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="relative">
+                  
+                    <Input
+                      type="search"
+                      placeholder="🔎Search guides..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  
+                  <Select value={selectedModel} onValueChange={(value) => setSelectedModel(value === "All Models" ? "all" : value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Model" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Models</SelectItem>
+                      {computerModels.map((model) => (
+                        <SelectItem key={model} value={model}>
+                          {model}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  
+                  <Select value={selectedCategory} onValueChange={(value) => setSelectedCategory(value === "All Categories" ? "all" : value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {categories.filter(cat => cat !== "All Categories").map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {filteredGuides.length === 0 ? (
+              <div className="text-center py-10">
+                <Laptop className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <h2 className="text-xl font-semibold">No guides found</h2>
+                <p className="text-muted-foreground">Try adjusting your search or filters</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {filteredGuides.map((guide) => (
+                  <Card key={guide.id} className="border border-blue-200 shadow-sm rounded-xl overflow-hidden bg-white">
+                    <div className="flex flex-col md:flex-row">
+                      {/* Preview Image Column */}
+                      {guide.steps && guide.steps.length > 0 && (guide.steps[0].image_url || guide.steps[0].imageUrl) && (
+                        <div className="md:w-1/3 bg-gray-50 flex items-center justify-center overflow-hidden border-r border-blue-200">
+                        <img
+                          src={guide.steps[0].image_url || guide.steps[0].imageUrl}
+                          alt={`Preview of ${guide.title}`}
+                          className="w-full h-full max-h-80 md:max-h-[300px] object-contain p-2"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.onerror = null;
+                            target.src = '/images/placeholder.jpg';
+                          }}
+                        />
                         </div>
                       )}
+                      
+                      {/* Guide Information Column */}
+                      <div className={`${guide.steps && guide.steps.length > 0 && (guide.steps[0].image_url || guide.steps[0].imageUrl) ? 'md:w-2/3' : 'w-full'}`}>
+                        <CardHeader className="bg-blue-50 px-6 py-4 border-b border-blue-200">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <CardTitle className="text-2xl text-blue-900">{guide.title}</CardTitle>
+                              <CardDescription className="text-blue-700 mt-1">{guide.model}</CardDescription>
+                            </div>
+                            <Badge className={`text-xs ${getDifficultyColor(guide.difficulty)} border`}>
+                              {guide.difficulty}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center text-sm text-blue-600 mt-2 space-x-4">
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-4 w-4" />
+                              <span>{guide.time}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Laptop className="h-4 w-4" />
+                              <span>{guide.model}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Wrench className="h-4 w-4" />
+                              <span>{guide.category}</span>
+                            </div>
+                          </div>
+                          <p className="text-sm text-blue-700 mt-2">{guide.description}</p>
+                        </CardHeader>
 
-                      <div className={(step.image_url || step.imageUrl || step.videoUrl) ? 'md:w-1/2' : 'w-full'}>
-                        <div className="text-blue-800 text-base leading-relaxed whitespace-pre-line">
-  {step.procedure || step.step_description || step.description}
-</div>
+                        <CardContent className="p-6 bg-blue-25">
+                          {guide.steps && guide.steps.length > 0 ? (
+                            <>
+                              <h4 className="font-semibold mb-4 text-blue-900 text-lg">Steps ({guide.steps.length})</h4>
+                              <Accordion type="single" collapsible={true} className="w-full">
+                                {guide.steps.map((step, index) => (
+                                  <AccordionItem key={step.id || index} value={`step-${index}`}>
+                                    <AccordionTrigger className="text-left bg-blue-100 hover:bg-blue-200 px-4 py-2 rounded-md">
+                                      <div className="flex items-center justify-between w-full">
+                                        <div className="flex items-center gap-2 flex-1">
+                                          <Badge variant="outline" className="text-xs bg-white text-blue-800 border-blue-300">
+                                            Step {step.step_number || index + 1}
+                                          </Badge>
+                                          {(!/^step\s*\d+$/i.test(step.step_des || step.title || '')) && (
+                                            <div className="text-sm font-semibold text-blue-900">
+                                              {step.step_des || step.title || step.step_description || step.description}
+                                            </div>
+                                          )}
+                                        </div>
+                                        <span className="text-xs text-blue-600 font-medium px-2 py-1 bg-white/50 rounded whitespace-nowrap ml-3">Show more</span>
+                                      </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="bg-white px-4 py-4 rounded-b-lg border border-t-0 border-blue-100">
+                                      <div className="flex flex-col md:flex-row gap-6">
+                                        {(step.image_url || step.imageUrl || step.videoUrl) && (
+                                          <div className="w-full md:w-1/2">
+                                            {(step.image_url || step.imageUrl) && (
+                                              <div className="rounded-lg overflow-hidden border shadow-sm mb-4">
+                                                <img
+                                                  src={step.image_url || step.imageUrl}
+                                                  alt={step.title || `Step ${index + 1}`}
+                                                  className="w-full h-auto object-cover"
+                                                  onError={(e) => {
+                                                    const target = e.target as HTMLImageElement;
+                                                    target.onerror = null;
+                                                    target.src = '/images/placeholder.jpg';
+                                                  }}
+                                                />
+                                              </div>
+                                            )}
+
+                                            {step.videoUrl && (
+                                              <div className="rounded-lg overflow-hidden border shadow-sm">
+                                                <video controls className="w-full h-auto" preload="metadata">
+                                                  <source src={step.videoUrl} type="video/mp4" />
+                                                  Your browser does not support the video tag.
+                                                </video>
+                                              </div>
+                                            )}
+                                          </div>
+                                        )}
+
+                                        <div className={(step.image_url || step.imageUrl || step.videoUrl) ? 'md:w-1/2' : 'w-full'}>
+                                          <div className="text-blue-800 text-base leading-relaxed whitespace-pre-line">
+                                            {step.procedure || step.step_description || step.description}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </AccordionContent>
+                                  </AccordionItem>
+                                ))}
+                              </Accordion>
+                            </>
+                          ) : (
+                            <div className="text-center py-8 text-blue-600">
+                              <p>No steps available for this guide</p>
+                              <Button asChild className="mt-4">
+                                <Link to={`/disassembly/${guide.id}`}>View Full Guide</Link>
+                              </Button>
+                            </div>
+                          )}
+                        </CardContent>
                       </div>
                     </div>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
+                  </Card>
+                ))}
+              </div>
+            )}
           </>
-        ) : (
-          <div className="text-center py-8 text-blue-600">
-            <p>No steps available for this guide</p>
-            <Button asChild className="mt-4">
-              <Link to={`/disassembly/${guide.id}`}>View Full Guide</Link>
-            </Button>
-          </div>
         )}
-      </CardContent>
-    </div>
-  </div>
-</Card>
-              ))}
-            </div>
-          )}
-        </>
-      )}
+      </div>
     </div>
   );
 }

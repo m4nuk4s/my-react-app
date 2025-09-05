@@ -6,6 +6,7 @@ import logo from "@/assets/wtpth/Thomson-Logo.png";
 import { motion } from "framer-motion";
 import { ArrowRight, Laptop, Cog, FileText, Wrench, Settings, FileQuestion, Shield, Zap, Library } from "lucide-react";
 import { cn } from "@/lib/utils";
+import BackVideo from "@/assets/wtpth/backvi.mp4";
 
 export default function Home() {
   const serviceCards = [
@@ -87,15 +88,20 @@ export default function Home() {
         variants={itemVariants}
         className="relative py-24 sm:py-32 overflow-hidden"
       >
-        <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
-          <img 
-            src={Panel} 
-            alt="Background" 
-            className="absolute inset-0 w-full h-full object-cover object-center opacity-60" 
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-        </div>
+       <div className="absolute inset-0 z-0">
+  <video
+    className="absolute inset-0 w-full h-full object-cover object-center opacity-60"
+    autoPlay
+    loop
+    muted
+    playsInline
+  >
+    <source src={BackVideo} type="video/mp4" />
+    Your browser does not support the video tag.
+  </video>
+  <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
+  <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+</div>
 
         <div className="container mx-auto px-4 relative z-10">
           <motion.div 
@@ -128,7 +134,7 @@ export default function Home() {
                 size="lg"
                 className="rounded-full bg-gradient-to-r from-primary to-purple-600 hover:from-purple-600 hover:to-primary transition-all duration-300 shadow-lg"
               >
-                <Link to="/guides">🗒Browse Guides</Link>
+                <Link to="/guides">🗒Guides</Link>
               </Button>
               <Button 
                 asChild 

@@ -9,8 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Badge } from '../components/ui/badge';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
-import { ChevronDown, ChevronRight, Download, Package } from 'lucide-react';
-import Panel from "@/assets/wtpth/panel.jpg";
+import { Download, Package } from 'lucide-react';
+import BackVideo from "@/assets/wtpth/backvi.mp4";
 
 // Import Accordion components
 import {
@@ -64,42 +64,31 @@ export function Drivers() {
     const fetchDriversWithFiles = async () => {
       setLoading(true);
       try {
-        // Fetch main driver records from the app drivers table
-        const { data: dbDrivers, error: driversError } = await supabase.from('app_8e3e8a4d8d0e442280110fd6f6c2cd95_drivers')
+        const { data: dbDrivers, error: driversError } = await supabase
+          .from('app_8e3e8a4d8d0e442280110fd6f6c2cd95_drivers')
           .select('*');
 
-        // Fetch additional driver files from the down1 table
         const { data: down1Files, error: down1Error } = await supabase
           .from('down1')
           .select('*');
 
         if (driversError) {
-          console.error('Supabase fetch error (drivers):', driversError);
-          toast.error('Database fetch failed. Check your Supabase connection and permissions.');
+          toast.error('Database fetch failed.');
           setDrivers([]);
           setLoading(false);
           return;
         }
 
         if (!dbDrivers || dbDrivers.length === 0) {
-          toast.error('No driver data found in Supabase. Check your database content and permissions.');
+          toast.error('No driver data found.');
           setDrivers([]);
           setLoading(false);
           return;
         }
 
-        // Process and log the down1 files if available
-        if (down1Error) {
-          console.warn('Could not fetch additional driver files from down1 table:', down1Error);
-        } else {
-          console.log('Additional driver files from down1 table:', down1Files);
-        }
-
         const driversData: Driver[] = dbDrivers.map(driver => {
-          // Create file entries from download_url
           const files: DriverFile[] = [];
-          
-          // Add main driver file
+
           if (driver.download_url && driver.download_url !== '#') {
             files.push({
               id: `file-${driver.id}`,
@@ -112,75 +101,44 @@ export function Drivers() {
               release_date: driver.release_date || driver.date || driver.created || new Date().toISOString()
             });
           }
-          
-          // Add additional files from down1 table
+
           if (down1Files && down1Files.length > 0) {
-            // Find files that match this driver by name
-            const additionalFiles = down1Files.filter(file => 
+            const additionalFiles = down1Files.filter(file =>
               file.model && file.model.toLowerCase() === driver.name.toLowerCase()
             );
-            
-            if (additionalFiles.length > 0) {
-              console.log(`Found ${additionalFiles.length} additional files for ${driver.name}`);
-              
-              // Add each additional file to the files array
-              additionalFiles.forEach(file => {
-                files.push({
-                  id: file.id,
-                  driver_id: driver.id,
-                  name: file.file_name || 'Additional Driver File',
-                  url: file.download_link || '#',
-                  size: file.file_size || 'Unknown',
-                  type: 'additional',
-                  version: file.version,
-                  release_date: file.release_date
-                });
+            additionalFiles.forEach(file => {
+              files.push({
+                id: file.id,
+                driver_id: driver.id,
+                name: file.file_name || 'Additional Driver File',
+                url: file.download_link || '#',
+                size: file.file_size || 'Unknown',
+                type: 'additional',
+                version: file.version,
+                release_date: file.release_date
               });
-            }
+            });
           }
-          
-          // Ensure we have a valid image URL with absolute path
+
           let imageUrl = '/placeholder-driver.png';
-          
-          // Process image URL with thorough validation
-          if (driver.image_url && 
-              driver.image_url !== 'null' && 
-              driver.image_url !== 'undefined' && 
-              driver.image_url.trim() !== '') {
-            
-            // If it's a relative URL, make it absolute
+          if (driver.image_url && driver.image_url.trim() !== '' && driver.image_url !== 'null' && driver.image_url !== 'undefined') {
             if (driver.image_url.startsWith('/')) {
-              const baseUrl = window.location.origin;
-              imageUrl = `${baseUrl}${driver.image_url}`;
+              imageUrl = `${window.location.origin}${driver.image_url}`;
             } else if (driver.image_url.startsWith('http')) {
-              // It's already absolute
               imageUrl = driver.image_url;
             } else {
-              // Add leading slash if missing
-              const baseUrl = window.location.origin;
-              imageUrl = `${baseUrl}/${driver.image_url}`;
+              imageUrl = `${window.location.origin}/${driver.image_url}`;
             }
-          } 
-          // Try image field as fallback
-          else if (driver.image && 
-                  driver.image !== 'null' && 
-                  driver.image !== 'undefined' && 
-                  driver.image.trim() !== '') {
-            
-            // Same processing for image field
+          } else if (driver.image && driver.image.trim() !== '' && driver.image !== 'null' && driver.image !== 'undefined') {
             if (driver.image.startsWith('/')) {
-              const baseUrl = window.location.origin;
-              imageUrl = `${baseUrl}${driver.image}`;
+              imageUrl = `${window.location.origin}${driver.image}`;
             } else if (driver.image.startsWith('http')) {
               imageUrl = driver.image;
             } else {
-              const baseUrl = window.location.origin;
-              imageUrl = `${baseUrl}/${driver.image}`;
+              imageUrl = `${window.location.origin}/${driver.image}`;
             }
           }
-          
-          console.log(`Driver ${driver.id}: Using image URL:`, imageUrl);
-          
+
           return {
             ...driver,
             image_url: imageUrl,
@@ -194,7 +152,6 @@ export function Drivers() {
         localStorage.setItem('drivers', JSON.stringify(driversData));
         setDrivers(driversData);
       } catch (error) {
-        console.error('Unexpected error loading drivers:', error);
         toast.error('Unexpected error loading drivers.');
         setDrivers([]);
       } finally {
@@ -223,38 +180,46 @@ export function Drivers() {
   }, [searchQuery, activeTab, drivers]);
 
   return (
-    <div className="container py-6">
-      <div className="text-center">
-        <div className="relative rounded overflow-hidden">
-          <div className="absolute inset-0 z-0">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
-            <img 
-              src={Panel} 
-              alt="Background" 
-              className="absolute inset-0 w-full h-full object-cover object-center opacity-60" 
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-          </div>
-          <div className="relative z-10 px-4 py-16">
-            <h1 className="text-4xl font-bold text-white mb-2">
-              Drivers/Recovery Images/Firmware
-              <p className="text-xl text-blue-50 mb-4 max-w-2xl text-center mx-auto drop-shadow">
-                Find and download the latest drivers/firmwares for your devices
-              </p>
-            </h1>
-          </div>
+    <div className="w-full">
+      {/* 🔹 Full-width Hero with video background */}
+      <div className="relative w-full overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <video
+            className="absolute inset-0 w-full h-full object-cover object-center opacity-60"
+            autoPlay
+            loop
+            muted
+            playsInline
+          >
+            <source src={BackVideo} type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
         </div>
-       <div className="flex items-center space-x-4 mt-6">
-  <div className="flex-1">
-    <Input
-      placeholder="🔎 Search drivers..."
-      value={searchQuery}
-      onChange={(e) => setSearchQuery(e.target.value)}
-      className="w-full !border !border-red-500 !focus:border-blue-50 !focus:ring-2"
-    />
-  </div>
 
+        <div className="relative z-10 px-4 py-16 text-center">
+          <h1 className="text-5xl font-bold text-white mb-2">
+            Drivers/Recovery Images/Firmware
+          </h1>
+          <p className="text-xl text-blue-50 mb-4 max-w-2xl text-center mx-auto drop-shadow">
+            Find and download the latest drivers/firmwares for your devices
+          </p>
         </div>
+      </div>
+
+      {/* 🔹 Page content below */}
+      <div className="container py-6">
+        <div className="flex items-center space-x-4 mt-6">
+          <div className="flex-1">
+            <Input
+              placeholder="🔎 Search drivers..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full !border !border-red-500 !focus:border-blue-50 !focus:ring-2"
+            />
+          </div>
+        </div>
+
         <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid grid-cols-3 md:grid-cols-6 gap-2">
             {categories.map((category) => (
@@ -263,6 +228,7 @@ export function Drivers() {
               </TabsTrigger>
             ))}
           </TabsList>
+
           <TabsContent value={activeTab} className="mt-6">
             {loading ? (
               <div className="text-center py-10">
@@ -284,9 +250,7 @@ export function Drivers() {
                           alt={driver.name}
                           className="w-full h-auto object-contain max-h-48"
                           onError={(e) => {
-                            console.error("Image failed to load:", driver.image_url);
                             (e.target as HTMLImageElement).src = '/placeholder-driver.png';
-                            console.log("Fallback image applied");
                           }}
                         />
                       ) : (
@@ -304,7 +268,6 @@ export function Drivers() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="flex-grow">
-
                       <div className="grid grid-cols-2 gap-4 text-sm mt-4">
                         <div>
                           <Label className="text-xs text-gray-500 dark:text-gray-400">Operating System</Label>

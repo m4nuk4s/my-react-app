@@ -5,7 +5,7 @@ import * as z from "zod";
 import emailjs from "@emailjs/browser";
 
 import { Button } from "@/components/ui/button";
-import Panel from "@/assets/wtpth/panel.jpg";
+import BackVideo from "@/assets/wtpth/backvi.mp4";
 
 
 import {
@@ -133,225 +133,116 @@ export default function Requests() {
   }
 
   return (
+    <div className="w-full">
+      {/* Full-width Hero with video background */}
+      <div className="relative w-full overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <video
+            className="absolute inset-0 w-full h-full object-cover object-center opacity-60"
+            autoPlay
+            loop
+            muted
+            playsInline
+          >
+            <source src={BackVideo} type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+        </div>
 
-    <div className="max-w-7xl mx-auto px-4 py-10 space-y-10">
-      <div className="text-center">
-        <div className="relative rounded overflow-hidden">
-          <div className="absolute inset-0 z-0">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
-            <img 
-              src={Panel} 
-              alt="Background" 
-              className="absolute inset-0 w-full h-full object-cover object-center opacity-60" 
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-          </div>
-          <div className="relative z-10 px-6 py-20">
-            <h1 className="text-4xl font-bold text-white mb-0">
-              Support Requests
-              <p className="text-xl text-blue-50 mb-10 max-w-2xl text-center mx-auto drop-shadow">
-                Need help with your device? Submit a request and we'll get back to you.
-              </p>
-            </h1>
-          </div>
+        <div className="relative z-10 px-4 py-16 text-center">
+          <h1 className="text-4xl font-bold text-white mb-2">
+            Support Requests
+          </h1>
+          <p className="text-xl text-blue-50 mb-4 max-w-2xl text-center mx-auto drop-shadow">
+            Need help with your device? Submit a request and we'll get back to you.
+          </p>
         </div>
       </div>
-	  
 
-      {isSubmitted && (
-        <Alert className="mb-8 bg-green-50 border-green-200">
-          <CheckCircle2 className="h-4 w-4 text-green-600" />
-          <AlertTitle className="text-green-800">Success!</AlertTitle>
-          <AlertDescription className="text-green-700">
-            Your request has been submitted. We'll get back to you via email soon.
-          </AlertDescription>
-        </Alert>
-      )}
+      {/* Page content below */}
+      <div className="container py-6 space-y-10">
+        {isSubmitted && (
+          <Alert className="mb-8 bg-green-50 border-green-200">
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
+            <AlertTitle className="text-green-800">Success!</AlertTitle>
+            <AlertDescription className="text-green-700">
+              Your request has been submitted. We'll get back to you via email soon.
+            </AlertDescription>
+          </Alert>
+        )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Submit a Request</CardTitle>
-          <CardDescription>
-            Fill out the form below to submit your request. We'll respond within 24-48
-            hours.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs
-            defaultValue="support"
-            value={activeTab}
-            onValueChange={setActiveTab}
-          >
-            <TabsList className="grid grid-cols-3 mb-6">
-              <TabsTrigger value="support">Technical Support</TabsTrigger>
-              <TabsTrigger value="driver">Driver Request</TabsTrigger>
-              <TabsTrigger value="guide">Guide Request</TabsTrigger>
-            </TabsList>
+        <Card>
+          <CardHeader>
+            <CardTitle>Submit a Request</CardTitle>
+            <CardDescription>
+              Fill out the form below to submit your request. We'll respond within 24-48
+              hours.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs
+              defaultValue="support"
+              value={activeTab}
+              onValueChange={setActiveTab}
+            >
+              <TabsList className="grid grid-cols-3 mb-6">
+                <TabsTrigger value="support">Technical Support</TabsTrigger>
+                <TabsTrigger value="driver">Driver Request</TabsTrigger>
+                <TabsTrigger value="guide">Guide Request</TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="support">
-              <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
-                <div className="flex">
-                  <Info className="h-5 w-5 text-blue-600 mr-2 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-blue-800">
-                    Need technical assistance with your computer? Provide as much detail
-                    as possible about the issue you're experiencing.
-                  </p>
+              <TabsContent value="support">
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
+                  <div className="flex">
+                    <Info className="h-5 w-5 text-blue-600 mr-2 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-blue-800">
+                      Need technical assistance with your computer? Provide as much detail
+                      as possible about the issue you're experiencing.
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </TabsContent>
+              </TabsContent>
 
-            <TabsContent value="driver">
-              <div className="bg-amber-50 border border-amber-200 rounded-md p-4 mb-6">
-                <div className="flex">
-                  <AlertTriangle className="h-5 w-5 text-amber-600 mr-2 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-amber-800">
-                    Can't find a specific driver? Let us know your device details and
-                    which driver you need.
-                  </p>
+              <TabsContent value="driver">
+                <div className="bg-amber-50 border border-amber-200 rounded-md p-4 mb-6">
+                  <div className="flex">
+                    <AlertTriangle className="h-5 w-5 text-amber-600 mr-2 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-amber-800">
+                      Can't find a specific driver? Let us know your device details and
+                      which driver you need.
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </TabsContent>
+              </TabsContent>
 
-            <TabsContent value="guide">
-              <div className="bg-green-50 border border-green-200 rounded-md p-4 mb-6">
-                <div className="flex">
-                  <Info className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-green-800">
-                    Need a specific repair or disassembly guide? Tell us which device you
-                    need help with.
-                  </p>
+              <TabsContent value="guide">
+                <div className="bg-green-50 border border-green-200 rounded-md p-4 mb-6">
+                  <div className="flex">
+                    <Info className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-green-800">
+                      Need a specific repair or disassembly guide? Tell us which device you
+                      need help with.
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </TabsContent>
+              </TabsContent>
 
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-6"
-                noValidate
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Your name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input type="email" placeholder="your.email@example.com" {...field} />
-                        </FormControl>
-                        <FormDescription>We'll use this to respond to your request.</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone (Optional)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Your phone number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="requestType"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Request Type</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select request type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {(activeTab === "support"
-                              ? requestTypes.support
-                              : activeTab === "driver"
-                              ? requestTypes.driver
-                              : requestTypes.guide
-                            ).map((type) => (
-                              <SelectItem key={type.value} value={type.value}>
-                                {type.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="subject"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Subject</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Brief subject of your request" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="message"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Message</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Describe your issue or request in detail"
-                          className="min-h-32"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="text-sm font-medium text-gray-900 mb-3">
-                    Additional Information
-                  </h4>
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-6"
+                  noValidate
+                >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                       control={form.control}
-                      name="deviceModel"
+                      name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Device Model (Optional)</FormLabel>
+                          <FormLabel>Name</FormLabel>
                           <FormControl>
-                            <Input placeholder="E.g., Thomson N17, Roxxor" {...field} />
+                            <Input placeholder="Your name" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -360,44 +251,158 @@ export default function Requests() {
 
                     <FormField
                       control={form.control}
-                      name="osVersion"
+                      name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>OS Version (Optional)</FormLabel>
+                          <FormLabel>Email</FormLabel>
                           <FormControl>
-                            <Input placeholder="E.g., Windows 11 24H2" {...field} />
+                            <Input type="email" placeholder="your.email@example.com" {...field} />
                           </FormControl>
+                          <FormDescription>We'll use this to respond to your request.</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                   </div>
-                </div>
 
-                <Button type="submit" className="w-full">
-                  Submit Request
-                </Button>
-              </form>
-            </Form>
-          </Tabs>
-        </CardContent>
-        <CardFooter className="flex justify-between border-t pt-6 text-sm text-gray-500">
-          <p>Your data is handled according to our privacy policy.</p>
-        </CardFooter>
-      </Card>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone (Optional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Your phone number" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-      <div className="mt-10">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Response Time</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-600">
-              We typically respond to all requests within 24-48 hours during business
-              days.
-            </p>
+                    <FormField
+                      control={form.control}
+                      name="requestType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Request Type</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select request type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {(activeTab === "support"
+                                ? requestTypes.support
+                                : activeTab === "driver"
+                                ? requestTypes.driver
+                                : requestTypes.guide
+                              ).map((type) => (
+                                <SelectItem key={type.value} value={type.value}>
+                                  {type.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="subject"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Subject</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Brief subject of your request" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="message"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Message</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Describe your issue or request in detail"
+                            className="min-h-32"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="text-sm font-medium text-gray-900 mb-3">
+                      Additional Information
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="deviceModel"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Device Model (Optional)</FormLabel>
+                            <FormControl>
+                              <Input placeholder="E.g., Thomson N17, Roxxor" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="osVersion"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>OS Version (Optional)</FormLabel>
+                            <FormControl>
+                              <Input placeholder="E.g., Windows 11 24H2" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  <Button type="submit" className="w-full">
+                    Submit Request
+                  </Button>
+                </form>
+              </Form>
+            </Tabs>
           </CardContent>
+          <CardFooter className="flex justify-between border-t pt-6 text-sm text-gray-500">
+            <p>Your data is handled according to our privacy policy.</p>
+          </CardFooter>
         </Card>
+
+        <div className="mt-10">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Response Time</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600">
+                We typically respond to all requests within 24-48 hours during business
+                days.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
