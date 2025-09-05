@@ -49,7 +49,7 @@ interface Driver {
   created?: string;
 }
 
-const categories = ['all', 'laptops', 'desktops', 'AIO', 'monitors', 'peripherals'];
+const categories = ['all', 'laptops', 'desktops', 'AIO', 'monitors', 'storage'];
 
 export function Drivers() {
   const [drivers, setDrivers] = useState<Driver[]>([]);

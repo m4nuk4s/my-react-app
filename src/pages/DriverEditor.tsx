@@ -62,7 +62,7 @@ const DriverEditor = () => {
   const driverCategories = [
     "laptops",
     "desktops",
-    "printers",
+    "AIO",
     "monitors",
     "storage",
   ];
