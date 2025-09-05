@@ -146,8 +146,8 @@ export default function Login() {
           animate="visible"
         >
           <motion.div variants={itemVariants} className="text-center">
-            <h1 className="text-4xl font-bold tracking-tight mb-3 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent drop-shadow-lg transition-all duration-300 hover:scale-105 cursor-default">
-              Welcome Back
+            <h1 className="text-6xl font-bold tracking-tight mb-3 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent drop-shadow-lg transition-all duration-300 hover:scale-105 cursor-default">
+              Welcome
             </h1>
             <p className="text-sm text-white font-medium drop-shadow">
               Login or create an account to access Tech Support 
@@ -170,7 +170,7 @@ export default function Login() {
             <Card className="border-primary/20 shadow-xl bg-card/95 backdrop-blur-sm">
               <CardHeader className="pb-4">
                 <CardDescription>
-                  Access your tech support account
+                  Access your tech support Center
                 </CardDescription>
               </CardHeader>
               <CardContent>

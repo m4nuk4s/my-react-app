@@ -39,7 +39,9 @@ export default function Navbar() {
   }, [scrolled]);
 
   const navigation = [
+  
     { name: "💻Windows", href: "/windows" },
+	
     { name: "🛠️Drivers", href: "/drivers" },
     { name: "🗒Guides", href: "/guides" },
     { name: "📜Docs", href: "/docs" },
