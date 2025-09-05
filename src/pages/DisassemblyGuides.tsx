@@ -600,14 +600,7 @@ finalSteps.sort((a, b) => (a.step_number || 0) - (b.step_number || 0));
           <p className="text-xl text-blue-50 mt-2 mb-8 max-w-2xl text-center mx-auto drop-shadow">
             Step-by-step guides for disassembling and repairing common computer models
           </p>
-          {isAuthenticated && (
-            <Button 
-              asChild 
-              className="rounded-full bg-gradient-to-r from-primary to-purple-600 hover:from-purple-600 hover:to-primary transition-all duration-300 shadow-lg"
-            >
-              <Link to="/admin/guides">Manage Guides</Link>
-            </Button>
-          )}
+          
         </div>
       </div>
 
