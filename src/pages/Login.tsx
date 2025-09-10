@@ -69,35 +69,50 @@ export default function Login() {
     }
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setRegistrationError("");
-    setRegistrationSuccess(false);
-    setIsLoading(true);
-    
-    if (!email || !password || !username) {
-      setRegistrationError("All fields are required");
-      setIsLoading(false);
-      return;
+const handleRegister = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setRegistrationError("");
+  setRegistrationSuccess(false);
+  setIsLoading(true);
+
+  if (!email || !password || !username) {
+    setRegistrationError("All fields are required");
+    setIsLoading(false);
+    return;
+  }
+
+  if (username.length < 6) {
+    setRegistrationError("Username must be at least 6 characters long");
+    setIsLoading(false);
+    return;
+  }
+
+  if (password.length < 6) {
+    setRegistrationError("Password must be at least 6 characters long");
+    setIsLoading(false);
+    return;
+  }
+
+  try {
+    const result = await register(email, username, password);
+    if (result === "pending") {
+      setRegistrationSuccess(true);
+      setUsername("");
+      setEmail("");
+      setPassword("");
+    } else if (!result) {
+      setRegistrationError("Email already in use");
     }
-    
-    try {
-      const result = await register(email, username, password);
-      if (result === "pending") {
-        setRegistrationSuccess(true);
-        setUsername("");
-        setEmail("");
-        setPassword("");
-      } else if (!result) {
-        setRegistrationError("Email already in use");
-      }
-    } catch (error: unknown) {
-      console.error("Registration error:", error);
-      setRegistrationError(error instanceof Error ? error.message : "An error occurred during registration");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  } catch (error: unknown) {
+    console.error("Registration error:", error);
+    setRegistrationError(
+      error instanceof Error ? error.message : "An error occurred during registration"
+    );
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   // Animation variants for elements
   const containerVariants = {
