@@ -1,44 +1,33 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Laptop, Shield, Rocket, Code, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Laptop, Shield, Rocket, Code } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function AnimatedWelcome({ onContinue }: { onContinue: () => void }) {
   const [currentStep, setCurrentStep] = useState(0);
   const totalSteps = 4;
   
-  const handleContinueClick = () => {
-    // Force direct DOM manipulation to ensure localStorage is set
+  // This function is called automatically after the last slide is shown.
+  const handleContinue = () => {
     localStorage.setItem('hasSeenWelcome', 'true');
-    // Force a manual callback
-    window.setTimeout(() => {
-      onContinue();
-    }, 100);
+    onContinue();
   };
 
-  const handleNextStep = () => {
-    if (currentStep < totalSteps - 1) {
-      setCurrentStep(prev => prev + 1);
-    } else {
-      handleContinueClick();
-    }
-  };
-
+  // This effect hook controls the automatic progression through the slides.
   useEffect(() => {
+    // Set a timer to advance to the next slide after 3 seconds.
     const timer = setTimeout(() => {
       if (currentStep < totalSteps - 1) {
         setCurrentStep(prev => prev + 1);
       } else {
-        // On the last slide, automatically continue to login after a delay
-        setTimeout(() => {
-          handleContinueClick();
-        }, 3000);
+        // If on the last slide, wait 3 seconds then proceed.
+        handleContinue();
       }
     }, 3000);
     
+    // Cleanup function to clear the timer if the component unmounts.
     return () => clearTimeout(timer);
-  }, [currentStep]);
+  }, [currentStep, totalSteps]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -103,7 +92,7 @@ export default function AnimatedWelcome({ onContinue }: { onContinue: () => void
     },
     {
       title: "Ready to Start?",
-      description: "Login or register to begin your tech support journey",
+      description: "You will be redirected momentarily...",
       icon: <Rocket className="h-16 w-16 text-white" />,
       color: "from-purple-500 to-pink-600",
       accent: "bg-purple-500"
@@ -113,7 +102,10 @@ export default function AnimatedWelcome({ onContinue }: { onContinue: () => void
   const currentSlide = slides[currentStep];
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+    <div 
+      className="fixed inset-0 bg-black/80 backdrop-blur-none z-50 flex items-center justify-center p-4"
+      onClick={handleContinue}
+    >
       <AnimatePresence mode="wait">
         <motion.div 
           key={currentStep}
@@ -122,34 +114,21 @@ export default function AnimatedWelcome({ onContinue }: { onContinue: () => void
           initial="hidden"
           animate="visible"
           exit="exit"
+          onClick={(e) => e.stopPropagation()}
         >
-          {/* Gradient background */}
-          <div className={cn(
-            "absolute inset-0 bg-gradient-to-br opacity-20",
-            currentSlide.color
-          )}></div>
-          
-          {/* Top colored band */}
-          <div className={cn(
-            "h-2 w-full",
-            currentSlide.accent
-          )}></div>
+          <div className={cn("absolute inset-0 bg-gradient-to-br opacity-20", currentSlide.color)}></div>
+          <div className={cn("h-2 w-full", currentSlide.accent)}></div>
           
           <div className="p-8">
-            {/* Icon */}
             <motion.div 
               className="flex justify-center mb-8"
               variants={iconVariants}
             >
-              <div className={cn(
-                "w-24 h-24 rounded-full flex items-center justify-center bg-gradient-to-br shadow-lg",
-                currentSlide.color
-              )}>
+              <div className={cn("w-24 h-24 rounded-full flex items-center justify-center bg-gradient-to-br shadow-lg", currentSlide.color)}>
                 {currentSlide.icon}
               </div>
             </motion.div>
             
-            {/* Content */}
             <motion.h2 
               className="text-2xl font-bold text-center mb-4 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent"
               variants={itemVariants}
@@ -164,8 +143,7 @@ export default function AnimatedWelcome({ onContinue }: { onContinue: () => void
               {currentSlide.description}
             </motion.p>
             
-            {/* Progress indicators */}
-            <div className="flex justify-center mb-6">
+            <div className="flex justify-center pt-2 pb-4">
               {slides.map((_, index) => (
                 <motion.div 
                   key={index}
@@ -182,33 +160,15 @@ export default function AnimatedWelcome({ onContinue }: { onContinue: () => void
               ))}
             </div>
             
-            {/* Controls */}
-            <div className="flex justify-between items-center">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={handleContinueClick}
-                className="text-muted-foreground hover:text-foreground"
+            <div className="flex justify-center">
+              <button 
+                onClick={handleContinue}
+                className="mt-4 px-6 py-2 rounded-full text-sm font-semibold text-white bg-black/50 backdrop-blur-md hover:bg-black/70 transition-colors duration-300"
               >
                 Skip
-              </Button>
-              
-              <Button 
-                onClick={handleNextStep}
-                className={cn(
-                  "rounded-full group",
-                  "bg-gradient-to-r from-primary to-purple-600",
-                  "hover:from-purple-600 hover:to-primary"
-                )}
-              >
-                {currentStep < totalSteps - 1 ? (
-                  <>
-                    Next
-                    <ChevronRight className="ml-1 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-                  </>
-                ) : "Get Started"}
-              </Button>
+              </button>
             </div>
+            
           </div>
         </motion.div>
       </AnimatePresence>
