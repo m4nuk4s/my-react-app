@@ -592,166 +592,218 @@ const loadDrivers = async () => {
             </CardHeader>
             <CardContent>
               {/* Pending Users Section */}
-              <div className="mb-8">
-                <h3 className="text-lg font-medium mb-4">Pending Approval Requests</h3>
-                {isLoading ? (
-                  <p>Loading pending users...</p>
-                ) : pendingUsers.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Username</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead className="w-[200px]">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {pendingUsers.map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell>{user.username}</TableCell>
-                          <TableCell>{user.email}</TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                className="flex items-center gap-1"
-                                onClick={() => handleApproveUser(user.id)}
-                              >
-                                <CheckCircle className="h-4 w-4" /> Approve
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="destructive"
-                                className="flex items-center gap-1"
-                                onClick={() => handleRejectUser(user.id)}
-                              >
-                                <XCircle className="h-4 w-4" /> Reject
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <p className="text-muted-foreground">No pending approval requests</p>
-                )}
-              </div>
+<div className="mt-10">
+  <h4 className="text-lg font-medium mb-4 flex items-center gap-2 text-orange-700">
+    <UserCircle className="h-5 w-5 text-orange-600" /> Pending Users
+  </h4>
+
+  {isLoading ? (
+    <p>Loading pending users...</p>
+  ) : pendingUsers.length > 0 ? (
+    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {pendingUsers.map((user) => (
+        <Card
+          key={user.id}
+          className="hover:shadow-lg hover:scale-[1.02] transition-all rounded-2xl border border-orange-200"
+        >
+          <CardHeader className="flex flex-row items-center gap-3 bg-blue-50 rounded-t-2xl p-4">
+            <UserCircle className="h-10 w-10 text-orange-600" />
+            <div>
+              <CardTitle className="text-base font-semibold text-orange-700">
+                {user.username}
+              </CardTitle>
+              <CardDescription>{user.email}</CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="flex justify-between items-center p-4">
+            <Badge className="bg-orange-600 text-white shadow-sm">
+              Pending
+            </Badge>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                className="bg-green-600 text-white hover:bg-green-700"
+                onClick={async () => {
+                  try {
+                    const { error } = await supabase
+                      .from("users")
+                      .update({ isApproved: true })
+                      .eq("id", user.id);
+
+                    if (error) throw error;
+
+                    setPendingUsers(pendingUsers.filter((u) => u.id !== user.id));
+                    setUsers([...users, { ...user, isApproved: true }]);
+                    toast.success(`${user.username} approved`);
+                  } catch (error) {
+                    console.error("Error approving user:", error);
+                    toast.error("Failed to approve user");
+                  }
+                }}
+              >
+                Approve
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={async () => {
+                  if (window.confirm(`Reject ${user.username}?`)) {
+                    try {
+                      const { error } = await supabase
+                        .from("users")
+                        .delete()
+                        .eq("id", user.id);
+
+                      if (error) throw error;
+
+                      setPendingUsers(pendingUsers.filter((u) => u.id !== user.id));
+                      toast.success("User rejected");
+                    } catch (error) {
+                      console.error("Error rejecting user:", error);
+                      toast.error("Failed to reject user");
+                    }
+                  }
+                }}
+              >
+                Reject
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  ) : (
+    <p className="text-muted-foreground">No pending users</p>
+  )}
+</div>
+
 
               {/* Active Users Section */}
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-medium">Active Users</h3>
-                  <Button onClick={() => navigate("/admin/users/new")}>Add New User</Button>
-                </div>
-                
-                {isLoading ? (
-                  <p>Loading users...</p>
-                ) : users.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Username</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead className="w-[120px]">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {users.map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell>{user.username}</TableCell>
-                          <TableCell>{user.email}</TableCell>
-                          <TableCell>
-                            <Badge variant={user.isAdmin ? "default" : "outline"}>
-                              {user.isAdmin ? "Admin" : "User"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button 
-                                size="icon" 
-                                variant="ghost"
-                                onClick={() => navigate(`/admin/users/edit/${user.id}`)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                size="icon" 
-                                variant="ghost"
-                                className="text-destructive hover:text-destructive"
-                                onClick={async () => {
-                                  if(window.confirm(`Are you sure you want to delete ${user.username}?`)) {
-                                    try {
-                                      // Delete from Supabase first
-                                      const { error } = await supabase
-                                        .from('users')
-                                        .delete()
-                                        .eq('id', user.id);
-                                      
-                                      if (error) {
-                                        console.error("Error deleting user from database:", error);
-                                        throw error; // Will trigger fallback
-                                      }
-                                      
-                                      // Update state
-                                      setUsers(users.filter(u => u.id !== user.id));
-                                      
-                                      // Also update localStorage as fallback
-                                      try {
-                                        const storedUsers = localStorage.getItem('users') || '[]';
-                                        const allUsers = JSON.parse(storedUsers);
-                                        
-                                        // Filter out the user to delete
-                                        const updatedUsers = allUsers.filter((u) => u.id !== user.id);
-                                        
-                                        // Update localStorage
-                                        localStorage.setItem('users', JSON.stringify(updatedUsers));
-                                      } catch (localError) {
-                                        console.warn("Failed to update localStorage after deleting user:", localError);
-                                        // Don't stop execution for localStorage errors
-                                      }
-                                      
-                                      toast.success("User deleted successfully");
-                                    } catch (error) {
-                                      console.error("Error deleting user:", error);
-                                      
-                                      // Fallback to localStorage if database fails
-                                      try {
-                                        // Get existing users
-                                        const storedUsers = localStorage.getItem('users') || '[]';
-                                        const allUsers = JSON.parse(storedUsers);
-                                        
-                                        // Filter out the user to delete
-                                        const updatedUsers = allUsers.filter((u) => u.id !== user.id);
-                                        
-                                        // Update localStorage
-                                        localStorage.setItem('users', JSON.stringify(updatedUsers));
-                                        
-                                        // Update state
-                                        setUsers(users.filter(u => u.id !== user.id));
-                                        toast.success("User deleted successfully (local only)");
-                                      } catch (fallbackError) {
-                                        console.error("Fallback error deleting user:", fallbackError);
-                                        toast.error("Failed to delete user");
-                                      }
-                                    }
-                                  }
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <p className="text-muted-foreground">No users found</p>
-                )}
-              </div>
+<div>
+  <div className="flex justify-between items-center mb-6">
+    <h3 className="text-xl font-semibold">Active Users</h3>
+    <Button onClick={() => navigate("/admin/users/new")}>
+      Add New User
+    </Button>
+  </div>
+
+  {isLoading ? (
+    <p>Loading users...</p>
+  ) : users.length > 0 ? (
+    <div className="space-y-10">
+      {/* Admins Section */}
+      <div>
+        <h4 className="text-lg font-medium mb-4 flex items-center gap-2 text-green-700">
+          <UserCircle className="h-5 w-5 text-green-600" /> Admins
+        </h4>
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {users.filter((u) => u.isAdmin).length > 0 ? (
+            users.filter((u) => u.isAdmin).map((user) => (
+              <Card
+                key={user.id}
+                className="hover:shadow-lg hover:scale-[1.02] transition-all rounded-2xl border border-green-200"
+              >
+                <CardHeader className="flex flex-row items-center gap-3 bg-green-50 rounded-t-2xl p-4">
+                  <UserCircle className="h-10 w-10 text-green-600" />
+                  <div>
+                    <CardTitle className="text-base font-semibold text-green-700">
+                      {user.username}
+                    </CardTitle>
+                    <CardDescription>{user.email}</CardDescription>
+                  </div>
+                </CardHeader>
+                <CardContent className="flex justify-between items-center p-4">
+                  <Badge className="bg-green-600 text-white shadow-sm">
+                    Admin
+                  </Badge>
+                  <div className="flex gap-2">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => navigate(`/admin/users/edit/${user.id}`)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() =>
+                        window.confirm(`Delete ${user.username}?`) &&
+                        setUsers(users.filter((u) => u.id !== user.id))
+                      }
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <p className="text-muted-foreground">No admins found</p>
+          )}
+        </div>
+      </div>
+
+      {/* Users Section */}
+      <div>
+        <h4 className="text-lg font-medium mb-4 flex items-center gap-2 text-blue-700">
+          <UserCircle className="h-5 w-5 text-blue-600" /> Users
+        </h4>
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {users.filter((u) => !u.isAdmin).length > 0 ? (
+            users.filter((u) => !u.isAdmin).map((user) => (
+              <Card
+                key={user.id}
+                className="hover:shadow-lg hover:scale-[1.02] transition-all rounded-2xl border border-blue-200"
+              >
+                <CardHeader className="flex flex-row items-center gap-3 bg-blue-50 rounded-t-2xl p-4">
+                  <UserCircle className="h-10 w-10 text-blue-600" />
+                  <div>
+                    <CardTitle className="text-base font-semibold text-blue-700">
+                      {user.username}
+                    </CardTitle>
+                    <CardDescription>{user.email}</CardDescription>
+                  </div>
+                </CardHeader>
+                <CardContent className="flex justify-between items-center p-4">
+                  <Badge className="bg-blue-600 text-white shadow-sm">
+                    User
+                  </Badge>
+                  <div className="flex gap-2">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => navigate(`/admin/users/edit/${user.id}`)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() =>
+                        window.confirm(`Delete ${user.username}?`) &&
+                        setUsers(users.filter((u) => u.id !== user.id))
+                      }
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <p className="text-muted-foreground">No users found</p>
+          )}
+        </div>
+      </div>
+    </div>
+  ) : (
+    <p className="text-muted-foreground">No users found</p>
+  )}
+</div>
+
             </CardContent>
           </Card>
         </TabsContent>
