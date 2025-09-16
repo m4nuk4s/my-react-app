@@ -1,15 +1,24 @@
-import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
 import AnimatedWelcome from "@/components/auth/AnimatedWelcome";
 import { motion } from "framer-motion";
-import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
-import { Mail, Lock, User, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Mail, Lock, User, AlertCircle, CheckCircle2, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import BackVideo from "@/assets/wtpth/backvi.mp4";
 
 export default function Login() {
@@ -18,52 +27,50 @@ export default function Login() {
   const [username, setUsername] = useState("");
   const [loginError, setLoginError] = useState("");
   const [registrationError, setRegistrationError] = useState("");
-  const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [showWelcomeAnimation, setShowWelcomeAnimation] = useState(
-    !localStorage.getItem('hasSeenWelcome')
-  );
+  const [showWelcomeAnimation, setShowWelcomeAnimation] = useState(false);
   
+  const [showPendingDialog, setShowPendingDialog] = useState(false);
+  // ✨ NEW: State to control the registration success dialog
+  const [showRegSuccessDialog, setShowRegSuccessDialog] = useState(false);
+
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from || '/';
   const { login, register } = useAuth();
 
-  const handleWelcomeComplete = () => {
-    setShowWelcomeAnimation(false);
-    localStorage.setItem('hasSeenWelcome', 'true');
-  };
+  useEffect(() => {
+    const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
+    if (hasSeenWelcome) {
+      setShowWelcomeAnimation(false);
+    }
+  }, []);
 
-  // Clears all form fields and messages when switching tabs
-  const handleTabChange = () => {
-    setEmail("");
-    setPassword("");
-    setUsername("");
-    setLoginError("");
-    setRegistrationError("");
-    setRegistrationSuccess(false);
+  const handleWelcomeComplete = () => {
+    window.setTimeout(() => {
+      setShowWelcomeAnimation(false);
+    }, 0);
+    localStorage.setItem('hasSeenWelcome', 'true');
   };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError("");
-    setRegistrationError("");
-    setRegistrationSuccess(false);
     setIsLoading(true);
     
     try {
       const result = await login(email, password);
       if (result === true) {
-        navigate(from, { replace: true });
+        console.log("Login successful");
+        navigate(from);
       } else if (result === "pending") {
-        setLoginError("Your account is pending approval by an administrator.");
+        setShowPendingDialog(true);
       } else {
-        setLoginError("Invalid email or password.");
+        setLoginError("Invalid email or password");
       }
     } catch (error: unknown) {
       console.error("Login error:", error);
-      const message = error instanceof Error ? error.message : "An unknown error occurred.";
-      setLoginError(`Login failed: ${message}`);
+      setLoginError(error instanceof Error ? error.message : "An error occurred during login");
     } finally {
       setIsLoading(false);
     }
@@ -72,38 +79,28 @@ export default function Login() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setRegistrationError("");
-    setLoginError("");
-    setRegistrationSuccess(false);
     setIsLoading(true);
-
+    
     if (!email || !password || !username) {
-      setRegistrationError("All fields are required.");
+      setRegistrationError("All fields are required");
       setIsLoading(false);
       return;
     }
-    if (username.length < 6) {
-      setRegistrationError("Username must be at least 6 characters long.");
-      setIsLoading(false);
-      return;
-    }
-    if (password.length < 6) {
-      setRegistrationError("Password must be at least 6 characters long.");
-      setIsLoading(false);
-      return;
-    }
-
+    
     try {
       const result = await register(email, username, password);
+      // ✨ MODIFIED: Show dialog on success
       if (result === "pending") {
-        setRegistrationSuccess(true);
-        handleTabChange(); // Clear fields on success
+        setShowRegSuccessDialog(true);
+        setUsername("");
+        setEmail("");
+        setPassword("");
       } else if (!result) {
-        setRegistrationError("This email is already in use.");
+        setRegistrationError("Email already in use");
       }
     } catch (error: unknown) {
       console.error("Registration error:", error);
-      const message = error instanceof Error ? error.message : "An unknown error occurred.";
-      setRegistrationError(`Registration failed: ${message}`);
+      setRegistrationError(error instanceof Error ? error.message : "An error occurred during registration");
     } finally {
       setIsLoading(false);
     }
@@ -111,31 +108,72 @@ export default function Login() {
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 },
+    },
   };
 
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1, transition: { duration: 0.5 } },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: { duration: 0.5 },
+    },
   };
 
   return (
-    <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      <div className="absolute inset-0 z-0">
-        <video
-          className="w-full h-full object-cover object-center opacity-60"
-          autoPlay loop muted playsInline
-        >
-          <source src={BackVideo} type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-      </div>
-
-      {showWelcomeAnimation ? (
+    <>
+      {showWelcomeAnimation && (
         <AnimatedWelcome onContinue={handleWelcomeComplete} />
-      ) : (
+      )}
+      
+      {/* Dialog for pending approval status on LOGIN */}
+      <Dialog open={showPendingDialog} onOpenChange={setShowPendingDialog}>
+        <DialogContent className="sm:max-w-md bg-card/95 backdrop-blur-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-amber-500" />
+              Account Pending Approval
+            </DialogTitle>
+            <DialogDescription className="pt-2 text-left">
+              Your account has been created but is still awaiting approval from an administrator. You will be notified when your account is activated.
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+      
+      {/* ✨ NEW: Dialog for successful REGISTRATION */}
+      <Dialog open={showRegSuccessDialog} onOpenChange={setShowRegSuccessDialog}>
+        <DialogContent className="sm:max-w-md bg-card/95 backdrop-blur-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-green-500" />
+              Registration Successful!
+            </DialogTitle>
+            <DialogDescription className="pt-2 text-left">
+              Your account is pending approval from an administrator. Once approved, you'll be able to log in.
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+      
+      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative">
+       <div className="absolute inset-0 z-0">
+          <video
+            className="absolute inset-0 w-full h-full object-cover object-center opacity-60"
+            autoPlay
+            loop
+            muted
+            playsInline
+          >
+            <source src={BackVideo} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+        </div>
         <motion.div 
           className="w-full max-w-md space-y-8 relative z-10"
           variants={containerVariants}
@@ -144,7 +182,7 @@ export default function Login() {
         >
           <motion.div variants={itemVariants} className="text-center">
             <h1 className="text-6xl font-bold tracking-tight mb-3 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent drop-shadow-lg transition-all duration-300 hover:scale-105 cursor-default">
-              Welcome
+              Welcome Back
             </h1>
             <p className="text-sm text-white font-medium drop-shadow">
               Login or create an account to access Tech Support 
@@ -166,62 +204,83 @@ export default function Login() {
             <Card className="border-primary/20 shadow-xl bg-card/95 backdrop-blur-sm">
               <CardHeader className="pb-4">
                 <CardDescription>
-                  Access your tech support Center
+                  Access your tech support account
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Tabs defaultValue="login" className="w-full" onValueChange={handleTabChange}>
-                  <TabsList className="grid w-full grid-cols-2 mb-6">
-                    <TabsTrigger value="login">Login</TabsTrigger>
-                    <TabsTrigger value="register">Register</TabsTrigger>
+                <Tabs defaultValue="login" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-6 gap-1 bg-transparent p-0">
+                    <TabsTrigger 
+                      value="login" 
+                      className="text-base font-semibold py-2 rounded-md bg-white/10 text-muted-foreground hover:bg-white/20 data-[state=active]:text-primary-foreground data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-purple-600"
+                    >
+                      Login
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="register" 
+                      className="text-base font-semibold py-2 rounded-md bg-white/10 text-muted-foreground hover:bg-white/20 data-[state=active]:text-primary-foreground data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-purple-600"
+                    >
+                      Register
+                    </TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="login">
                     <form onSubmit={handleLogin} className="space-y-5">
                       <div className="space-y-2">
-                        <label htmlFor="login-email" className="text-sm font-medium flex items-center gap-1.5">
+                        <label className="text-sm font-medium flex items-center gap-1.5">
                           <Mail className="h-3.5 w-3.5 text-muted-foreground" />
                           Email
                         </label>
                         <Input
-                          id="login-email"
                           type="email"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
+                          className="border-primary/20 focus-visible:ring-primary/30"
                           placeholder="you@example.com"
                           required
                         />
                       </div>
                       
                       <div className="space-y-2">
-                        <label htmlFor="login-password" className="text-sm font-medium flex items-center gap-1.5">
+                        <label className="text-sm font-medium flex items-center gap-1.5">
                           <Lock className="h-3.5 w-3.5 text-muted-foreground" />
                           Password
                         </label>
                         <Input
-                          id="login-password"
                           type="password"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
+                          className="border-primary/20 focus-visible:ring-primary/30"
                           placeholder="••••••••"
                           required
                         />
                       </div>
                       
                       {loginError && (
-                        <Alert variant="destructive" className="text-red-600 bg-red-50/80 dark:bg-red-950/80 dark:text-red-400">
-                          <AlertCircle className="h-4 w-4" />
-                          <AlertDescription>{loginError}</AlertDescription>
-                        </Alert>
+                        <div className="flex items-start gap-2 text-red-500 text-sm p-2 rounded-md bg-red-50/50 dark:bg-red-950/50">
+                          <AlertCircle className="h-4 w-4 mt-0.5" />
+                          <span>{loginError}</span>
+                        </div>
                       )}
                       
-                      <Button type="submit" className="w-full" disabled={isLoading}>
+                      <Button 
+                        type="submit" 
+                        className={cn(
+                          "w-full relative overflow-hidden transition-all",
+                          "bg-gradient-to-r from-primary to-purple-600",
+                          "hover:from-purple-600 hover:to-primary"
+                        )}
+                        disabled={isLoading}
+                      >
                         {isLoading ? (
-                          <span className="flex items-center justify-center">
-                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                            Signing In...
+                          <span className="flex items-center">
+                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Logging in...
                           </span>
-                        ) : "Sign In"}
+                        ) : "Sign in"}
                       </Button>
                     </form>
                   </TabsContent>
@@ -229,67 +288,73 @@ export default function Login() {
                   <TabsContent value="register">
                     <form onSubmit={handleRegister} className="space-y-5">
                       <div className="space-y-2">
-                        <label htmlFor="register-username" className="text-sm font-medium flex items-center gap-1.5">
+                        <label className="text-sm font-medium flex items-center gap-1.5">
                           <User className="h-3.5 w-3.5 text-muted-foreground" />
                           Username
                         </label>
                         <Input
-                          id="register-username"
                           value={username}
                           onChange={(e) => setUsername(e.target.value)}
+                          className="border-primary/20 focus-visible:ring-primary/30"
                           placeholder="johnsmith"
                           required
                         />
                       </div>
                       
                       <div className="space-y-2">
-                        <label htmlFor="register-email" className="text-sm font-medium flex items-center gap-1.5">
+                        <label className="text-sm font-medium flex items-center gap-1.5">
                           <Mail className="h-3.5 w-3.5 text-muted-foreground" />
                           Email
                         </label>
                         <Input
-                          id="register-email"
                           type="email"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
+                          className="border-primary/20 focus-visible:ring-primary/30"
                           placeholder="you@example.com"
                           required
                         />
                       </div>
                       
                       <div className="space-y-2">
-                        <label htmlFor="register-password" className="text-sm font-medium flex items-center gap-1.5">
+                        <label className="text-sm font-medium flex items-center gap-1.5">
                           <Lock className="h-3.5 w-3.5 text-muted-foreground" />
                           Password
                         </label>
                         <Input
-                          id="register-password"
                           type="password"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          placeholder="Minimum 6 characters"
+                          className="border-primary/20 focus-visible:ring-primary/30"
+                          placeholder="••••••••"
                           required
                         />
                       </div>
                       
                       {registrationError && (
-                        <Alert variant="destructive" className="text-red-600 bg-red-50/80 dark:bg-red-950/80 dark:text-red-400">
-                          <AlertCircle className="h-4 w-4" />
-                          <AlertDescription>{registrationError}</AlertDescription>
-                        </Alert>
+                        <div className="flex items-start gap-2 text-red-500 text-sm p-2 rounded-md bg-red-50/50 dark:bg-red-950/50">
+                          <AlertCircle className="h-4 w-4 mt-0.5" />
+                          <span>{registrationError}</span>
+                        </div>
                       )}
                       
-                      {registrationSuccess && (
-                         <Alert variant="success" className="text-green-600 bg-green-50/80 dark:bg-green-950/80 dark:text-green-400">
-                          <CheckCircle2 className="h-4 w-4" />
-                          <AlertDescription>Success! Your account is pending approval.</AlertDescription>
-                        </Alert>
-                      )}
+                      {/* ✨ DELETED: The old inline success message was here */}
                       
-                      <Button type="submit" className="w-full" disabled={isLoading}>
-                         {isLoading ? (
-                           <span className="flex items-center justify-center">
-                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                      <Button 
+                        type="submit" 
+                        className={cn(
+                          "w-full relative overflow-hidden transition-all",
+                          "bg-gradient-to-r from-primary to-purple-600",
+                          "hover:from-purple-600 hover:to-primary"
+                        )}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <span className="flex items-center">
+                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
                             Registering...
                           </span>
                         ) : "Create Account"}
@@ -301,7 +366,7 @@ export default function Login() {
             </Card>
           </motion.div>
         </motion.div>
-      )}
-    </div>
+      </div>
+    </>
   );
 }

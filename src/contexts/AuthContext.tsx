@@ -189,6 +189,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           console.log('Email notification failed:', emailError);
         }
 
+        // --- FIX APPLIED HERE ---
+        // Sign the user out immediately after registration.
+        // This creates their account but prevents an active session
+        // for a pending user.
+        await supabase.auth.signOut();
+        // --- END FIX ---
+
         return "pending";
       }
 
