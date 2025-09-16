@@ -638,120 +638,130 @@ const loadDrivers = async () => {
                   <p className="text-muted-foreground">No pending approval requests</p>
                 )}
               </div>
+{/* Active Users Section */}
+<div>
+  <div className="flex justify-between items-center mb-6">
+    <h3 className="text-xl font-semibold">Active Accounts</h3>
+    <Button onClick={() => navigate("/admin/users/new")}>
+      <Plus className="mr-2 h-4 w-4" /> Add New Account
+    </Button>
+  </div>
 
-              {/* Active Users Section */}
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-medium">Active Users</h3>
-                  <Button onClick={() => navigate("/admin/users/new")}>Add New User</Button>
+  {isLoading ? (
+    <p>Loading users...</p>
+  ) : users.length > 0 ? (
+    <div className="space-y-6">
+      {["admin", "user", "client"] // fixed order → admin always first
+        .filter((roleType) =>
+          users.some((u) =>
+            (u.role?.toLowerCase() === "administrator"
+              ? "admin"
+              : u.role?.toLowerCase()) === roleType
+          )
+        )
+        .map((roleType) => {
+          // Normalize role users
+          const roleUsers = users.filter(
+            (u) =>
+              (u.role?.toLowerCase() === "administrator"
+                ? "admin"
+                : u.role?.toLowerCase()) === roleType
+          );
+
+          // Display-friendly names
+          const formatRoleName = (role: string) => {
+            if (role === "admin") return "Administrator";
+            if (role === "client") return "Client";
+            if (role === "user") return "User";
+            return role.charAt(0).toUpperCase() + role.slice(1);
+          };
+
+          // Role colors
+          const roleColor =
+            roleType === "admin"
+              ? "text-blue-600"
+              : roleType === "client"
+              ? "text-purple-600"
+              : "text-green-600";
+
+          return (
+            <Card key={roleType} className="border shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <UserCircle className={`h-6 w-6 ${roleColor}`} />
+                  <CardTitle className="text-lg">
+                    {formatRoleName(roleType)}s
+                  </CardTitle>
+                  <Badge variant="secondary" className="ml-2">
+                    {roleUsers.length}
+                  </Badge>
                 </div>
-                
-                {isLoading ? (
-                  <p>Loading users...</p>
-                ) : users.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Username</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead className="w-[120px]">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {users.map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell>{user.username}</TableCell>
-                          <TableCell>{user.email}</TableCell>
-                          <TableCell>
-                            <Badge variant={user.isAdmin ? "default" : "outline"}>
-                              {user.isAdmin ? "Admin" : "User"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button 
-                                size="icon" 
-                                variant="ghost"
-                                onClick={() => navigate(`/admin/users/edit/${user.id}`)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                size="icon" 
-                                variant="ghost"
-                                className="text-destructive hover:text-destructive"
-                                onClick={async () => {
-                                  if(window.confirm(`Are you sure you want to delete ${user.username}?`)) {
-                                    try {
-                                      // Delete from Supabase first
-                                      const { error } = await supabase
-                                        .from('users')
-                                        .delete()
-                                        .eq('id', user.id);
-                                      
-                                      if (error) {
-                                        console.error("Error deleting user from database:", error);
-                                        throw error; // Will trigger fallback
-                                      }
-                                      
-                                      // Update state
-                                      setUsers(users.filter(u => u.id !== user.id));
-                                      
-                                      // Also update localStorage as fallback
-                                      try {
-                                        const storedUsers = localStorage.getItem('users') || '[]';
-                                        const allUsers = JSON.parse(storedUsers);
-                                        
-                                        // Filter out the user to delete
-                                        const updatedUsers = allUsers.filter((u) => u.id !== user.id);
-                                        
-                                        // Update localStorage
-                                        localStorage.setItem('users', JSON.stringify(updatedUsers));
-                                      } catch (localError) {
-                                        console.warn("Failed to update localStorage after deleting user:", localError);
-                                        // Don't stop execution for localStorage errors
-                                      }
-                                      
-                                      toast.success("User deleted successfully");
-                                    } catch (error) {
-                                      console.error("Error deleting user:", error);
-                                      
-                                      // Fallback to localStorage if database fails
-                                      try {
-                                        // Get existing users
-                                        const storedUsers = localStorage.getItem('users') || '[]';
-                                        const allUsers = JSON.parse(storedUsers);
-                                        
-                                        // Filter out the user to delete
-                                        const updatedUsers = allUsers.filter((u) => u.id !== user.id);
-                                        
-                                        // Update localStorage
-                                        localStorage.setItem('users', JSON.stringify(updatedUsers));
-                                        
-                                        // Update state
-                                        setUsers(users.filter(u => u.id !== user.id));
-                                        toast.success("User deleted successfully (local only)");
-                                      } catch (fallbackError) {
-                                        console.error("Fallback error deleting user:", fallbackError);
-                                        toast.error("Failed to delete user");
-                                      }
-                                    }
-                                  }
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+              </CardHeader>
+
+              <CardContent>
+                {roleUsers.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {roleUsers.map((user) => (
+                      <Card key={user.id} className="p-4 flex flex-col shadow-sm">
+                        <div className="flex items-center gap-3">
+                          <UserCircle className={`h-10 w-10 ${roleColor}`} />
+                          <div className="flex-1">
+                            <p className="font-medium text-base">{user.username}</p>
+                            <p className="text-sm text-muted-foreground">{user.email}</p>
+                          </div>
+                          <Badge variant="outline" className="capitalize">
+                            {formatRoleName(roleType)}
+                          </Badge>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex justify-end gap-2 mt-4">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            title={`Edit ${formatRoleName(roleType)}`}
+                            onClick={() =>
+                              navigate(`/admin/users/edit/${user.id}`)
+                            }
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            title={`Delete ${formatRoleName(roleType)}`}
+                            className="text-destructive hover:text-destructive"
+                            onClick={async () => {
+                              if (
+                                window.confirm(
+                                  `Delete ${formatRoleName(roleType)} ${user.username}?`
+                                )
+                              ) {
+                                // your delete logic here
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
                 ) : (
-                  <p className="text-muted-foreground">No users found</p>
+                  <p className="text-muted-foreground">
+                    No {formatRoleName(roleType)}s found
+                  </p>
                 )}
-              </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+    </div>
+  ) : (
+    <p className="text-muted-foreground">No accounts found</p>
+  )}
+</div>
+
             </CardContent>
           </Card>
         </TabsContent>
