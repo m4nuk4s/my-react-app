@@ -16,7 +16,8 @@ import {
 import AnimatedWelcome from "@/components/auth/AnimatedWelcome";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mail, Lock, User, AlertCircle, CheckCircle2, Clock } from "lucide-react";
+// ✨ MODIFIED: Removed CheckCircle2, UserCheck is no longer needed directly. Custom SVG will be used.
+import { Mail, Lock, User, AlertCircle, Clock } from "lucide-react"; 
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import BackVideo from "@/assets/wtpth/backvi.mp4";
@@ -31,7 +32,6 @@ export default function Login() {
   const [showWelcomeAnimation, setShowWelcomeAnimation] = useState(false);
   
   const [showPendingDialog, setShowPendingDialog] = useState(false);
-  // ✨ NEW: State to control the registration success dialog
   const [showRegSuccessDialog, setShowRegSuccessDialog] = useState(false);
 
   const navigate = useNavigate();
@@ -89,7 +89,6 @@ export default function Login() {
     
     try {
       const result = await register(email, username, password);
-      // ✨ MODIFIED: Show dialog on success
       if (result === "pending") {
         setShowRegSuccessDialog(true);
         setUsername("");
@@ -144,18 +143,59 @@ export default function Login() {
         </DialogContent>
       </Dialog>
       
-      {/* ✨ NEW: Dialog for successful REGISTRATION */}
+      {/* ✨ NEW: Professional dialog for successful REGISTRATION with combined user and check icon */}
       <Dialog open={showRegSuccessDialog} onOpenChange={setShowRegSuccessDialog}>
         <DialogContent className="sm:max-w-md bg-card/95 backdrop-blur-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-500" />
-              Registration Successful!
+          <div className="flex flex-col items-center justify-center text-center p-4 pt-8">
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0, y: -50 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
+            >
+              <div className="relative w-24 h-24 rounded-full bg-green-500/10 flex items-center justify-center">
+                {/* User Icon (base) */}
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="1.5" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  className="lucide lucide-user h-14 w-14 text-green-600" // Slightly darker green for the user
+                >
+                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+                {/* Checkmark Icon (overlay) */}
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.4, type: "spring", stiffness: 300, damping: 20 }}
+                  className="absolute bottom-2 right-2 p-1 rounded-full bg-green-500 text-white shadow-lg"
+                >
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="3" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    className="lucide lucide-check h-6 w-6"
+                  >
+                    <path d="M20 6 9 17l-5-5"/>
+                  </svg>
+                </motion.div>
+              </div>
+            </motion.div>
+
+            <DialogTitle className="mt-5 text-2xl font-bold">
+              Registration Submitted
             </DialogTitle>
-            <DialogDescription className="pt-2 text-left">
-              Your account is pending approval from an administrator. Once approved, you'll be able to log in.
+            <DialogDescription className="mt-2 text-center text-muted-foreground">
+              Your account is pending approval from an administrator. You'll be able to log in once it has been activated.
             </DialogDescription>
-          </DialogHeader>
+          </div>
         </DialogContent>
       </Dialog>
       
@@ -337,8 +377,6 @@ export default function Login() {
                           <span>{registrationError}</span>
                         </div>
                       )}
-                      
-                      {/* ✨ DELETED: The old inline success message was here */}
                       
                       <Button 
                         type="submit" 
