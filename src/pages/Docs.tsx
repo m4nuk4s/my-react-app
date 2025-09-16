@@ -6,7 +6,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { FileText, Eye, Search, Loader2, Plus, Edit, Trash2 } from 'lucide-react';
+import { 
+  FileText, Eye, Search, Loader2, Plus, Edit, Trash2, 
+  BookOpen, LayoutTemplate, Bookmark, RotateCw, Book, Wrench, Folder 
+} from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { fetchDocuments, deleteDocument, Document } from '@/lib/supabase-docs';
 import DocumentManagementDialog from '@/components/DocumentManagementDialog';
@@ -21,6 +24,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+
+
 
 const Docs = () => {
   const { isAuthenticated, user, isAdmin } = useAuth();
@@ -196,7 +201,7 @@ const Docs = () => {
       const term = searchTerm.toLowerCase();
       results = results.filter(doc => 
         doc.title.toLowerCase().includes(term) || 
-        doc.desc.toLowerCase().includes(term)
+        (doc.desc && doc.desc.toLowerCase().includes(term))
       );
     }
     
@@ -247,22 +252,34 @@ const Docs = () => {
     loadDocuments(); // Reload documents after add/edit
   };
 
-  // File type icon mapping
-  const getFileIcon = (fileType: string) => {
-    switch (fileType.toLowerCase()) {
-      case 'pdf':
-        return <FileText className="h-5 w-5 text-red-500" />;
-      case 'xlsx':
-      case 'xls':
-        return <FileText className="h-5 w-5 text-green-500" />;
-      case 'docx':
-      case 'doc':
-        return <FileText className="h-5 w-5 text-blue-500" />;
-      case 'pptx':
-      case 'ppt':
-        return <FileText className="h-5 w-5 text-orange-500" />;
+  // Category to Icon mapping with colors
+  const getCategoryIcon = (category: string | null | undefined) => {
+    const baseClassName = "h-8 w-8 flex-shrink-0";
+  
+    if (!category) {
+        return <Folder className={`${baseClassName} text-gray-500`} />;
+    }
+    
+    const normalized = category.trim().toLowerCase().replace(/[-_]/g, " ");
+  
+    switch (normalized) {
+      case "general":
+        return <FileText className={`${baseClassName} text-slate-500`} />;
+      case "guides":
+        return <BookOpen className={`${baseClassName} text-green-500`} />;
+      case "templates":
+        return <LayoutTemplate className={`${baseClassName} text-blue-500`} />;
+      case "reference":
+        return <Bookmark className={`${baseClassName} text-indigo-500`} />;
+      case "reworks":
+        return <RotateCw className={`${baseClassName} text-amber-500`} />;
+      case "manual":
+      case "manuals":
+        return <Book className={`${baseClassName} text-sky-500`} />;
+      case "issue fix":
+        return <Wrench className={`${baseClassName} text-red-500`} />;
       default:
-        return <FileText className="h-5 w-5 text-gray-500" />;
+        return <Folder className={`${baseClassName} text-gray-500`} />;
     }
   };
 
@@ -305,9 +322,9 @@ const Docs = () => {
       <div className="container py-10 max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight">Document Library</h2>
+            <h2 className="text-2xl font-bold tracking-tight">Documents Library</h2>
             <p className="text-muted-foreground mt-1">
-              Search, filter, and manage all available documents.
+              Search all available documents.
             </p>
           </div>
           <div className="flex items-center gap-2 mt-4 md:mt-0">
@@ -368,11 +385,13 @@ const Docs = () => {
                   filteredDocuments.map((document) => (
                     <Card key={document.id} className="hover:shadow-lg transition-shadow flex flex-col">
                       <CardHeader className="pb-3">
-                        <div className="flex items-start gap-3">
-                          {getFileIcon(document.type)}
-                          <CardTitle className="text-lg leading-snug">{document.title}</CardTitle>
+                        <div className="flex items-start gap-4">
+                          {getCategoryIcon(document.category)}
+                          <div className="flex-1">
+                             <CardTitle className="text-lg leading-snug">{document.title}</CardTitle>
+                             <CardDescription className="mt-2 line-clamp-3 h-[60px]">{document.desc}</CardDescription>
+                          </div>
                         </div>
-                        <CardDescription className="mt-2 line-clamp-3 h-[60px]">{document.desc}</CardDescription>
                       </CardHeader>
                       <CardContent className="pb-3 flex-grow">
                         <div className="flex items-center justify-between text-sm text-muted-foreground">
