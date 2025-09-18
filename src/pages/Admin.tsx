@@ -620,29 +620,37 @@ const loadDrivers = async () => {
               Pending
             </Badge>
             <div className="flex gap-2">
-              <Button
-                size="sm"
-                className="bg-green-600 text-white hover:bg-green-700"
-                onClick={async () => {
-                  try {
-                    const { error } = await supabase
-                      .from("users")
-                      .update({ isApproved: true })
-                      .eq("id", user.id);
+       <Button
+  size="sm"
+  className="bg-green-600 text-white hover:bg-green-700"
+  onClick={async () => {
+    try {
+      // First, update the user in the Supabase database
+      const { error } = await supabase
+        .from("users")
+        .update({ isapproved: true }) // Use the lowercase 'isapproved' column
+        .eq("id", user.id);
 
-                    if (error) throw error;
+      if (error) throw error;
 
-                    setPendingUsers(pendingUsers.filter((u) => u.id !== user.id));
-                    setUsers([...users, { ...user, isApproved: true }]);
-                    toast.success(`${user.username} approved`);
-                  } catch (error) {
-                    console.error("Error approving user:", error);
-                    toast.error("Failed to approve user");
-                  }
-                }}
-              >
-                Approve
-              </Button>
+      // Then, update the local state to reflect the change immediately
+      setPendingUsers(pendingUsers.filter((u) => u.id !== user.id));
+      setUsers([...users, { ...user, isApproved: true }]);
+
+      // Finally, show the success toast with an icon and description ✅
+      toast.success("User Approved", {
+        description: `The user '${user.username}' has been successfully approved.`,
+        icon: <CheckCircle className="h-5 w-5 text-green-500" />,
+      });
+
+    } catch (error) {
+      console.error("Error approving user:", error);
+      toast.error("Failed to approve user");
+    }
+  }}
+>
+  Approve
+</Button>
               <Button
                 size="sm"
                 variant="destructive"
