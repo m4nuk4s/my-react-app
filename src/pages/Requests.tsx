@@ -386,7 +386,7 @@ export default function Requests() {
             </Tabs>
           </CardContent>
           <CardFooter className="flex justify-between border-t pt-6 text-sm text-gray-500">
-            <p>Your data is handled according to our privacy policy.</p>
+            <p> </p>
           </CardFooter>
         </Card>
 
