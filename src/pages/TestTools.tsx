@@ -3,18 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Download, 
-  Check, 
-  Info, 
-  AlertTriangle, 
-  CheckCircle2, 
-  MemoryStick, 
-  HardDrive, 
-  Network, 
-  Thermometer, 
-  Battery 
-} from "lucide-react";
+import { Download, Check, Info, AlertTriangle, CheckCircle2 } from "lucide-react";
 import Home from "@/assets/wtpth/Home.jpg";
 import maininf from "@/assets/wtpth/maininf.jpg";
 import final from "@/assets/wtpth/final.jpg";
@@ -22,7 +11,6 @@ import tp from "@/assets/wtpth/tp.jpg";
 import kbc from "@/assets/wtpth/kbc.jpg";
 import Serial from "@/assets/wtpth/Serial.jpg";
 import sound from "@/assets/wtpth/sound.jpg";
-import WtpthIcon from "@/assets/wtpth/wtpth.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
 import BackVideo from "@/assets/wtpth/backvi.mp4";
@@ -69,8 +57,7 @@ export default function TestTools() {
       category: "Hardware",
       os: ["windows10", "windows11"],
       size: "15 MB",
-      link: "https://www.memtest86.com/downloads/memtest86-usb.zip",
-      icon: <MemoryStick className="h-8 w-8 text-blue-600" />
+      link: "https://www.memtest86.com/downloads/memtest86-usb.zip"
     },
     {
       name: "CrystalDiskMark",
@@ -79,8 +66,7 @@ export default function TestTools() {
       category: "Storage",
       os: ["windows10", "windows11"],
       size: "28 MB",
-      link: "https://crystalmark.info/redirect.php?product=CrystalDiskMark",
-      icon: <HardDrive className="h-8 w-8 text-blue-600" />
+      link: "https://crystalmark.info/redirect.php?product=CrystalDiskMark"
     },
     {
       name: "NetworkAnalyzer",
@@ -89,8 +75,7 @@ export default function TestTools() {
       category: "Network",
       os: ["windows10", "windows11"],
       size: "257 MB",
-      link: "https://www.manageengine.com/products/netflow/2028821/ManageEngine_NetFlowAnalyzer_64bit.exe",
-      icon: <Network className="h-8 w-8 text-blue-600" />
+      link: "https://www.manageengine.com/products/netflow/2028821/ManageEngine_NetFlowAnalyzer_64bit.exe"
     },
     {
       name: "Core Temp",
@@ -99,8 +84,7 @@ export default function TestTools() {
       category: "Hardware",
       os: ["windows10"],
       size: "18 MB",
-      link: "https://www.alcpu.com/CoreTemp/Core-Temp-setup-v1.18.1.0.exe",
-      icon: <Thermometer className="h-8 w-8 text-blue-600" />
+      link: "https://www.alcpu.com/CoreTemp/Core-Temp-setup-v1.18.1.0.exe"
     },
     {
       name: "BatteryInfoView",
@@ -109,8 +93,7 @@ export default function TestTools() {
       category: "Hardware",
       os: ["windows10", "windows11"],
       size: "12 MB",
-      link: "https://www.nirsoft.net/utils/batteryinfoview-x64.zip",
-      icon: <Battery className="h-8 w-8 text-blue-600" />
+      link: "https://www.nirsoft.net/utils/batteryinfoview-x64.zip"
     }
   ];
 
@@ -172,13 +155,8 @@ export default function TestTools() {
             <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-8">
               <div>
                 <Badge variant="outline" className="mb-4">Featured Tool</Badge>
-                <div className="flex items-center gap-4">
-                  <img src={WtpthIcon} alt="WTPTH Icon" className="h-14 w-14" />
-                  <div>
-                    <h2 className="text-3xl font-bold">{featuredTool.name}</h2>
-                    <p className="text-gray-600">Version {featuredTool.version}</p>
-                  </div>
-                </div>
+                <h2 className="text-3xl font-bold mb-2">{featuredTool.name}</h2>
+                <p className="text-gray-600">Version {featuredTool.version}</p>
               </div>
               <div className="mt-4 md:mt-0">
                 {isAuthenticated ? (
@@ -339,22 +317,19 @@ export default function TestTools() {
           <h2 className="text-2xl font-bold mb-6">Other Testing Utilities</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {otherTools.map((tool, index) => (
-              <Card key={index} className="flex flex-col">
+              <Card key={index}>
                 <CardHeader>
                   <div className="flex justify-between items-start">
-                    <div className="flex items-start gap-4">
-                      {tool.icon}
-                      <div>
-                        <CardTitle>{tool.name}</CardTitle>
-                        <CardDescription>Version {tool.version}</CardDescription>
-                      </div>
+                    <div>
+                      <CardTitle>{tool.name}</CardTitle>
+                      <CardDescription>Version {tool.version}</CardDescription>
                     </div>
-                    <Badge variant="outline" className="text-blue-700 border-blue-700 whitespace-nowrap">
+                    <Badge variant="outline" className="text-blue-700 border-blue-700">
                       {tool.category}
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="flex-grow">
+                <CardContent>
                   <p className="text-gray-600 mb-4">{tool.description}</p>
                   <div className="flex items-center justify-between text-sm text-gray-500">
                     <div>Size: {tool.size}</div>
