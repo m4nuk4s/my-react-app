@@ -1151,69 +1151,69 @@ const loadDrivers = async () => {
                     // Add the model using our utility - now async
                     await modelManager.addModel(searchTerm.trim());
                     
-						// Reset search term and show success
-						setSearchTerm('');
-						toast.success("Model added successfully to Supabase and local storage");
-						
-						// Reload models to update the UI
-						await loadGuides();
-					  } catch (error) {
-						if (error.message === 'Model already exists') {
-						  toast.error("Model already exists");
-						} else {
-						  console.error("Error adding model:", error);
-						  toast.error("Failed to add model");
-						}
-					  }
-					}}>Add Model</Button>
-				  </div>
+                    // Reset search term and show success
+                    setSearchTerm('');
+                    toast.success("Model added successfully to Supabase and local storage");
+                    
+                    // Reload models to update the UI
+                    await loadGuides();
+                  } catch (error) {
+                    if (error.message === 'Model already exists') {
+                      toast.error("Model already exists");
+                    } else {
+                      console.error("Error adding model:", error);
+                      toast.error("Failed to add model");
+                    }
+                  }
+                }}>Add Model</Button>
+              </div>
 
-				  <div className="border rounded-lg">
-					<Table>
-					  <TableHeader>
-						<TableRow>
-						  <TableHead>Model Name</TableHead>
-						  <TableHead className="w-[100px] text-right">Actions</TableHead>
-						</TableRow>
-					  </TableHeader>
-					  <TableBody>
-						{/* Use actual models from state instead of hardcoded array */}
-						{(computerModels || ["UKN15I711-8GR512", "UKN15I310-8DG256-IF1599445", "UA-N15C8SL512"]).map((model) => (
-						  <TableRow key={model}>
-							<TableCell>{model}</TableCell>
-							<TableCell className="text-right">
-							  <Button 
-								size="icon" 
-								variant="ghost"
-								className="text-destructive hover:text-destructive h-8 w-8"
-								onClick={async () => {
-								  if (window.confirm(`Are you sure you want to delete model "${model}"?`)) {
-									try {
-									  // Use the modelManager utility - now async
-									  await modelManager.deleteModel(model);
-									  
-									  // Reload models to update the UI
-									  await loadGuides();
-									  
-									  toast.success("Model deleted successfully from Supabase and local storage");
-									} catch (error) {
-									  console.error("Error deleting model:", error);
-									  toast.error("Failed to delete model");
-									}
-								  }
-								}}
-							  >
-								<Trash2 className="h-4 w-4" />
-							  </Button>
-							</TableCell>
-						  </TableRow>
-						))}
-					  </TableBody>
-					</Table>
-				  </div>
-				</CardContent>
-			  </Card>
-			</TabsContent>
+              <div className="border rounded-lg">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Model Name</TableHead>
+                      <TableHead className="w-[100px] text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {/* Use actual models from state instead of hardcoded array */}
+                    {(computerModels || ["UKN15I711-8GR512", "UKN15I310-8DG256-IF1599445", "UA-N15C8SL512"]).map((model) => (
+                      <TableRow key={model}>
+                        <TableCell>{model}</TableCell>
+                        <TableCell className="text-right">
+                          <Button 
+                            size="icon" 
+                            variant="ghost"
+                            className="text-destructive hover:text-destructive h-8 w-8"
+                            onClick={async () => {
+                              if (window.confirm(`Are you sure you want to delete model "${model}"?`)) {
+                                try {
+                                  // Use the modelManager utility - now async
+                                  await modelManager.deleteModel(model);
+                                  
+                                  // Reload models to update the UI
+                                  await loadGuides();
+                                  
+                                  toast.success("Model deleted successfully from Supabase and local storage");
+                                } catch (error) {
+                                  console.error("Error deleting model:", error);
+                                  toast.error("Failed to delete model");
+                                }
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* Settings Tab */}
         <TabsContent value="settings">
