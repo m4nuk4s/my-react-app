@@ -29,6 +29,10 @@ import './styles/test-tools-dark-mode-fixes.css';
 
 const queryClient = new QueryClient();
 
+// Define roles for easier management
+const ADMIN_ROLE = ['admin'];
+const USER_ADMIN_ROLES = ['user', 'admin'];
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -42,26 +46,31 @@ const App = () => (
                   {/* Public route with authentication check */}
                   <Route path="/login" element={<PublicRoute restricted>{<Login />}</PublicRoute>} />
                   
-                  {/* Protected routes - require authentication */}
+                  {/* Routes accessible to all authenticated users (client, user, admin) */}
                   <Route path="/" element={<ProtectedRoute>{<Home />}</ProtectedRoute>} />
-                  <Route path="/windows" element={<ProtectedRoute>{<Windows />}</ProtectedRoute>} />
-                  <Route path="/windows10" element={<ProtectedRoute>{<Navigate to="/windows" state={{ tab: "win10" }} />}</ProtectedRoute>} />
-                  <Route path="/windows11" element={<ProtectedRoute>{<Navigate to="/windows" state={{ tab: "win11" }} />}</ProtectedRoute>} />
                   <Route path="/drivers" element={<ProtectedRoute>{<Drivers />}</ProtectedRoute>} />
                   <Route path="/guides" element={<ProtectedRoute>{<Guides />}</ProtectedRoute>} />
-                  <Route path="/docs" element={<ProtectedRoute>{<Docs />}</ProtectedRoute>} />
-                  <Route path="/test-tools" element={<ProtectedRoute>{<TestTools />}</ProtectedRoute>} />
                   <Route path="/requests" element={<ProtectedRoute>{<Requests />}</ProtectedRoute>} />
-                  <Route path="/disassembly-guides" element={<ProtectedRoute>{<DisassemblyGuides />}</ProtectedRoute>} />
-                  <Route path="/disassembly/:id" element={<ProtectedRoute>{<DisassemblyGuideDetail />}</ProtectedRoute>} />
-                  <Route path="/admin" element={<ProtectedRoute>{<Admin />}</ProtectedRoute>} />
-                  <Route path="/admin/guides" element={<ProtectedRoute>{<Admin />}</ProtectedRoute>} />
-                  <Route path="/admin/guides/new" element={<ProtectedRoute>{<GuideEditor />}</ProtectedRoute>} />
-                  <Route path="/admin/guides/edit/:id" element={<ProtectedRoute>{<GuideEditor />}</ProtectedRoute>} />
-                  <Route path="/admin/drivers/new" element={<ProtectedRoute>{<DriverEditor />}</ProtectedRoute>} />
-                  <Route path="/admin/drivers/edit/:id" element={<ProtectedRoute>{<DriverEditor />}</ProtectedRoute>} />
-                  <Route path="/admin/users/new" element={<ProtectedRoute>{<UserEditor />}</ProtectedRoute>} />
-                  <Route path="/admin/users/edit/:id" element={<ProtectedRoute>{<UserEditor />}</ProtectedRoute>} />
+
+                  {/* Routes accessible only to 'user' and 'admin' roles */}
+                  <Route path="/windows" element={<ProtectedRoute allowedRoles={USER_ADMIN_ROLES}>{<Windows />}</ProtectedRoute>} />
+                  <Route path="/windows10" element={<ProtectedRoute allowedRoles={USER_ADMIN_ROLES}>{<Navigate to="/windows" state={{ tab: "win10" }} />}</ProtectedRoute>} />
+                  <Route path="/windows11" element={<ProtectedRoute allowedRoles={USER_ADMIN_ROLES}>{<Navigate to="/windows" state={{ tab: "win11" }} />}</ProtectedRoute>} />
+                  <Route path="/docs" element={<ProtectedRoute allowedRoles={USER_ADMIN_ROLES}>{<Docs />}</ProtectedRoute>} />
+                  <Route path="/test-tools" element={<ProtectedRoute allowedRoles={USER_ADMIN_ROLES}>{<TestTools />}</ProtectedRoute>} />
+                  <Route path="/disassembly-guides" element={<ProtectedRoute allowedRoles={USER_ADMIN_ROLES}>{<DisassemblyGuides />}</ProtectedRoute>} />
+                  <Route path="/disassembly/:id" element={<ProtectedRoute allowedRoles={USER_ADMIN_ROLES}>{<DisassemblyGuideDetail />}</ProtectedRoute>} />
+                  
+                  {/* Admin-only routes */}
+                  <Route path="/admin" element={<ProtectedRoute allowedRoles={ADMIN_ROLE}>{<Admin />}</ProtectedRoute>} />
+                  <Route path="/admin/guides" element={<ProtectedRoute allowedRoles={ADMIN_ROLE}>{<Admin />}</ProtectedRoute>} />
+                  <Route path="/admin/guides/new" element={<ProtectedRoute allowedRoles={ADMIN_ROLE}>{<GuideEditor />}</ProtectedRoute>} />
+                  <Route path="/admin/guides/edit/:id" element={<ProtectedRoute allowedRoles={ADMIN_ROLE}>{<GuideEditor />}</ProtectedRoute>} />
+                  <Route path="/admin/drivers/new" element={<ProtectedRoute allowedRoles={ADMIN_ROLE}>{<DriverEditor />}</ProtectedRoute>} />
+                  <Route path="/admin/drivers/edit/:id" element={<ProtectedRoute allowedRoles={ADMIN_ROLE}>{<DriverEditor />}</ProtectedRoute>} />
+                  <Route path="/admin/users/new" element={<ProtectedRoute allowedRoles={ADMIN_ROLE}>{<UserEditor />}</ProtectedRoute>} />
+                  <Route path="/admin/users/edit/:id" element={<ProtectedRoute allowedRoles={ADMIN_ROLE}>{<UserEditor />}</ProtectedRoute>} />
+                  
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Layout>

@@ -38,17 +38,20 @@ export default function Navbar() {
     };
   }, [scrolled]);
 
-  const navigation = [
-  
-    { name: "💻Windows", href: "/windows" },
-	
-    { name: "🛠️Drivers", href: "/drivers" },
-    { name: "🗒Guides", href: "/guides" },
-    { name: "📜Docs", href: "/docs" },
-    { name: "🪛Disassembly Guides", href: "/disassembly-guides" },
-    { name: "📊Test Tools", href: "/test-tools" },
-    { name: "❓Requests", href: "/requests" },
+  const allNavigation = [
+    { name: "💻Windows", href: "/windows", roles: ['admin', 'user'] },
+    { name: "🛠️Drivers", href: "/drivers", roles: ['admin', 'user', 'client'] },
+    { name: "🗒Guides", href: "/guides", roles: ['admin', 'user', 'client'] },
+    { name: "📜Docs", href: "/docs", roles: ['admin', 'user'] },
+    { name: "🪛Disassembly Guides", href: "/disassembly-guides", roles: ['admin', 'user'] },
+    { name: "📊Test Tools", href: "/test-tools", roles: ['admin', 'user'] },
+    { name: "❓Requests", href: "/requests", roles: ['admin', 'user', 'client'] },
   ];
+
+  // Filter navigation based on the current user's role
+  const navigation = user
+    ? allNavigation.filter(item => item.roles.includes(user.role))
+    : [];
 
   const isActive = (path: string) => {
     return location.pathname === path;

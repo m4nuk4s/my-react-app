@@ -137,7 +137,7 @@ export default function Login() {
               Account Pending Approval
             </DialogTitle>
             <DialogDescription className="pt-2 text-left">
-              Your account has been created but is still awaiting approval from an administrator.
+              Your account has been created but is still awaiting approval from an administrator. You will be notified when your account is activated.
             </DialogDescription>
           </DialogHeader>
         </DialogContent>

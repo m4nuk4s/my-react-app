@@ -72,7 +72,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 email: userData.email,
                 username: userData.username,
                 isAdmin: userData.isadmin,
-                isApproved: userData.isapproved
+                isApproved: userData.isapproved,
+                role: userData.role // Ensure role is set from DB
               });
             } else {
               // 🚫 Pending user: force logout
@@ -119,7 +120,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               email: userData.email,
               username: userData.username,
               isAdmin: userData.isadmin,
-              isApproved: userData.isapproved
+              isApproved: userData.isapproved,
+              role: userData.role // Ensure role is set from DB
             });
 
             if (userData.isadmin) {
@@ -169,7 +171,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             email,
             username,
             isadmin: false,
-            isapproved: false
+            isapproved: false,
+            role: 'client' // Default role for new registrations
           });
 
         if (insertError) {

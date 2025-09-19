@@ -759,8 +759,8 @@ const loadDrivers = async () => {
           <UserCircle className="h-5 w-5 text-blue-600" /> Users
         </h4>
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {users.filter((u) => !u.isAdmin).length > 0 ? (
-            users.filter((u) => !u.isAdmin).map((user) => (
+          {users.filter((u) => !u.isAdmin && u.role === 'user').length > 0 ? (
+            users.filter((u) => !u.isAdmin && u.role === 'user').map((user) => (
               <Card
                 key={user.id}
                 className="hover:shadow-lg hover:scale-[1.02] transition-all rounded-2xl border border-blue-200"
@@ -803,6 +803,60 @@ const loadDrivers = async () => {
             ))
           ) : (
             <p className="text-muted-foreground">No users found</p>
+          )}
+        </div>
+      </div>
+
+      {/* Clients Section */}
+      <div>
+        <h4 className="text-lg font-medium mb-4 flex items-center gap-2 text-purple-700">
+          <UserCircle className="h-5 w-5 text-purple-600" /> Clients
+        </h4>
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {users.filter((u) => u.role === 'client').length > 0 ? (
+            users.filter((u) => u.role === 'client').map((user) => (
+              <Card
+                key={user.id}
+                className="hover:shadow-lg hover:scale-[1.02] transition-all rounded-2xl border border-purple-200"
+              >
+                <CardHeader className="flex flex-row items-center gap-3 bg-green-50 rounded-t-2xl p-4">
+                  <UserCircle className="h-10 w-10 text-purple-600" />
+                  <div>
+                    <CardTitle className="text-base font-semibold text-purple-700">
+                      {user.username}
+                    </CardTitle>
+                    <CardDescription>{user.email}</CardDescription>
+                  </div>
+                </CardHeader>
+                <CardContent className="flex justify-between items-center p-4">
+                  <Badge className="bg-purple-600 text-white shadow-sm">
+                    Client
+                  </Badge>
+                  <div className="flex gap-2">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => navigate(`/admin/users/edit/${user.id}`)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() =>
+                        window.confirm(`Delete ${user.username}?`) &&
+                        setUsers(users.filter((u) => u.id !== user.id))
+                      }
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <p className="text-muted-foreground">No clients found</p>
           )}
         </div>
       </div>
