@@ -222,7 +222,7 @@ export default function Login() {
         >
           <motion.div variants={itemVariants} className="text-center">
             <h1 className="text-6xl font-bold tracking-tight mb-3 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent drop-shadow-lg transition-all duration-300 hover:scale-105 cursor-default">
-              Welcome Back
+              Welcome
             </h1>
             <p className="text-sm text-white font-medium drop-shadow">
               Login or create an account to access Tech Support 
