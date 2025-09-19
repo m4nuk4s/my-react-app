@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     initializeSupabase();
   }, []);
 
-  // Check for authenticated session on initial load
+  // ✅ FIX: Check for authenticated session on initial load
   useEffect(() => {
     const checkSession = async () => {
       try {
@@ -65,13 +65,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (userError) throw userError;
 
           if (userData) {
-            setUser({
-              id: userData.id,
-              email: userData.email,
-              username: userData.username,
-              isAdmin: userData.isadmin,
-              isApproved: userData.isapproved
-            });
+            // Only allow approved users or admins
+            if (userData.isadmin || userData.isapproved) {
+              setUser({
+                id: userData.id,
+                email: userData.email,
+                username: userData.username,
+                isAdmin: userData.isadmin,
+                isApproved: userData.isapproved
+              });
+            } else {
+              // 🚫 Pending user: force logout
+              await supabase.auth.signOut();
+              setUser(null);
+            }
           }
         }
       } catch (error) {
@@ -121,6 +128,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
             return true;
           } else {
+            // 🚫 Logout immediately if not approved
+            await supabase.auth.signOut();
             return "pending";
           }
         }
@@ -189,12 +198,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           console.log('Email notification failed:', emailError);
         }
 
-        // --- FIX APPLIED HERE ---
-        // Sign the user out immediately after registration.
-        // This creates their account but prevents an active session
-        // for a pending user.
+        // 🚫 Sign the user out immediately after registration.
         await supabase.auth.signOut();
-        // --- END FIX ---
 
         return "pending";
       }
