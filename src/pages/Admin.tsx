@@ -527,6 +527,47 @@ const loadDrivers = async () => {
     }
   };
 
+  // ***** FIXED CODE STARTS HERE *****
+  // Function to handle deleting an active user
+  const handleDeleteUser = async (userId, username) => {
+    if (!window.confirm(`Are you sure you want to delete the user "${username}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      // 1. Attempt to delete the user from Supabase
+      const { error } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', userId);
+
+      if (error) {
+        console.error("Error deleting user from database:", error);
+        throw error; // Let the catch block handle it
+      }
+
+      // 2. Update the local state to reflect the deletion in the UI
+      setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
+
+      // 3. Update localStorage as a fallback/cache
+      try {
+        const storedUsers = localStorage.getItem('users') || '[]';
+        const parsedUsers = JSON.parse(storedUsers);
+        const updatedUsers = parsedUsers.filter(user => user.id !== userId);
+        localStorage.setItem('users', JSON.stringify(updatedUsers));
+      } catch (localError) {
+        console.warn("Could not update localStorage after deleting user:", localError);
+      }
+
+      toast.success(`User "${username}" has been deleted successfully.`);
+
+    } catch (error) {
+      console.error("Failed to delete user:", error);
+      toast.error("An error occurred while trying to delete the user.");
+    }
+  };
+  // ***** FIXED CODE ENDS HERE *****
+
   // Function to toggle the assistant
   const handleToggleAssistant = () => {
     const newValue = !assistantEnabled;
@@ -732,17 +773,16 @@ const loadDrivers = async () => {
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
+                    {/* ***** FIXED CODE STARTS HERE ***** */}
                     <Button
                       size="icon"
                       variant="ghost"
                       className="text-destructive hover:text-destructive"
-                      onClick={() =>
-                        window.confirm(`Delete ${user.username}?`) &&
-                        setUsers(users.filter((u) => u.id !== user.id))
-                      }
+                      onClick={() => handleDeleteUser(user.id, user.username)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
+                    {/* ***** FIXED CODE ENDS HERE ***** */}
                   </div>
                 </CardContent>
               </Card>
@@ -786,17 +826,16 @@ const loadDrivers = async () => {
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
+                    {/* ***** FIXED CODE STARTS HERE ***** */}
                     <Button
                       size="icon"
                       variant="ghost"
                       className="text-destructive hover:text-destructive"
-                      onClick={() =>
-                        window.confirm(`Delete ${user.username}?`) &&
-                        setUsers(users.filter((u) => u.id !== user.id))
-                      }
+                      onClick={() => handleDeleteUser(user.id, user.username)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
+                    {/* ***** FIXED CODE ENDS HERE ***** */}
                   </div>
                 </CardContent>
               </Card>
@@ -840,17 +879,16 @@ const loadDrivers = async () => {
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
+                    {/* ***** FIXED CODE STARTS HERE ***** */}
                     <Button
                       size="icon"
                       variant="ghost"
                       className="text-destructive hover:text-destructive"
-                      onClick={() =>
-                        window.confirm(`Delete ${user.username}?`) &&
-                        setUsers(users.filter((u) => u.id !== user.id))
-                      }
+                      onClick={() => handleDeleteUser(user.id, user.username)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
+                    {/* ***** FIXED CODE ENDS HERE ***** */}
                   </div>
                 </CardContent>
               </Card>
