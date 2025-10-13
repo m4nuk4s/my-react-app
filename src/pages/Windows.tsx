@@ -140,14 +140,23 @@ export default function Windows() {
       size: "15 GB",
     }
   ];
+const win11IsoDetails = [
+  {
+    name: "Windows 11 Home 🇪🇺",
+    version: "24H2",
+    size: "22 GB",
+    link: "http://gofile.me/5wnJP/iR1i1ILRr", // existing link
+  },
+  {
+    name: "WINDOWS 11 INDIA 🇮🇳 ",
+    version: "25H2",
+    size: "13 GB",
+    link: "https://drive.google.com/drive/folders/1_2DXWl5a29hMFTSCH2azKMjpOYfEV_Mj?usp=sharing", // new unique link
+	
+  }
+];
 
-  const win11IsoDetails = [
-    {
-      name: "Windows 11 Home + Office 365",
-      version: "24H2",
-      size: "22 GB",
-    }
-  ];
+
 
   const essentialDrivers = [
     {
@@ -267,10 +276,17 @@ export default function Windows() {
                           </DialogTrigger>
               
                           <Button asChild variant="default" className="w-full mt-2">
-                            <a href="http://gofile.me/5wnJP/iR1i1ILRr" download>
-                              Download Windows 11
-                            </a>
-                          </Button>
+  <a href={iso.link} download>
+    Download {iso.name}
+  </a>
+</Button>
+{iso.name === "WINDOWS 11 INDIA 🇮🇳 " && (
+  <Button asChild variant="default" className="w-full mt-2">
+    <a href="https://drive.google.com/file/d/1u7iLDuNWE3CiWY1-TloEOzrozojTCgCl/view?usp=sharing" target="_blank" rel="noopener noreferrer">
+      📄 SOP Installation Guide
+    </a>
+  </Button>
+)}
                           <DialogContent className="sm:max-w-[500px]">
                             <DialogHeader>
                               <DialogTitle>Request Windows 11 ISO</DialogTitle>
