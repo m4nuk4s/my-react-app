@@ -20,7 +20,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Company info */}
           <div>
-            <h3 className="font-bold text-lg mb-4 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">Tech Support</h3>
+            <h3 className="font-bold text-lg mb-4 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">Thomson Support</h3>
             <p className="text-sm text-muted-foreground mb-4 max-w-xs">
               Your comprehensive resource center for hardware and software support. We're here to help you resolve technical issues efficiently.
             </p>
@@ -37,7 +37,7 @@ export default function Footer() {
               <span className="text-sm">Toggle theme</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Tech Support Guide
+              © {new Date().getFullYear()} Thomson Support
             </p>
           </div>
         </div>
