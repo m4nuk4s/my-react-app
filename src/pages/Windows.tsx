@@ -46,6 +46,18 @@ import {
 const SERVICE_ID = "service_3nte2w8";
 const TEMPLATE_ID = "template_ynyayik"; 
 const USER_ID = "_FaISaFJ5SBxVUtzl";
+const outlinePillButton =
+  "relative rounded-md px-6 py-2 text-sm font-medium " +
+  "text-gray-900 dark:text-gray-100 bg-transparent " +
+  "transition-all duration-300 ease-in-out transform " +
+  "hover:bg-gray-100 dark:hover:bg-red-600/20 " + // background hover effect
+  "focus:outline-none focus:ring-2 focus:ring-gray-400/40 focus:ring-offset-2 focus:ring-offset-transparent " +
+  // animated border pseudo-element
+  "before:absolute before:inset-0 before:rounded-md before:border-2 before:border-red-500 dark:before:border-white before:opacity-0 before:transition-opacity before:duration-300 before:ease-in-out " +
+  "hover:before:opacity-100 " +
+  "active:scale-95";
+
+
 
 const windowsRequestSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -270,18 +282,32 @@ const win11IsoDetails = [
                         <p className="text-sm text-gray-500 mb-4">Size: {iso.size}</p>
                         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                           <DialogTrigger asChild>
-                            <Button className="w-full">
+                            <Button
+  variant="outline"
+  className={`w-full ${outlinePillButton}`}
+>
+
                               <Send className="mr-2 h-4 w-4" /> Request Windows
                             </Button>
                           </DialogTrigger>
               
-                          <Button asChild variant="default" className="w-full mt-2">
+                          <Button
+  asChild
+  variant="outline"
+  className={`w-full mt-2 ${outlinePillButton}`}
+>
+
   <a href={iso.link} download>
     Download {iso.name}
   </a>
 </Button>
 {iso.name === "WINDOWS 11 INDIA 🇮🇳 " && (
-  <Button asChild variant="default" className="w-full mt-2">
+  <Button
+  asChild
+  variant="outline"
+  className={`w-full mt-2 ${outlinePillButton}`}
+>
+
     <a href="https://drive.google.com/file/d/1u7iLDuNWE3CiWY1-TloEOzrozojTCgCl/view?usp=sharing" target="_blank" rel="noopener noreferrer">
       📄 SOP Installation Guide
     </a>
@@ -447,7 +473,12 @@ const win11IsoDetails = [
                       </CardHeader>
                       <CardContent>
                         <p className="text-sm text-gray-500 mb-4">{driver.description}</p>
-                        <Button asChild variant="outline" className="w-full">
+                        <Button
+  asChild
+  variant="outline"
+  className={`w-full ${outlinePillButton}`}
+>
+
                           <a href="/requests?type=driver">
                             <Send className="mr-2 h-4 w-4" /> Request Driver
                           </a>
@@ -536,7 +567,13 @@ const win11IsoDetails = [
                         If you have specific questions about Windows 11 compatibility or installation for your computer,
                         please submit a support request.
                       </p>
-                      <Button asChild>
+                      <Button
+  asChild
+  variant="outline"
+  className={outlinePillButton}
+>
+
+
                         <a href="/requests">Contact Support</a>
                       </Button>
                     </CardContent>
@@ -575,7 +612,11 @@ const win11IsoDetails = [
                         <p className="text-sm text-gray-500 mb-4">Size: {iso.size}</p>
                         <Dialog>
                           <DialogTrigger asChild>
-                            <Button className="w-full">
+                            <Button
+  variant="outline"
+  className={`w-full ${outlinePillButton}`}
+>
+
                               <Send className="mr-2 h-4 w-4" /> Request Windows
                             </Button>
                             
@@ -737,7 +778,12 @@ const win11IsoDetails = [
                       </CardHeader>
                       <CardContent>
                         <p className="text-sm text-gray-500 mb-4">{driver.description}</p>
-                        <Button asChild variant="outline" className="w-full">
+                        <Button
+  asChild
+  variant="outline"
+  className={`w-full ${outlinePillButton}`}
+>
+
                           <a href="/requests?type=driver">
                             <Send className="mr-2 h-4 w-4" /> Request Driver
                           </a>

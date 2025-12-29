@@ -72,6 +72,17 @@ export default function Requests() {
     },
   });
 
+const outlinePillButton =
+  "relative rounded-md px-6 py-2 text-sm font-medium " +
+  "text-gray-900 dark:text-gray-100 bg-transparent " +
+  "transition-all duration-300 ease-in-out transform " +
+  "hover:bg-gray-100 dark:hover:bg-red-600/20 " + // background hover effect
+  "focus:outline-none focus:ring-2 focus:ring-gray-400/40 focus:ring-offset-2 focus:ring-offset-transparent " +
+  // animated border pseudo-element
+  "before:absolute before:inset-0 before:rounded-md before:border-2 before:border-red-500 dark:before:border-white before:opacity-0 before:transition-opacity before:duration-300 before:ease-in-out " +
+  "hover:before:opacity-100 " +
+  "active:scale-95";
+  
   const requestTypes = {
     support: [
       { value: "technical-issue", label: "Technical Issue" },
@@ -378,7 +389,7 @@ export default function Requests() {
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full">
+                  <Button type="submit"  variant="outline" className={`w-full ${outlinePillButton}`}>
                     Submit Request
                   </Button>
                 </form>

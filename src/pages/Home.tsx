@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Laptop, Cog, FileText, Wrench, Settings, FileQuestion, Shield, Zap, Library } from "lucide-react";
 import { cn } from "@/lib/utils";
 import BackVideo from "@/assets/wtpth/backvi.mp4";
+import { useTranslation } from "react-i18next";
 
 export default function Home() {
   const serviceCards = [
@@ -64,6 +65,16 @@ export default function Home() {
       },
     },
   };
+const outlinePillButton =
+  "relative rounded-md px-6 py-2 text-sm font-medium " +
+  "text-gray-900 dark:text-gray-100 bg-transparent " +
+  "transition-all duration-300 ease-in-out transform " +
+  "hover:bg-gray-100 dark:hover:bg-red-600/20 " + // background hover effect
+  "focus:outline-none focus:ring-2 focus:ring-gray-400/40 focus:ring-offset-2 focus:ring-offset-transparent " +
+  // animated border pseudo-element
+  "before:absolute before:inset-0 before:rounded-md before:border-2 before:border-red-500 dark:before:border-white before:opacity-0 before:transition-opacity before:duration-300 before:ease-in-out " +
+  "hover:before:opacity-100 " +
+  "active:scale-95";
 
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
@@ -107,47 +118,50 @@ export default function Home() {
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.2 }}
+            transition={{ duration: 0.2, delay: 0.2 }}
             className="flex flex-col items-center"
           >
             <motion.div 
               whileHover={{ rotate: 0, scale: 1.1 }}
-              transition={{ type: "mass", stiffness: 300, damping: 10 }}
+              transition={{ type: "mass", stiffness: 0, damping: 0 }}
               className="mb-6"
             >
               <img
                 src={logo}
                 alt="Tech Support Logo"
-                className="h-70 w-199 md:h-20 md:w-30 drop-shadow-xl"
+                className="h-70 w-199 md:h-30 md:w-50 drop-shadow-x9"
               />
             </motion.div>
             <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-6 text-center drop-shadow-md">
-              Tech Support Center
+              Support Center
             </h1>
             <p className="text-xl text-blue-50 mb-10 max-w-2xl text-center drop-shadow">
-              Your one-stop solution for all computer maintenance and technical support needs
+              Usefull tools and software and Windows installation
             </p>
             
             <div className="flex flex-wrap justify-center gap-4">
-              <Button 
-                asChild 
-                size="lg"
-                className="rounded-full bg-gradient-to-r from-primary to-purple-600 hover:from-purple-600 hover:to-primary transition-all duration-300 shadow-lg"
+              <Button
+  asChild
+  variant="outline"
+  size="lg"
+ className={outlinePillButton}
               >
                 <Link to="/guides">🗒Guides</Link>
               </Button>
-              <Button 
-                asChild 
-                size="lg"
-                className="rounded-full bg-gradient-to-r from-purple-600 to-primary hover:from-primary hover:to-purple-600 transition-all duration-300 shadow-lg"
+             <Button
+  asChild
+  variant="outline"
+  size="lg"
+  className={outlinePillButton}
               >
                 <Link to="/requests">❓Get Support</Link>
               </Button>
 			  
-			   <Button 
-                asChild 
-                size="lg"
-                className="rounded-full bg-gradient-to-r from-purple-600 to-primary hover:from-primary hover:to-purple-600 transition-all duration-300 shadow-lg"
+			   <Button
+  asChild
+  variant="outline"
+  size="lg"
+ className={outlinePillButton}
               >
                 <Link to="/docs">📜Documents</Link>
               </Button>
@@ -167,7 +181,7 @@ export default function Home() {
         <div className="text-center mb-12">
           <motion.h2 
             variants={itemVariants}
-            className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent inline-block"
+            className="text-3xl font-bold bg-gradient-to-r from-primary to-red-400 bg-clip-text text-transparent inline-block"
           >
             System Tools & Software
           </motion.h2>
@@ -206,7 +220,7 @@ export default function Home() {
                   <Button 
                     asChild 
                     variant="ghost" 
-                    className="w-full justify-between group hover:bg-primary/10"
+                    className={outlinePillButton}
                   >
                     <Link to={service.link}>
                       <span>Learn More</span>
@@ -232,10 +246,11 @@ export default function Home() {
           <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
             Access technical support tools and resources today.
           </p>
-          <Button 
-            asChild 
-            size="lg"
-            className="rounded-full bg-gradient-to-r from-primary to-purple-600 hover:from-purple-600 hover:to-primary transition-all duration-300 shadow-lg"
+         <Button
+  asChild
+  variant="outline"
+  size="lg"
+  className={outlinePillButton}
           >
             <Link to="/drivers">Explore Resources</Link>
           </Button>

@@ -48,6 +48,16 @@ interface Driver {
   release_date?: string;
   created?: string;
 }
+const outlinePillButton =
+  "relative rounded-md px-6 py-2 text-sm font-medium " +
+  "text-gray-900 dark:text-gray-100 bg-transparent " +
+  "transition-all duration-300 ease-in-out transform " +
+  "hover:bg-gray-100 dark:hover:bg-red-600/20 " + // background hover effect
+  "focus:outline-none focus:ring-2 focus:ring-gray-400/40 focus:ring-offset-2 focus:ring-offset-transparent " +
+  // animated border pseudo-element
+  "before:absolute before:inset-0 before:rounded-md before:border-2 before:border-red-500 dark:before:border-white before:opacity-0 before:transition-opacity before:duration-300 before:ease-in-out " +
+  "hover:before:opacity-100 " +
+  "active:scale-95";
 
 const categories = ['all', 'laptops', 'desktops', 'AIO', 'monitors', 'storage'];
 
@@ -286,7 +296,7 @@ export function Drivers() {
                         {driver.files && driver.files.length > 0 ? (
                           <Accordion type="single" collapsible className="w-full">
                             <AccordionItem value="driver-files">
-                              <AccordionTrigger className="text-sm font-medium py-2 px-2 bg-blue-100 dark:bg-blue-900/30 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800/50 flex items-center">
+                              <AccordionTrigger className={`w-full ${outlinePillButton}`}>
                                 <Package className="h-4 w-4 mr-2" />
                                 <span>{driver.files.length} Driver Files Available</span>
                               </AccordionTrigger>
@@ -310,7 +320,7 @@ export function Drivers() {
                                         <Button
                                           size="sm"
                                           variant="outline"
-                                          className="flex items-center gap-1 w-full text-ellipsis overflow-hidden bg-gradient-to-r from-primary/10 to-purple-600/10 hover:from-primary/20 hover:to-purple-600/20 transition-all duration-300"
+                                          className={`w-full ${outlinePillButton}`}
                                           onClick={() => window.open(file.url, '_blank')}
                                           title={`Download ${file.name}`}
                                         >

@@ -60,7 +60,16 @@ export default function TestTools() {
     },
     downloadLink: "https://drive.google.com/file/d/1bEBVk9Wgd9DK9xHH_Kwy_vCBbmH7frLg/view?usp=sharing"
   };
-
+const outlinePillButton =
+  "relative rounded-md px-6 py-2 text-sm font-medium " +
+  "text-gray-900 dark:text-gray-100 bg-transparent " +
+  "transition-all duration-300 ease-in-out transform " +
+  "hover:bg-gray-100 dark:hover:bg-red-600/20 " + // background hover effect
+  "focus:outline-none focus:ring-2 focus:ring-gray-400/40 focus:ring-offset-2 focus:ring-offset-transparent " +
+  // animated border pseudo-element
+  "before:absolute before:inset-0 before:rounded-md before:border-2 before:border-red-500 dark:before:border-white before:opacity-0 before:transition-opacity before:duration-300 before:ease-in-out " +
+  "hover:before:opacity-100 " +
+  "active:scale-95";
   const otherTools = [
     {
       name: "Memtest86",
@@ -182,7 +191,9 @@ export default function TestTools() {
               </div>
               <div className="mt-4 md:mt-0">
                 {isAuthenticated ? (
-                  <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700">
+                  <Button asChild  size="sm"
+                                          variant="outline"
+                                          className={`w-full ${outlinePillButton}`}>
                     <a href={featuredTool.downloadLink} target="_blank" rel="noreferrer">
                       <Download className="mr-2 h-5 w-5" />
                       Download Now
@@ -369,7 +380,9 @@ export default function TestTools() {
                   </div>
                 </CardContent>
                 <CardFooter className="border-t pt-4">
-                  <Button asChild size="sm" className="w-full bg-blue-600 hover:bg-blue-700">
+                  <Button asChild  size="sm"
+                                          variant="outline"
+                                          className={`w-full ${outlinePillButton}`}>
                     <a href={tool.link} target="_blank" rel="noreferrer">
                       <Download className="mr-2 h-4 w-4" /> Download
                     </a>
@@ -389,8 +402,11 @@ export default function TestTools() {
               If you're experiencing issues with our testing tools or need assistance interpreting test results,
               our technical support team is ready to help.
             </p>
-            <Button asChild>
+            <Button asChild size="sm"
+                                          variant="outline"
+                                          className={`w-full ${outlinePillButton}`}>
               <Link to="/requests">Get Technical Support</Link>
+			  
             </Button>
           </div>
         </div>

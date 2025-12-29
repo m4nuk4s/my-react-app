@@ -46,6 +46,22 @@ export default function Login() {
     }
   }, []);
 
+const outlinePillButton =
+  "relative rounded-md px-6 py-2 text-sm font-medium " +
+  // base border (always visible)
+  "border border-gray-300 dark:border-gray-700 " +
+  "text-gray-900 dark:text-gray-100 bg-transparent " +
+  "transition-all duration-300 ease-in-out transform " +
+  "hover:bg-gray-100 dark:hover:bg-red-600/20 " +
+  "focus:outline-none focus:ring-2 focus:ring-gray-400/40 focus:ring-offset-2 focus:ring-offset-transparent " +
+  // animated hover border (overlay)
+  "before:absolute before:inset-0 before:rounded-md before:border-2 " +
+  "before:border-red-500 dark:before:border-white " +
+  "before:opacity-0 before:transition-opacity before:duration-300 before:ease-in-out " +
+  "hover:before:opacity-100 " +
+  "active:scale-95";
+
+  
   const handleWelcomeComplete = () => {
     window.setTimeout(() => {
       setShowWelcomeAnimation(false);
@@ -211,7 +227,7 @@ export default function Login() {
             <source src={BackVideo} type="video/mp4" />
             Your browser does not support the video tag.
           </video>
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-red-500 mix-blend-multiply" />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
         </div>
         <motion.div 
@@ -221,11 +237,11 @@ export default function Login() {
           animate="visible"
         >
           <motion.div variants={itemVariants} className="text-center">
-            <h1 className="text-6xl font-bold tracking-tight mb-3 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent drop-shadow-lg transition-all duration-300 hover:scale-105 cursor-default">
+            <h1 className="text-6xl font-bold tracking-tight mb-3 bg-gradient-to-r from-primary to-red-600/20 bg-clip-text text-transparent drop-shadow-lg transition-all duration-300 hover:scale-105 cursor-default">
               Welcome
             </h1>
             <p className="text-sm text-white font-medium drop-shadow">
-              Login or create an account to access Tech Support 
+              Login or create an account to access Thomson Support 
             </p>
           </motion.div>
           
@@ -252,13 +268,13 @@ export default function Login() {
                   <TabsList className="grid w-full grid-cols-2 mb-6 gap-1 bg-transparent p-0">
                     <TabsTrigger 
                       value="login" 
-                      className="text-base font-semibold py-2 rounded-md bg-white/10 text-muted-foreground hover:bg-white/20 data-[state=active]:text-primary-foreground data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-purple-600"
+                       className={outlinePillButton}
                     >
                       Login
                     </TabsTrigger>
                     <TabsTrigger 
                       value="register" 
-                      className="text-base font-semibold py-2 rounded-md bg-white/10 text-muted-foreground hover:bg-white/20 data-[state=active]:text-primary-foreground data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-purple-600"
+                       className={outlinePillButton}
                     >
                       Register
                     </TabsTrigger>
@@ -303,15 +319,15 @@ export default function Login() {
                         </div>
                       )}
                       
-                      <Button 
-                        type="submit" 
-                        className={cn(
-                          "w-full relative overflow-hidden transition-all",
-                          "bg-gradient-to-r from-primary to-purple-600",
-                          "hover:from-purple-600 hover:to-primary"
-                        )}
-                        disabled={isLoading}
-                      >
+                      <Button
+  type="submit"
+  variant="outline"
+  className={cn(
+    "w-full",
+    outlinePillButton
+  )}
+  disabled={isLoading}
+>
                         {isLoading ? (
                           <span className="flex items-center">
                             <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -378,15 +394,12 @@ export default function Login() {
                         </div>
                       )}
                       
-                      <Button 
-                        type="submit" 
-                        className={cn(
-                          "w-full relative overflow-hidden transition-all",
-                          "bg-gradient-to-r from-primary to-purple-600",
-                          "hover:from-purple-600 hover:to-primary"
-                        )}
-                        disabled={isLoading}
-                      >
+             <Button
+  type="submit"
+  variant="outline"
+  className={cn("w-full", outlinePillButton)}
+  disabled={isLoading}
+>
                         {isLoading ? (
                           <span className="flex items-center">
                             <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
