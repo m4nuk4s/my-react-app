@@ -153,7 +153,7 @@ const outlinePillButton =
               Account Pending Approval
             </DialogTitle>
             <DialogDescription className="pt-2 text-left">
-              Your account has been created but is still awaiting approval from an administrator. You will be notified when your account is activated.
+              Your account has been created but is still awaiting approval from an administrator.
             </DialogDescription>
           </DialogHeader>
         </DialogContent>
@@ -227,7 +227,7 @@ const outlinePillButton =
             <source src={BackVideo} type="video/mp4" />
             Your browser does not support the video tag.
           </video>
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-red-500 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
         </div>
         <motion.div 
