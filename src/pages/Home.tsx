@@ -136,7 +136,7 @@ const outlinePillButton =
               Support Center
             </h1>
             <p className="text-xl text-blue-50 mb-10 max-w-2xl text-center drop-shadow">
-              Usefull tools and software and Windows installation
+              Usefull tools,Drivers,Repair Guides,Windows installation
             </p>
             
             <div className="flex flex-wrap justify-center gap-4">
@@ -146,7 +146,7 @@ const outlinePillButton =
   size="lg"
  className={outlinePillButton}
               >
-                <Link to="/guides">🗒Guides</Link>
+                <Link to="/guides">Guides</Link>
               </Button>
              <Button
   asChild
@@ -154,7 +154,7 @@ const outlinePillButton =
   size="lg"
   className={outlinePillButton}
               >
-                <Link to="/requests">❓Get Support</Link>
+                <Link to="/requests">Get Support</Link>
               </Button>
 			  
 			   <Button
@@ -163,7 +163,7 @@ const outlinePillButton =
   size="lg"
  className={outlinePillButton}
               >
-                <Link to="/docs">📜Documents</Link>
+                <Link to="/docs">Documents</Link>
               </Button>
 			  
             </div>
@@ -244,7 +244,7 @@ const outlinePillButton =
         <div className="bg-gradient-to-r from-primary/10 to-purple-600/10 p-8 sm:p-12 rounded-xl border border-primary/20 backdrop-blur-sm">
           <h2 className="text-2xl sm:text-3xl font-bold mb-4">Ready to get started?</h2>
           <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Access technical support tools and resources today.
+            Access support tools and resources.
           </p>
          <Button
   asChild
@@ -252,7 +252,7 @@ const outlinePillButton =
   size="lg"
   className={outlinePillButton}
           >
-            <Link to="/drivers">Explore Resources</Link>
+            <Link to="/drivers">Drivers,Tools</Link>
           </Button>
         </div>
       </motion.section>
