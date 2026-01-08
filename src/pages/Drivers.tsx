@@ -12,7 +12,6 @@ import { toast } from 'sonner';
 import { Download, Package } from 'lucide-react';
 import BackVideo from "@/assets/wtpth/backvi.mp4";
 
-// Import Accordion components
 import {
   Accordion,
   AccordionContent,
@@ -48,13 +47,13 @@ interface Driver {
   release_date?: string;
   created?: string;
 }
+
 const outlinePillButton =
   "relative rounded-md px-6 py-2 text-sm font-medium " +
   "text-gray-900 dark:text-gray-100 bg-transparent " +
   "transition-all duration-300 ease-in-out transform " +
-  "hover:bg-gray-100 dark:hover:bg-red-600/20 " + // background hover effect
+  "hover:bg-gray-100 dark:hover:bg-red-600/20 " +
   "focus:outline-none focus:ring-2 focus:ring-gray-400/40 focus:ring-offset-2 focus:ring-offset-transparent " +
-  // animated border pseudo-element
   "before:absolute before:inset-0 before:rounded-md before:border-2 before:border-red-500 dark:before:border-white before:opacity-0 before:transition-opacity before:duration-300 before:ease-in-out " +
   "hover:before:opacity-100 " +
   "active:scale-95";
@@ -67,8 +66,21 @@ export function Drivers() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [loading, setLoading] = useState(true);
+
+  // ✅ NEW: visible drivers limit
+  const [visibleDrivers, setVisibleDrivers] = useState(8);
+
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
+
+  const toggleShowMore = (driverId: string) => {
+    setExpandedDrivers(prev => ({
+      ...prev,
+      [driverId]: !prev[driverId],
+    }));
+  };
+
+  const [expandedDrivers, setExpandedDrivers] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const fetchDriversWithFiles = async () => {
@@ -78,21 +90,11 @@ export function Drivers() {
           .from('app_8e3e8a4d8d0e442280110fd6f6c2cd95_drivers')
           .select('*');
 
-        const { data: down1Files, error: down1Error } = await supabase
-          .from('down1')
-          .select('*');
+        const { data: down1Files } = await supabase.from('down1').select('*');
 
-        if (driversError) {
+        if (driversError || !dbDrivers) {
           toast.error('Database fetch failed.');
           setDrivers([]);
-          setLoading(false);
-          return;
-        }
-
-        if (!dbDrivers || dbDrivers.length === 0) {
-          toast.error('No driver data found.');
-          setDrivers([]);
-          setLoading(false);
           return;
         }
 
@@ -161,7 +163,7 @@ export function Drivers() {
 
         localStorage.setItem('drivers', JSON.stringify(driversData));
         setDrivers(driversData);
-      } catch (error) {
+      } catch {
         toast.error('Unexpected error loading drivers.');
         setDrivers([]);
       } finally {
@@ -187,6 +189,7 @@ export function Drivers() {
       result = result.filter(driver => driver.category === activeTab);
     }
     setFilteredDrivers(result);
+    setVisibleDrivers(8); // reset visible drivers when filters/search change
   }, [searchQuery, activeTab, drivers]);
 
   return (
@@ -250,98 +253,110 @@ export function Drivers() {
                 <p>No drivers found. Try adjusting your search criteria.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
-                {filteredDrivers.map((driver) => (
-                  <Card key={driver.id} className="overflow-hidden flex flex-col">
-                    <div className="overflow-hidden bg-white dark:bg-blue-800" style={{ minHeight: "120px" }}>
-                      {driver.image_url ? (
-                        <img
-                          src={driver.image_url}
-                          alt={driver.name}
-                          className="w-full h-auto object-contain max-h-48"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/placeholder-driver.png';
-                          }}
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center h-full">
-                          <span className="text-muted-foreground">No Image Available</span>
-                        </div>
-                      )}
-                    </div>
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-xl font-bold">{driver.name}</CardTitle>
-                      </div>
-                      <CardDescription>
-                        {driver.manufacturer} • {driver.category}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-grow">
-                      <div className="grid grid-cols-2 gap-4 text-sm mt-4">
-                        <div>
-                          <Label className="text-xs text-gray-500 dark:text-gray-400">Operating System</Label>
-                          <p className="mt-1">
-                            <Badge variant="subtle" className="text-xs bg-blue-500 hover:bg-blue-600 text-white">
-                              <strong>{driver.os_version}</strong>
-                            </Badge>
-                          </p>
-                        </div>
-                        <div>
-                          <Label className="text-xs text-gray-500 dark:text-gray-400"></Label>
-                          <p className="font-semibold mt-1">Available Files</p>
-                        </div>
-                      </div>
-                      <div className="mt-4 space-y-2">
-                        {driver.files && driver.files.length > 0 ? (
-                          <Accordion type="single" collapsible className="w-full">
-                            <AccordionItem value="driver-files">
-                              <AccordionTrigger className={`w-full ${outlinePillButton}`}>
-                                <Package className="h-4 w-4 mr-2" />
-                                <span>{driver.files.length} Driver Files Available</span>
-                              </AccordionTrigger>
-                              <AccordionContent>
-                                <div className="space-y-2 mt-2">
-                                  {driver.files.map((file) => (
-                                    <div key={file.id} className="border rounded-md p-2 bg-slate-50 dark:bg-slate-900">
-                                      <div className="flex justify-between items-center mb-2">
-                                        <div className="text-xs text-muted-foreground">File Info</div>
-                                        {file.version && (
-                                          <Badge variant="outline" className="text-xs">v{file.version}</Badge>
-                                        )}
-                                      </div>
-                                      <div className="flex justify-between items-center text-sm text-muted-foreground">
-                                        <div>{file.size}</div>
-                                        {file.release_date && (
-                                          <div>Released: {new Date(file.release_date).toLocaleDateString()}</div>
-                                        )}
-                                      </div>
-                                      <div className="mt-2">
-                                        <Button
-                                          size="sm"
-                                          variant="outline"
-                                          className={`w-full ${outlinePillButton}`}
-                                          onClick={() => window.open(file.url, '_blank')}
-                                          title={`Download ${file.name}`}
-                                        >
-                                          <Download className="h-3 w-3 flex-shrink-0" /> 
-                                          <span className="truncate">{file.name}</span>
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </AccordionContent>
-                            </AccordionItem>
-                          </Accordion>
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+                  {filteredDrivers.slice(0, visibleDrivers).map((driver) => (
+                    <Card key={driver.id} className="overflow-hidden flex flex-col">
+                      <div className="overflow-hidden bg-white dark:bg-blue-800" style={{ minHeight: "120px" }}>
+                        {driver.image_url ? (
+                          <img
+                            src={driver.image_url}
+                            alt={driver.name}
+                            className="w-full h-auto object-contain max-h-48"
+                            onError={(e) => {(e.target as HTMLImageElement).src = '/placeholder-driver.png';}}
+                          />
                         ) : (
-                          <p className="text-sm text-muted-foreground">No files available for download</p>
+                          <div className="flex items-center justify-center h-full">
+                            <span className="text-muted-foreground">No Image Available</span>
+                          </div>
                         )}
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                      <CardHeader>
+                        <div className="flex justify-between items-start">
+                          <CardTitle className="text-xl font-bold">{driver.name}</CardTitle>
+                        </div>
+                        <CardDescription>
+                          {driver.manufacturer} • {driver.category}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="flex-grow">
+                        <div className="grid grid-cols-2 gap-4 text-sm mt-4">
+                          <div>
+                            <Label className="text-xs text-gray-500 dark:text-gray-400">Operating System</Label>
+                            <p className="mt-1">
+                              <Badge variant="subtle" className="text-xs bg-blue-500 hover:bg-blue-600 text-white">
+                                <strong>{driver.os_version}</strong>
+                              </Badge>
+                            </p>
+                          </div>
+                          <div>
+                            <Label className="text-xs text-gray-500 dark:text-gray-400"></Label>
+                            <p className="font-semibold mt-1">Available Files</p>
+                          </div>
+                        </div>
+                        <div className="mt-4 space-y-2">
+                          {driver.files && driver.files.length > 0 ? (
+                            <Accordion type="single" collapsible className="w-full">
+                              <AccordionItem value="driver-files">
+                                <AccordionTrigger className={`w-full ${outlinePillButton}`}>
+                                  <Package className="h-4 w-4 mr-2" />
+                                  <span>{driver.files.length} Driver Files Available</span>
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                  <div className="space-y-2 mt-2">
+                                    {driver.files.map((file) => (
+                                      <div key={file.id} className="border rounded-md p-2 bg-slate-50 dark:bg-slate-900">
+                                        <div className="flex justify-between items-center mb-2">
+                                          <div className="text-xs text-muted-foreground">File Info</div>
+                                          {file.version && (
+                                            <Badge variant="outline" className="text-xs">v{file.version}</Badge>
+                                          )}
+                                        </div>
+                                        <div className="flex justify-between items-center text-sm text-muted-foreground">
+                                          <div>{file.size}</div>
+                                          {file.release_date && (
+                                            <div>Released: {new Date(file.release_date).toLocaleDateString()}</div>
+                                          )}
+                                        </div>
+                                        <div className="mt-2">
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className={`w-full ${outlinePillButton}`}
+                                            onClick={() => window.open(file.url, '_blank')}
+                                            title={`Download ${file.name}`}
+                                          >
+                                            <Download className="h-3 w-3 flex-shrink-0" /> 
+                                            <span className="truncate">{file.name}</span>
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </AccordionContent>
+                              </AccordionItem>
+                            </Accordion>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">No files available for download</p>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* ✅ SHOW MORE DRIVERS */}
+                {filteredDrivers.length > visibleDrivers && (
+                  <div className="flex justify-center mt-6">
+                    <Button
+                      variant="outline"
+                      onClick={() => setVisibleDrivers((prev) => prev + 8)}
+                    >
+                      Show more drivers
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </TabsContent>
         </Tabs>
