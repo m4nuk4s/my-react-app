@@ -65,16 +65,16 @@ export default function Home() {
       },
     },
   };
-const outlinePillButton =
-  "relative rounded-md px-6 py-2 text-sm font-medium " +
-  "text-gray-900 dark:text-gray-100 bg-transparent " +
-  "transition-all duration-300 ease-in-out transform " +
-  "hover:bg-gray-100 dark:hover:bg-red-600/20 " + // background hover effect
-  "focus:outline-none focus:ring-2 focus:ring-gray-400/40 focus:ring-offset-2 focus:ring-offset-transparent " +
-  // animated border pseudo-element
-  "before:absolute before:inset-0 before:rounded-md before:border-2 before:border-red-500 dark:before:border-white before:opacity-0 before:transition-opacity before:duration-300 before:ease-in-out " +
-  "hover:before:opacity-100 " +
-  "active:scale-95";
+
+  const outlinePillButton =
+    "relative rounded-md px-6 py-2 text-sm font-medium " +
+    "text-gray-900 dark:text-gray-100 bg-transparent " +
+    "transition-all duration-300 ease-in-out transform " +
+    "hover:bg-gray-100 dark:hover:bg-red-600/20 " +
+    "focus:outline-none focus:ring-2 focus:ring-gray-400/40 focus:ring-offset-2 focus:ring-offset-transparent " +
+    "before:absolute before:inset-0 before:rounded-md before:border-2 before:border-red-500 dark:before:border-white before:opacity-0 before:transition-opacity before:duration-300 before:ease-in-out " +
+    "hover:before:opacity-100 " +
+    "active:scale-95";
 
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
@@ -84,8 +84,6 @@ const outlinePillButton =
       transition: { duration: 0.5 }
     },
   };
-
-  // Features section has been removed
 
   return (
     <motion.div 
@@ -99,20 +97,20 @@ const outlinePillButton =
         variants={itemVariants}
         className="relative py-24 sm:py-32 overflow-hidden"
       >
-       <div className="absolute inset-0 z-0">
-  <video
-    className="absolute inset-0 w-full h-full object-cover object-center opacity-60"
-    autoPlay
-    loop
-    muted
-    playsInline
-  >
-    <source src={BackVideo} type="video/mp4" />
-    Your browser does not support the video tag.
-  </video>
-  <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
-  <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-</div>
+        <div className="absolute inset-0 z-0">
+          <video
+            className="absolute inset-0 w-full h-full object-cover object-center opacity-60"
+            autoPlay
+            loop
+            muted
+            playsInline
+          >
+            <source src={BackVideo} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+        </div>
 
         <div className="container mx-auto px-4 relative z-10">
           <motion.div 
@@ -136,39 +134,46 @@ const outlinePillButton =
               Support Center
             </h1>
             <p className="text-xl text-blue-50 mb-10 max-w-2xl text-center drop-shadow">
-              Usefull tools,Drivers,Repair Guides,Windows installation
+              Useful tools, Drivers, Repair Guides, Windows installation
             </p>
             
             <div className="flex flex-wrap justify-center gap-4">
               <Button
-  asChild
-  variant="outline"
-  size="lg"
- className={outlinePillButton}
+                asChild
+                variant="outline"
+                size="lg"
+                className={outlinePillButton}
               >
-                <Link to="/guides">Guides</Link>
+                <Link to="/guides" className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Guides
+                </Link>
               </Button>
-             <Button
-  asChild
-  variant="outline"
-  size="lg"
-  className={outlinePillButton}
-              >
-                <Link to="/requests">Get Support</Link>
-              </Button>
-			  
-			   <Button
-  asChild
-  variant="outline"
-  size="lg"
- className={outlinePillButton}
-              >
-                <Link to="/docs">Documents</Link>
-              </Button>
-			  
-            </div>
-			
 
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className={outlinePillButton}
+              >
+                <Link to="/requests" className="flex items-center gap-2">
+                  <FileQuestion className="h-5 w-5" />
+                  Get Support
+                </Link>
+              </Button>
+			  
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className={outlinePillButton}
+              >
+                <Link to="/docs" className="flex items-center gap-2">
+                  <Library className="h-5 w-5" />
+                  Documents
+                </Link>
+              </Button>
+            </div>
           </motion.div>
         </div>
       </motion.section>
@@ -222,7 +227,7 @@ const outlinePillButton =
                     variant="ghost" 
                     className={outlinePillButton}
                   >
-                    <Link to={service.link}>
+                    <Link to={service.link} className="flex items-center gap-2">
                       <span>Learn More</span>
                       <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </Link>
@@ -234,8 +239,6 @@ const outlinePillButton =
         </motion.div>
       </motion.section>
 
-      {/* This section has been removed as requested */}
-
       {/* Call to Action */}
       <motion.section
         variants={itemVariants} 
@@ -246,13 +249,16 @@ const outlinePillButton =
           <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
             Access support tools and resources.
           </p>
-         <Button
-  asChild
-  variant="outline"
-  size="lg"
-  className={outlinePillButton}
+          <Button
+            asChild
+            variant="outline"
+            size="lg"
+            className={outlinePillButton}
           >
-            <Link to="/drivers">Drivers,Tools</Link>
+            <Link to="/drivers" className="flex items-center gap-2">
+              <Zap className="h-5 w-5" />
+              Drivers, Tools
+            </Link>
           </Button>
         </div>
       </motion.section>
