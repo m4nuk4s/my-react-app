@@ -17,7 +17,7 @@ import AnimatedWelcome from "@/components/auth/AnimatedWelcome";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 // ✨ MODIFIED: Removed CheckCircle2, UserCheck is no longer needed directly. Custom SVG will be used.
-import { Mail, Lock, User, AlertCircle, Clock } from "lucide-react"; 
+import { Mail, Lock, User, AlertCircle, Clock, LogIn, UserPlus } from "lucide-react"; 
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import BackVideo from "@/assets/wtpth/backvi.mp4";
@@ -34,6 +34,11 @@ export default function Login() {
   const [showPendingDialog, setShowPendingDialog] = useState(false);
   const [showRegSuccessDialog, setShowRegSuccessDialog] = useState(false);
 
+  // States to manage placeholders disappearing on click
+  const [emailPlaceholder, setEmailPlaceholder] = useState("example@mail.com");
+  const [passPlaceholder, setPassPlaceholder] = useState("••••••••");
+  const [userPlaceholder, setUserPlaceholder] = useState("johnsmith");
+
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from || '/';
@@ -48,13 +53,11 @@ export default function Login() {
 
 const outlinePillButton =
   "relative rounded-md px-6 py-2 text-sm font-medium " +
-  // base border (always visible)
   "border border-gray-300 dark:border-gray-700 " +
   "text-gray-900 dark:text-gray-100 bg-transparent " +
   "transition-all duration-300 ease-in-out transform " +
   "hover:bg-gray-100 dark:hover:bg-red-600/20 " +
   "focus:outline-none focus:ring-2 focus:ring-gray-400/40 focus:ring-offset-2 focus:ring-offset-transparent " +
-  // animated hover border (overlay)
   "before:absolute before:inset-0 before:rounded-md before:border-2 " +
   "before:border-red-500 dark:before:border-white " +
   "before:opacity-0 before:transition-opacity before:duration-300 before:ease-in-out " +
@@ -169,7 +172,6 @@ const outlinePillButton =
               transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
             >
               <div className="relative w-24 h-24 rounded-full bg-green-500/10 flex items-center justify-center">
-                {/* User Icon (base) */}
                 <svg 
                   xmlns="http://www.w3.org/2000/svg" 
                   viewBox="0 0 24 24" 
@@ -178,11 +180,10 @@ const outlinePillButton =
                   strokeWidth="1.5" 
                   strokeLinecap="round" 
                   strokeLinejoin="round" 
-                  className="lucide lucide-user h-14 w-14 text-green-600" // Slightly darker green for the user
+                  className="lucide lucide-user h-14 w-14 text-green-600"
                 >
                   <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
                 </svg>
-                {/* Checkmark Icon (overlay) */}
                 <motion.div
                   initial={{ scale: 0, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
@@ -215,33 +216,31 @@ const outlinePillButton =
         </DialogContent>
       </Dialog>
       
-      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative">
-       <div className="absolute inset-0 z-0">
+      <div className="min-h-screen flex items-center justify-center py-12 px-4 relative overflow-hidden bg-black">
+        <div className="absolute inset-0 z-0">
           <video
-            className="absolute inset-0 w-full h-full object-cover object-center opacity-60"
-            autoPlay
-            loop
-            muted
-            playsInline
+            className="absolute inset-0 w-full h-full object-cover opacity-40"
+            autoPlay loop muted playsInline
           >
             <source src={BackVideo} type="video/mp4" />
-            Your browser does not support the video tag.
           </video>
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black" />
         </div>
+
         <motion.div 
           className="w-full max-w-md space-y-8 relative z-10"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
+          {/* ✨ REPLACED: Professional Welcome Header */}
           <motion.div variants={itemVariants} className="text-center">
-            <h1 className="text-6xl font-bold tracking-tight mb-3 bg-gradient-to-r from-primary to-red-600/20 bg-clip-text text-transparent drop-shadow-lg transition-all duration-300 hover:scale-105 cursor-default">
+            <h1 className="text-7xl md:text-8xl font-extralight tracking-tighter text-white mb-2">
               Welcome
             </h1>
-            <p className="text-sm text-white font-medium drop-shadow">
-              Login or create an account to access Thomson Support 
+            <div className="h-[1px] w-16 bg-red-600 mx-auto mb-4 opacity-80" />
+            <p className="text-slate-400 text-xs uppercase tracking-[0.3em] font-medium">
+              Technical Support Portal
             </p>
           </motion.div>
           
@@ -259,156 +258,109 @@ const outlinePillButton =
           <motion.div variants={itemVariants}>
             <Card className="border-primary/20 shadow-xl bg-card/95 backdrop-blur-sm">
               <CardHeader className="pb-4">
-                <CardDescription>
+                <CardDescription className="text-center">
                   Access your tech support account
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="login" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-6 gap-1 bg-transparent p-0">
-                    <TabsTrigger 
-                      value="login" 
-                       className={outlinePillButton}
-                    >
-                      Login
+                  <TabsList className="grid w-full grid-cols-2 mb-8 bg-transparent p-0">
+                    <TabsTrigger value="login" className={cn(outlinePillButton, "flex items-center gap-2")}>
+                      <LogIn className="h-4 w-4" /> Login
                     </TabsTrigger>
-                    <TabsTrigger 
-                      value="register" 
-                       className={outlinePillButton}
-                    >
-                      Register
+                    <TabsTrigger value="register" className={cn(outlinePillButton, "flex items-center gap-2")}>
+                      <UserPlus className="h-4 w-4" /> Register
                     </TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="login">
-                    <form onSubmit={handleLogin} className="space-y-5">
+                    <form onSubmit={handleLogin} className="space-y-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium flex items-center gap-1.5">
-                          <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-                          Email
+                        <label className="text-sm font-medium flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-muted-foreground" /> Email
                         </label>
                         <Input
                           type="email"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
+                          placeholder={emailPlaceholder}
+                          onFocus={() => setEmailPlaceholder("")}
+                          onBlur={() => setEmailPlaceholder("example@mail.com")}
                           className="border-primary/20 focus-visible:ring-primary/30"
-                          placeholder="you@example.com"
                           required
                         />
                       </div>
-                      
                       <div className="space-y-2">
-                        <label className="text-sm font-medium flex items-center gap-1.5">
-                          <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-                          Password
+                        <label className="text-sm font-medium flex items-center gap-2">
+                          <Lock className="h-4 w-4 text-muted-foreground" /> Password
                         </label>
                         <Input
                           type="password"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
+                          placeholder={passPlaceholder}
+                          onFocus={() => setPassPlaceholder("")}
+                          onBlur={() => setPassPlaceholder("••••••••")}
                           className="border-primary/20 focus-visible:ring-primary/30"
-                          placeholder="••••••••"
                           required
                         />
                       </div>
-                      
-                      {loginError && (
-                        <div className="flex items-start gap-2 text-red-500 text-sm p-2 rounded-md bg-red-50/50 dark:bg-red-950/50">
-                          <AlertCircle className="h-4 w-4 mt-0.5" />
-                          <span>{loginError}</span>
-                        </div>
-                      )}
-                      
-                      <Button
-  type="submit"
-  variant="outline"
-  className={cn(
-    "w-full",
-    outlinePillButton
-  )}
-  disabled={isLoading}
->
-                        {isLoading ? (
-                          <span className="flex items-center">
-                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Logging in...
-                          </span>
-                        ) : "Sign in"}
+                      {loginError && <p className="text-red-500 text-xs font-medium">{loginError}</p>}
+                      <Button type="submit" variant="outline" className={cn("w-full py-6 flex items-center justify-center gap-2", outlinePillButton)} disabled={isLoading}>
+                        {isLoading ? "Signing in..." : <><LogIn className="h-4 w-4" /> Sign In</>}
                       </Button>
                     </form>
                   </TabsContent>
                   
                   <TabsContent value="register">
-                    <form onSubmit={handleRegister} className="space-y-5">
+                    <form onSubmit={handleRegister} className="space-y-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium flex items-center gap-1.5">
-                          <User className="h-3.5 w-3.5 text-muted-foreground" />
-                          Username
+                        <label className="text-sm font-medium flex items-center gap-2">
+                          <User className="h-4 w-4 text-muted-foreground" /> Username
                         </label>
                         <Input
                           value={username}
                           onChange={(e) => setUsername(e.target.value)}
+                          placeholder={userPlaceholder}
+                          onFocus={() => setUserPlaceholder("")}
+                          onBlur={() => setUserPlaceholder("johnsmith")}
                           className="border-primary/20 focus-visible:ring-primary/30"
-                          placeholder="johnsmith"
                           required
                         />
                       </div>
-                      
                       <div className="space-y-2">
-                        <label className="text-sm font-medium flex items-center gap-1.5">
-                          <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-                          Email
+                        <label className="text-sm font-medium flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-muted-foreground" /> Email
                         </label>
                         <Input
                           type="email"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
+                          placeholder={emailPlaceholder}
+                          onFocus={() => setEmailPlaceholder("")}
+                          onBlur={() => setEmailPlaceholder("example@mail.com")}
                           className="border-primary/20 focus-visible:ring-primary/30"
-                          placeholder="you@example.com"
                           required
                         />
                       </div>
-                      
                       <div className="space-y-2">
-                        <label className="text-sm font-medium flex items-center gap-1.5">
-                          <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-                          Password
+                        <label className="text-sm font-medium flex items-center gap-2">
+                          <Lock className="h-4 w-4 text-muted-foreground" /> Password
                         </label>
                         <Input
                           type="password"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
+                          placeholder={passPlaceholder}
+                          onFocus={() => setPassPlaceholder("")}
+                          onBlur={() => setPassPlaceholder("••••••••")}
                           className="border-primary/20 focus-visible:ring-primary/30"
-                          placeholder="••••••••"
                           required
                         />
                       </div>
-                      
-                      {registrationError && (
-                        <div className="flex items-start gap-2 text-red-500 text-sm p-2 rounded-md bg-red-50/50 dark:bg-red-950/50">
-                          <AlertCircle className="h-4 w-4 mt-0.5" />
-                          <span>{registrationError}</span>
-                        </div>
-                      )}
-                      
-             <Button
-  type="submit"
-  variant="outline"
-  className={cn("w-full", outlinePillButton)}
-  disabled={isLoading}
->
-                        {isLoading ? (
-                          <span className="flex items-center">
-                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Registering...
-                          </span>
-                        ) : "Create Account"}
+                      {registrationError && <p className="text-red-500 text-xs font-medium">{registrationError}</p>}
+                      <Button type="submit" variant="outline" className={cn("w-full py-6 flex items-center justify-center gap-2", outlinePillButton)} disabled={isLoading}>
+                        {isLoading ? "Processing..." : <><UserPlus className="h-4 w-4" /> Create Account</>}
                       </Button>
                     </form>
                   </TabsContent>
