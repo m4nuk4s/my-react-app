@@ -98,6 +98,7 @@ export default function Drivers() {
   const [activeTab, setActiveTab] = useState('all');
   const [visibleDrivers, setVisibleDrivers] = useState(8);
   const [loading, setLoading] = useState(true);
+  
 
   /* ---------------- FETCH (RESTORED) ---------------- */
 
@@ -191,31 +192,42 @@ export default function Drivers() {
   return (
     <div className="w-full">
 
-      {/* HERO SEARCH (NEW) */}
-      <div className="relative w-full overflow-hidden">
-        <video className="absolute inset-0 w-full h-full object-cover opacity-60" autoPlay loop muted>
-          <source src={BackVideo} type="video/mp4" />
-        </video>
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30" />
+ {/* HERO SEARCH (UPDATED TO MATCH DOCS) */}
+<div className="relative overflow-hidden text-center">
+  <div className="absolute inset-0 z-0">
+    <video
+      className="absolute inset-0 w-full h-full object-cover object-center opacity-60"
+      autoPlay
+      loop
+      muted
+      playsInline
+    >
+      <source src={BackVideo} type="video/mp4" />
+      Your browser does not support the video tag.
+    </video>
+    {/* Matching the Docs.tsx gradient overlays */}
+    <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
+    <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+  </div>
 
-        <div className="relative z-10 px-4 py-16 text-center">
-          <h1 className="text-5xl font-bold text-white mb-2">
-            Drivers / FW /Recovery
-          </h1>
-          <p className="text-blue-50 mb-6">
-            Find and download the latest drivers for your devices
-          </p>
+  <div className="relative z-10 max-w-7xl mx-auto px-4 py-20">
+    <h1 className="text-5xl font-bold text-white">
+      Drivers / FW / Recovery
+    </h1>
+    <p className="text-xl text-blue-50 mt-2 max-w-2xl text-center mx-auto drop-shadow">
+      Find and download the latest drivers for your devices
+    </p>
 
-          <div className="flex justify-center">
-            <Input
-              placeholder="🔎 Search drivers, files, versions..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-14 text-lg max-w-xl bg-white shadow-xl border-2 border-red-500"
-            />
-          </div>
-        </div>
-      </div>
+    <div className="flex justify-center mt-8">
+      <Input
+        placeholder="🔎 Search drivers, files, versions..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="h-14 text-lg max-w-xl bg-white shadow-xl border-2 border-red-500 text-black"
+      />
+    </div>
+  </div>
+</div>
 
       {/* CONTENT */}
      <div className="container py-6">
