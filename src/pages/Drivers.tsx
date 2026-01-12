@@ -6,7 +6,7 @@ import { Input } from '../components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Badge } from '../components/ui/badge';
 import { toast } from 'sonner';
-import { Download, Package } from 'lucide-react';
+import { Download, Package, Monitor, Copy } from 'lucide-react';
 import BackVideo from "@/assets/wtpth/backvi.mp4";
 
 import {
@@ -15,6 +15,15 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 /* ---------------- TYPES ---------------- */
 
@@ -98,9 +107,16 @@ export default function Drivers() {
   const [activeTab, setActiveTab] = useState('all');
   const [visibleDrivers, setVisibleDrivers] = useState(8);
   const [loading, setLoading] = useState(true);
-  
 
-  /* ---------------- FETCH (RESTORED) ---------------- */
+  const copyCommand = () => {
+    const cmd = "wmic csproduct get name, identifyingnumber";
+    navigator.clipboard.writeText(cmd);
+    toast.success("Command copied!", {
+      description: "Paste it into Command Prompt to see Model & Serial."
+    });
+  };
+
+  /* ---------------- FETCH ---------------- */
 
   useEffect(() => {
     const fetchDriversWithFiles = async () => {
@@ -192,61 +208,111 @@ export default function Drivers() {
   return (
     <div className="w-full">
 
- {/* HERO SEARCH (UPDATED TO MATCH DOCS) */}
-<div className="relative overflow-hidden text-center">
-  <div className="absolute inset-0 z-0">
-    <video
-      className="absolute inset-0 w-full h-full object-cover object-center opacity-60"
-      autoPlay
-      loop
-      muted
-      playsInline
-    >
-      <source src={BackVideo} type="video/mp4" />
-      Your browser does not support the video tag.
-    </video>
-    {/* Matching the Docs.tsx gradient overlays */}
-    <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
-    <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-  </div>
+{/* HERO SEARCH */}
+      <div className="relative overflow-hidden text-center">
+        <div className="absolute inset-0 z-0">
+          <video
+            className="absolute inset-0 w-full h-full object-cover object-center opacity-60"
+            autoPlay
+            loop
+            muted
+            playsInline
+          >
+            <source src={BackVideo} type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+        </div>
 
-  <div className="relative z-10 max-w-7xl mx-auto px-4 py-20">
-    <h1 className="text-5xl font-bold text-white">
-      Drivers / FW / Recovery
-    </h1>
-    <p className="text-xl text-blue-50 mt-2 max-w-2xl text-center mx-auto drop-shadow">
-      Find and download the latest drivers for your devices
-    </p>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 py-20">
+          <h1 className="text-5xl font-bold text-white">
+            Drivers / FW / Recovery
+          </h1>
+          <p className="text-xl text-blue-50 mt-2 max-w-2xl text-center mx-auto drop-shadow">
+            Find and download the latest drivers for your devices
+          </p>
 
-    <div className="flex justify-center mt-8">
-      <Input
-        placeholder="🔎 Search drivers, files, versions..."
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        className="h-14 text-lg max-w-xl bg-white shadow-xl border-2 border-red-500 text-black"
-      />
-    </div>
-  </div>
-</div>
+          <div className="mt-8 max-w-3xl mx-auto">
+            {/* SQUARE SEARCH WRAPPER */}
+            <div className="relative flex items-center">
+              <Input
+                placeholder="🔎 Search drivers, files, versions..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-14 pl-6 pr-44 text-lg bg-white shadow-xl border-2 border-red-500 text-black rounded-none"
+              />
+              
+              <div className="absolute right-1">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button 
+                      variant="ghost"
+                      className={`${outlinePillButton} h-12 rounded-none flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-black dark:text-black border-l border-slate-200`}
+                    >
+                      <Monitor className="h-4 w-4" />
+                      <span className="hidden sm:inline">Identify Device</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Find Model & Serial Number</DialogTitle>
+                      <DialogDescription>
+                        Follow these steps to identify your Thomson hardware.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-6 py-4">
+                      <div className="space-y-3">
+                        <h4 className="font-bold text-sm flex items-center gap-2">
+                          <span className="bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">1</span>
+                          Windows Command (Recommended)
+                        </h4>
+                        <p className="text-xs text-muted-foreground">Copy and paste this into Command Prompt (CMD) to see your Model and Serial Number:</p>
+                        <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-3 rounded border">
+                          <code className="text-[10px] md:text-xs flex-1 font-mono">wmic csproduct get name, identifyingnumber</code>
+                          <Button size="icon" variant="ghost" onClick={copyCommand} className="h-8 w-8">
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 pt-2 border-t">
+                        <h4 className="font-bold text-sm flex items-center gap-2">
+                          <span className="bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">2</span>
+                          Bottom Sticker
+                        </h4>
+                        <p className="text-xs text-muted-foreground">Check the white label on the bottom of your laptop.</p>
+                        <div className="grid grid-cols-2 gap-2 text-[10px] bg-slate-50 dark:bg-slate-900 p-3 rounded italic text-center">
+                          <div className="border-r">Model: NEO14-v2...</div>
+                          <div>S/N: TH8234...</div>
+                        </div>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* CONTENT */}
-     <div className="container py-6">
-  <Tabs value={activeTab} onValueChange={setActiveTab}>
-    <TabsList className="grid grid-cols-3 md:grid-cols-6 gap-2 bg-slate-100 dark:bg-slate-800 p-1">
-      {categories.map(cat => (
-        <TabsTrigger 
-          key={cat} 
-          value={cat} 
-          className="capitalize transition-all 
-            data-[state=active]:bg-red-600 
-            data-[state=active]:text-white 
-            data-[state=active]:font-bold 
-            data-[state=active]:shadow-md"
-        >
-          {cat}
-        </TabsTrigger>
-      ))}
-    </TabsList>
+      <div className="container py-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid grid-cols-3 md:grid-cols-6 gap-2 bg-slate-100 dark:bg-slate-800 p-1">
+            {categories.map(cat => (
+              <TabsTrigger 
+                key={cat} 
+                value={cat} 
+                className="capitalize transition-all 
+                  data-[state=active]:bg-red-600 
+                  data-[state=active]:text-white 
+                  data-[state=active]:font-bold 
+                  data-[state=active]:shadow-md"
+              >
+                {cat}
+              </TabsTrigger>
+            ))}
+          </TabsList>
 
           <TabsContent value={activeTab} className="mt-6">
             {loading ? (
@@ -266,6 +332,7 @@ export default function Drivers() {
                       <img
                         src={driver.image_url}
                         className="w-full h-40 object-contain bg-white"
+                        alt={driver.name}
                       />
 
                       <CardHeader>
@@ -287,42 +354,40 @@ export default function Drivers() {
                               {driver.files.length} Driver Files Available
                             </AccordionTrigger>
 
-                           <AccordionContent className="space-y-2 mt-3">
-  {driver.files.map(file => (
-    <div key={file.id} className="border rounded-md p-3 bg-slate-50 dark:bg-slate-900">
-      <div className="flex justify-between items-center mb-1">
-        <span className="text-xs text-muted-foreground">File Info</span>
-        {file.version && (
-          <Badge variant="outline" className="text-xs">
-            {/* CHANGE 1: Highlight the version string */}
-            v{highlightText(file.version, searchQuery)}
-          </Badge>
-        )}
-      </div>
+                            <AccordionContent className="space-y-2 mt-3">
+                              {driver.files.map(file => (
+                                <div key={file.id} className="border rounded-md p-3 bg-slate-50 dark:bg-slate-900">
+                                  <div className="flex justify-between items-center mb-1">
+                                    <span className="text-xs text-muted-foreground">File Info</span>
+                                    {file.version && (
+                                      <Badge variant="outline" className="text-xs">
+                                        v{highlightText(file.version, searchQuery)}
+                                      </Badge>
+                                    )}
+                                  </div>
 
-      <div className="text-sm text-muted-foreground">
-        {/* CHANGE 2: Highlight the size string */}
-        {highlightText(file.size, searchQuery)}
-      </div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {highlightText(file.size, searchQuery)}
+                                  </div>
 
-      {file.release_date && (
-        <div className="text-sm text-muted-foreground">
-          Released: {new Date(file.release_date).toLocaleDateString()}
-        </div>
-      )}
+                                  {file.release_date && (
+                                    <div className="text-sm text-muted-foreground">
+                                      Released: {new Date(file.release_date).toLocaleDateString()}
+                                    </div>
+                                  )}
 
-      <Button
-        size="sm"
-        variant="outline"
-        className={`mt-2 w-full ${outlinePillButton}`}
-        onClick={() => window.open(file.url, '_blank')}
-      >
-        <Download className="h-3 w-3 mr-2" />
-        {highlightText(file.name, searchQuery)}
-      </Button>
-    </div>
-  ))}
-</AccordionContent>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className={`mt-2 w-full ${outlinePillButton}`}
+                                    onClick={() => window.open(file.url, '_blank')}
+                                  >
+                                    <Download className="h-3 w-3 mr-2" />
+                                    {highlightText(file.name, searchQuery)}
+                                  </Button>
+                                </div>
+                              ))}
+                            </AccordionContent>
                           </AccordionItem>
                         </Accordion>
                       </CardContent>
@@ -330,18 +395,17 @@ export default function Drivers() {
                   ))}
                 </div>
 
-               {filteredDrivers.length > visibleDrivers && (
-  <div className="flex justify-center mt-6">
-    <Button
-      variant="ghost"
-      onClick={() => setVisibleDrivers((prev) => prev + 8)}
-      className={outlinePillButton}
-    >
-      Show more drivers
-    </Button>
-  </div>
-)}
-
+                {filteredDrivers.length > visibleDrivers && (
+                  <div className="flex justify-center mt-6">
+                    <Button
+                      variant="ghost"
+                      onClick={() => setVisibleDrivers((prev) => prev + 8)}
+                      className={outlinePillButton}
+                    >
+                      Show more drivers
+                    </Button>
+                  </div>
+                )}
               </>
             )}
           </TabsContent>
