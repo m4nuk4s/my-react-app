@@ -8,25 +8,25 @@ export default function Home() {
   const serviceCards = [
     {
       title: "Windows Support",
-      description: "Drivers for Windows 10 & 11",
+      description: "Instalation support for Windows 10 & 11",
       link: "/windows",
       icon: <Laptop className="h-8 w-8" />,
     },
     {
       title: "Drivers",
-      description: "Hardware driver downloads",
+      description: "Find and download drivers for your computer model",
       link: "/drivers",
       icon: <Cog className="h-8 w-8" />,
     },
     {
       title: "Guides",
-      description: "Troubleshooting manuals",
+      description: "Troubleshooting Guides",
       link: "/guides",
       icon: <FileText className="h-8 w-8" />,
     },
     {
       title: "Disassembly",
-      description: "Repair & tear-down guides",
+      description: "Repair & Disassembly guides",
       link: "/disassembly-guides",
       icon: <Wrench className="h-8 w-8" />,
     },
@@ -38,7 +38,7 @@ export default function Home() {
     },
     {
       title: "Support",
-      description: "Submit a technical request",
+      description: "Submit a request for technical support",
       link: "/requests",
       icon: <FileQuestion className="h-8 w-8" />,
     }
