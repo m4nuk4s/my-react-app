@@ -93,27 +93,28 @@ export default function Home() {
                 <Link 
                   key={index}
                   to={service.link} 
-                  /* CHANGED: bg-white/10 and backdrop-blur for a light "glass" look */
-                  className="group relative overflow-hidden rounded-2xl bg-white/10 p-10 backdrop-blur-md border border-white/20 transition-all duration-300 hover:scale-[1.01] hover:bg-white/20 hover:border-red-600/40"
+                  /* UPDATED: Increased light-mode opacity (bg-white/80) and added shadow for depth */
+                  className="group relative overflow-hidden rounded-2xl bg-white/80 p-10 backdrop-blur-xl border border-slate-200 shadow-sm transition-all duration-300 hover:scale-[1.01] hover:bg-white/95 hover:border-red-600/40 dark:bg-white/10 dark:border-white/20 dark:shadow-none dark:hover:bg-white/20"
                 >
                   <div className="relative z-10 flex flex-col h-full">
                     {/* RED ICON */}
-                    <div className="mb-8 text-red-500 group-hover:scale-110 transition-transform duration-300 origin-left">
+                    <div className="mb-8 text-red-600 dark:text-red-500 group-hover:scale-110 transition-transform duration-300 origin-left">
                       {service.icon}
                     </div>
 
                     <div className="mt-auto">
-                      <h3 className="text-xl font-bold mb-2 tracking-tight uppercase text-white group-hover:text-red-500 transition-colors">
+                      {/* Title - Strong Slate-950 for light mode visibility */}
+                      <h3 className="text-xl font-bold mb-2 tracking-tight uppercase text-slate-950 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-500 transition-colors">
                         {service.title}
                       </h3>
                       
-                      {/* Description - High contrast for readability */}
-                      <p className="text-sm text-zinc-100/80 leading-relaxed font-medium">
+                      {/* Description - UPDATED to text-slate-800 for high readability in light mode */}
+                      <p className="text-sm text-slate-800 dark:text-zinc-100/80 leading-relaxed font-semibold dark:font-medium">
                         {service.description}
                       </p>
 
                       {/* Accent line */}
-                      <div className="mt-6 h-[1px] w-12 bg-red-600/50 group-hover:w-full group-hover:bg-red-500 transition-all duration-500" />
+                      <div className="mt-6 h-[1px] w-12 bg-slate-300 dark:bg-red-600/50 group-hover:w-full group-hover:bg-red-500 transition-all duration-500" />
                     </div>
                   </div>
                 </Link>
