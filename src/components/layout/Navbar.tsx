@@ -15,7 +15,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import logo from "@/assets/wtpth/logo.png";
 import { motion } from "framer-motion";
 
 export default function Navbar() {
@@ -39,33 +38,35 @@ export default function Navbar() {
       window.removeEventListener("scroll", handleScroll);
     };
   }, [scrolled]);
-const outlinePillButton =
-  "!rounded-md bg-transparent border border-transparent " + // border hidden by default
-  "text-gray-900 dark:text-gray-100 px-6 py-2 text-sm font-medium " +
-  "transition-all duration-200 ease-out " +
-  "hover:border-gray-400 hover:bg-gray-100 hover:-translate-y-[1px] hover:shadow-sm " +
-  "dark:hover:border-gray-500 dark:hover:bg-gray-800 " +
-  "active:translate-y-0 active:shadow-none " +
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400/40";
+
+  const outlinePillButton =
+    "!rounded-md bg-transparent border border-transparent " +
+    "text-gray-900 dark:text-gray-100 px-6 py-2 text-sm font-medium " +
+    "transition-all duration-200 ease-out " +
+    "hover:border-gray-400 hover:bg-gray-100 hover:-translate-y-[1px] hover:shadow-sm " +
+    "dark:hover:border-gray-500 dark:hover:bg-gray-800 " +
+    "active:translate-y-0 active:shadow-none " +
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400/40";
 
   const allNavigation = [
-    { name: "Windows Images", href: "/windows", roles: ['admin', 'user'] },
-    { name: "️Drivers", href: "/drivers", roles: ['admin', 'user', 'client'] },
-    { name: "Guides", href: "/guides", roles: ['admin', 'user', 'client'] },
-    { name: "Docs", href: "/docs", roles: ['admin', 'user'] },
-    { name: "Disassembly Guides", href: "/disassembly-guides", roles: ['admin', 'user'] },
-    { name: "Test Tools", href: "/test-tools", roles: ['admin', 'user'] },
-    { name: "Requests", href: "/requests", roles: ['admin', 'user', 'client'] },
+    { name: "Windows Images", href: "/windows", roles: ["admin", "user"] },
+    { name: "Drivers", href: "/drivers", roles: ["admin", "user", "client"] },
+    { name: "Guides", href: "/guides", roles: ["admin", "user", "client"] },
+    { name: "Docs", href: "/docs", roles: ["admin", "user"] },
+    {
+      name: "Disassembly Guides",
+      href: "/disassembly-guides",
+      roles: ["admin", "user"],
+    },
+    { name: "Test Tools", href: "/test-tools", roles: ["admin", "user"] },
+    { name: "Requests", href: "/requests", roles: ["admin", "user", "client"] },
   ];
 
-  // Filter navigation based on the current user's role
   const navigation = user
-    ? allNavigation.filter(item => item.roles.includes(user.role))
+    ? allNavigation.filter((item) => item.roles.includes(user.role))
     : [];
 
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
+  const isActive = (path: string) => location.pathname === path;
 
   const handleLogout = () => {
     logout();
@@ -77,143 +78,132 @@ const outlinePillButton =
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-    className={cn(
-  "sticky top-0 z-40 w-full backdrop-blur-md transition-all duration-200 border-b-2",
-  scrolled
-    ? "bg-background/95 shadow-md border-red-600 dark:border-white"
-    : "bg-background border-red-600 dark:border-white"
-)}
+      className={cn(
+        "sticky top-0 z-40 w-full backdrop-blur-md transition-all duration-200 border-b-2",
+        scrolled
+          ? "bg-background/95 shadow-md border-red-600 dark:border-white"
+          : "bg-background border-red-600 dark:border-white"
+      )}
     >
       <div className="w-full px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center relative w-full">
-          {/* Left: Logo + Support Center */}
+        <div className="flex h-16 items-center justify-between relative w-full">
+          
+          {/* LEFT: Logo Section */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="flex items-center absolute left-4"
+            className="flex items-center z-10"
           >
             <Link to="/" className="flex-shrink-0 flex items-center group">
-             <div className="relative">
-  {/* Light mode logo */}
-  <motion.img
-    whileHover={{ scale: 1.1 }}
-    transition={{ type: "spring", stiffness: 100 }}
-    src={logoB}
-    alt="Logo"
-    className="h-[60px] w-auto block dark:hidden"  />
-
-  {/* Dark mode logo */}
-  <motion.img
-    whileHover={{ scale: 1.1 }}
-    transition={{ type: "spring", stiffness: 300 }}
-    src={logoW}
-    alt="Logo White"
-    className="hidden dark:block h-[60px] w-auto"
-  />
-</div>
-              <span className="text-xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:to-primary transition-all duration-300">
-                
-              </span>
+              <div className="relative">
+                <motion.img
+                  whileHover={{ scale: 1.1 }}
+                  transition={{ type: "spring", stiffness: 100 }}
+                  src={logoB}
+                  alt="Logo"
+                  className="h-[60px] w-auto block dark:hidden"
+                />
+                <motion.img
+                  whileHover={{ scale: 1.1 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                  src={logoW}
+                  alt="Logo White"
+                  className="hidden dark:block h-[60px] w-auto"
+                />
+              </div>
             </Link>
           </motion.div>
 
-          {/* Center: Navigation + Auth */}
-          <div className="flex-1 flex justify-center items-center">
-            <div className="hidden md:flex md:space-x-1 md:items-center">
-              {isAuthenticated && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ staggerChildren: 0.1, delayChildren: 0.2 }}
-                  className="flex space-x-1 items-center"
-                >
-                  {navigation.map((item, index) => (
-                    <motion.div
-                      key={item.name}
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.1 * index }}
-                    >
-                 <Button
-  asChild
-  variant="ghost"
-  className={cn(
-    "rounded-none h-9 px-4 bg-transparent transition-all duration-200",
-    isActive(item.href)
-      ? "font-bold"
-      : "text-foreground hover:!text-red-600 hover:!font-bold dark:hover:!text-white dark:hover:!font-bold"
-  )}
->
-  <Link to={item.href}>
-    {item.name}
-  </Link>
-</Button>
-
-                    </motion.div>
-                  ))}
-                </motion.div>
-              )}
-
-              <div className="flex items-center ml-4 space-x-2">
-                <EnhancedThemeToggle />
-
-                {isAuthenticated ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                         className={outlinePillButton}
-                      >
-                        <User className="h-4 w-4 mr-2 text-primary" />
-                        <span className="max-w-[100px] truncate">
-                          {user?.username}
-                        </span>
-                        <ChevronDown className="h-4 w-4 ml-1 opacity-70" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="end"
-                      className="w-56 animate-in fade-in-80 shadow-lg"
-                    >
-                      {isAdmin && (
-                        <DropdownMenuItem asChild>
-                          <Link
-                            to="/admin"
-                            className="w-full cursor-pointer text-red-600 font-semibold"
-                          >
-                            Admin Dashboard
-                          </Link>
-                        </DropdownMenuItem>
+          {/* CENTER: Navigation Links (Absolutely centered) */}
+          <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center">
+            {isAuthenticated && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex space-x-1 items-center"
+              >
+                {navigation.map((item, index) => (
+                  <motion.div
+                    key={item.name}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 * index }}
+                  >
+                    <Button
+                      asChild
+                      variant="ghost"
+                      className={cn(
+                        "rounded-none h-9 px-4 bg-transparent transition-all duration-200",
+                        isActive(item.href)
+                          ? "font-bold text-red-600 dark:text-white"
+                          : "text-foreground hover:!text-red-600 hover:!font-bold dark:hover:!text-white"
                       )}
-                      <DropdownMenuItem
-                        onClick={handleLogout}
-                        className="cursor-pointer"
-                      >
-                        <LogOut className="h-4 w-4 mr-2" />
-                        Logout
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                ) : (
-                <Button
-  asChild
-  variant="outline"
-  size="sm"
-  className={cn(outlinePillButton, "font-semibold")}
-
->
-  <Link to="/login">Login</Link>
-</Button>
-
-                )}
-              </div>
-            </div>
+                    >
+                      <Link to={item.href}>{item.name}</Link>
+                    </Button>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
           </div>
 
-          {/* Right: Mobile menu button */}
-          <div className="flex items-center md:hidden absolute right-4">
+          {/* RIGHT: Auth & Theme (Right aligned) */}
+          <div className="hidden md:flex items-center space-x-4 z-10">
+            <EnhancedThemeToggle />
+
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={outlinePillButton}
+                  >
+                    <User className="h-4 w-4 mr-2 text-primary" />
+                    <span className="max-w-[100px] truncate">
+                      {user?.username}
+                    </span>
+                    <ChevronDown className="h-4 w-4 ml-1 opacity-70" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-56 animate-in fade-in-80 shadow-lg"
+                >
+                  {isAdmin && (
+                    <DropdownMenuItem asChild>
+                      <Link
+                        to="/admin"
+                        className="w-full cursor-pointer text-red-600 font-semibold"
+                      >
+                        Admin Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="cursor-pointer"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className={cn(outlinePillButton, "font-semibold")}
+              >
+                <Link to="/login">Login</Link>
+              </Button>
+            )}
+          </div>
+
+          {/* MOBILE: Menu Button (Anchored right) */}
+          <div className="flex items-center md:hidden">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">

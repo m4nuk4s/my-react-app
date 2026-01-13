@@ -6,7 +6,7 @@ import { Input } from '../components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Badge } from '../components/ui/badge';
 import { toast } from 'sonner';
-import { Download, Package, Monitor, Copy, Calendar, HardDrive } from 'lucide-react';
+import { Download, Package, Monitor, Copy, Calendar, HardDrive, Check } from 'lucide-react';
 import BackVideo from "@/assets/wtpth/backvi.mp4";
 
 import {
@@ -107,6 +107,9 @@ export default function Drivers() {
   const [activeTab, setActiveTab] = useState('all');
   const [visibleDrivers, setVisibleDrivers] = useState(8);
   const [loading, setLoading] = useState(true);
+  
+  // Track which file link was just copied for visual feedback
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Auto-Identify Logic (Handles URL search params)
   useEffect(() => {
@@ -141,6 +144,18 @@ export default function Drivers() {
     toast.success("Command copied!", {
       description: "Paste it into Command Prompt to see Model & Serial."
     });
+  };
+
+  const copyFileUrl = (url: string, id: string) => {
+    navigator.clipboard.writeText(url);
+    setCopiedId(id);
+    toast.success("Link copied!", {
+      description: "URL saved to clipboard.",
+      duration: 2000,
+    });
+    
+    // Reset the icon back to 'Copy' after 2 seconds
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   /* ---------------- FETCH ---------------- */
@@ -241,7 +256,7 @@ export default function Drivers() {
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 py-20">
-          <h1 className="text-5xl font-bold text-white">Drivers,Firmware,Recovery Image</h1>
+          <h1 className="text-5xl font-bold text-white">Drivers, Firmware, Recovery Image</h1>
           <p className="text-xl text-blue-50 mt-2 max-w-2xl text-center mx-auto drop-shadow">
             Find and download the latest drivers for your devices
           </p>
@@ -252,7 +267,6 @@ export default function Drivers() {
                 placeholder="🔎 Search drivers, files, versions..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                /* WHITE BORDER IN DARK MODE */
                 className="h-14 pl-6 pr-44 text-lg bg-white shadow-xl border-2 border-red-500 dark:border-white text-black rounded-none"
               />
               <div className="absolute right-1">
@@ -361,14 +375,13 @@ export default function Drivers() {
                                       {highlightText(file.name, searchQuery)}
                                     </h5>
                                     {file.version && (
-                                      /* HIGH VISIBILITY VERSION BADGE */
                                       <Badge className="bg-slate-200 text-slate-900 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-100 text-[10px] h-5 px-1.5 font-mono border-none">
                                         v{highlightText(file.version, searchQuery)}
                                       </Badge>
                                     )}
                                   </div>
 
-                                  {/* ROW-BASED SPECS (Date pushed to right) */}
+                                  {/* ROW-BASED SPECS */}
                                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                                     <div className="flex items-center gap-2">
                                       <HardDrive className="h-3 w-3" />
@@ -382,16 +395,31 @@ export default function Drivers() {
                                     )}
                                   </div>
 
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    /* BORDERED PILL STYLE DOWNLOAD BUTTON */
-                                    className={`${outlinePillButton} w-full h-9 flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700`}
-                                    onClick={() => window.open(file.url, '_blank')}
-                                  >
-                                    <Download className="h-3 w-3" />
-                                    Download Now
-                                  </Button>
+                                  {/* ACTION BUTTONS */}
+                                  <div className="flex gap-2">
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className={`${outlinePillButton} flex-1 h-9 flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700`}
+                                      onClick={() => window.open(file.url, '_blank')}
+                                    >
+                                      <Download className="h-3 w-3" />
+                                      Download
+                                    </Button>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      title="Copy Download Link"
+                                      className={`${outlinePillButton} w-9 h-9 flex items-center justify-center border border-slate-200 dark:border-slate-700 ${copiedId === file.id ? 'text-green-600 border-green-500' : ''}`}
+                                      onClick={() => copyFileUrl(file.url, file.id)}
+                                    >
+                                      {copiedId === file.id ? (
+                                        <Check className="h-3 w-3" />
+                                      ) : (
+                                        <Copy className="h-3 w-3" />
+                                      )}
+                                    </Button>
+                                  </div>
                                 </div>
                               ))}
                             </AccordionContent>
