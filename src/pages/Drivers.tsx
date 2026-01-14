@@ -217,7 +217,7 @@ export default function Drivers() {
         <section className="pt-20 pb-12">
           <div className="container mx-auto px-6">
             <div className="max-w-4xl">
-              <img src={logo} alt="Thomson" className="h-16 mb-8 object-contain" />
+              
               <h1 className="text-4xl md:text-6xl font-light tracking-tight mb-4 text-white">
                 Drivers & <span className="font-bold uppercase text-red-600">Recovery</span>
               </h1>
