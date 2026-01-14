@@ -2,18 +2,17 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { motion } from "framer-motion";
 import { 
-  FileText, Eye, Search, Loader2, Plus, Edit, Trash2, 
+  FileText, Eye, Loader2, Plus, Edit, Trash2, 
   BookOpen, LayoutTemplate, Bookmark, RotateCw, Book, Wrench, Folder 
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { fetchDocuments, deleteDocument, Document } from '@/lib/supabase-docs';
 import DocumentManagementDialog from '@/components/DocumentManagementDialog';
-import BackVideo from "@/assets/wtpth/backvi.mp4"; // Import the video
+import BackVideo from "@/assets/wtpth/backvi.mp4";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,187 +24,50 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-const outlinePillButton =
-  "relative rounded-md px-6 py-2 text-sm font-medium " +
-  "text-gray-900 dark:text-gray-100 bg-transparent " +
-  "transition-all duration-300 ease-in-out transform " +
-  "hover:bg-gray-100 dark:hover:bg-red-600/20 " + // background hover effect
-  "focus:outline-none focus:ring-2 focus:ring-gray-400/40 focus:ring-offset-2 focus:ring-offset-transparent " +
-  // animated border pseudo-element
-  "before:absolute before:inset-0 before:rounded-md before:border-2 before:border-red-500 dark:before:border-white before:opacity-0 before:transition-opacity before:duration-300 before:ease-in-out " +
-  "hover:before:opacity-100 " +
-  "active:scale-95";
-
 const Docs = () => {
-  const { isAuthenticated, user, isAdmin } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [documents, setDocuments] = useState<Document[]>([]);
   const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   
-  // Dialog states
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
 
-  // Redirect if not authenticated and load documents
+  const fadeUp = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+  };
+
   useEffect(() => {
     if (!isAuthenticated) {
       toast.error('You must be logged in to access documents');
       navigate('/login', { state: { from: '/docs' } });
       return;
     }
-    
     loadDocuments();
   }, [isAuthenticated, navigate]);
-
-  const setupDocsTable = async () => {
-    try {
-      // First try to create the table using execute_sql RPC
-      const { error: rpcError } = await supabase.rpc('execute_sql', {
-        sql_query: `
-          CREATE TABLE IF NOT EXISTS docs (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            title TEXT NOT NULL,
-            type TEXT NOT NULL,
-            desc TEXT,
-            down TEXT NOT NULL,
-            category TEXT DEFAULT 'general',
-            fileSize TEXT,
-            dateAdded TIMESTAMPTZ DEFAULT NOW(),
-            user_id UUID REFERENCES auth.users(id),
-            created_at TIMESTAMPTZ DEFAULT NOW()
-          );
-          
-          CREATE INDEX IF NOT EXISTS docs_title_idx ON docs(title);
-          CREATE INDEX IF NOT EXISTS docs_type_idx ON docs(type);
-          CREATE INDEX IF NOT EXISTS docs_category_idx ON docs(category);
-        `
-      });
-
-      if (rpcError) {
-        console.log('RPC method failed, table might already exist:', rpcError);
-      } else {
-        console.log('Docs table setup completed via RPC');
-      }
-
-      // Insert sample data if table is empty
-      const { data: existingDocs, error: checkError } = await supabase
-        .from('docs')
-        .select('id')
-        .limit(1);
-
-      if (checkError) {
-        console.error('Error checking existing docs:', checkError);
-        return false;
-      }
-
-      if (!existingDocs || existingDocs.length === 0) {
-        console.log('No documents found, inserting sample data...');
-        
-        const sampleDocs = [
-          {
-            title: 'System Maintenance Guide',
-            type: 'pdf',
-            desc: 'Complete guide for system maintenance procedures and best practices',
-            down: '#sample-download-1',
-            category: 'guides',
-            fileSize: '2.4 MB'
-          },
-          {
-            title: 'Hardware Compatibility List',
-            type: 'xlsx',
-            desc: 'Comprehensive list of all compatible hardware components and specifications',
-            down: '#sample-download-2',
-            category: 'reference',
-            fileSize: '1.8 MB'
-          },
-          {
-            title: 'Software Installation Instructions',
-            type: 'pdf',
-            desc: 'Step-by-step software installation procedures for various systems',
-            down: '#sample-download-3',
-            category: 'guides',
-            fileSize: '3.1 MB'
-          },
-          {
-            title: 'Network Configuration Templates',
-            type: 'docx',
-            desc: 'Ready-to-use templates for standard network configurations',
-            down: '#sample-download-4',
-            category: 'templates',
-            fileSize: '1.2 MB'
-          },
-          {
-            title: 'Security Protocols Documentation',
-            type: 'pdf',
-            desc: 'Latest security protocols and procedures for system protection',
-            down: '#sample-download-5',
-            category: 'reference',
-            fileSize: '4.5 MB'
-          }
-        ];
-
-        const { error: insertError } = await supabase
-          .from('docs')
-          .insert(sampleDocs);
-
-        if (insertError) {
-          console.error('Error inserting sample docs:', insertError);
-        } else {
-          console.log('Sample documents inserted successfully');
-        }
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Error setting up docs table:', error);
-      return false;
-    }
-  };
 
   const loadDocuments = async () => {
     try {
       setLoading(true);
-      setError(null);
-      
-      console.log('Setting up docs table...');
-      await setupDocsTable();
-      
-      console.log('Fetching documents from database...');
       const docs = await fetchDocuments();
-      
-      console.log('Documents fetched:', docs);
       setDocuments(docs);
       setFilteredDocuments(docs);
-      
-      if (docs.length === 0) {
-        setError('No documents found in the database');
-        toast.info('No documents found in the database');
-      } else {
-        toast.success(`Loaded ${docs.length} documents`);
-      }
-    } catch (error) {
-      console.error('Error loading documents:', error);
-      setError(`Failed to load documents: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      toast.error('Failed to load documents from database');
+    } catch (err) {
+      toast.error('Failed to load documents');
     } finally {
       setLoading(false);
     }
   };
 
-  // Filter documents based on search term and active category
   useEffect(() => {
     let results = documents;
-    
-    if (activeCategory !== 'all') {
-      results = results.filter(doc => doc.category === activeCategory);
-    }
-    
+    if (activeCategory !== 'all') results = results.filter(doc => doc.category === activeCategory);
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       results = results.filter(doc => 
@@ -213,320 +75,183 @@ const Docs = () => {
         (doc.desc && doc.desc.toLowerCase().includes(term))
       );
     }
-    
     setFilteredDocuments(results);
   }, [searchTerm, activeCategory, documents]);
 
   const handlePreviewDocument = (document: Document) => {
     if (document.down && document.down !== '#' && !document.down.startsWith('#sample')) {
-      // Open preview URL in new tab
       window.open(document.down, '_blank');
-      toast.success(`Previewing ${document.title}`);
     } else {
       toast.info(`Sample preview for: ${document.title}`);
     }
   };
 
-  const handleEditDocument = (document: Document) => {
-    setSelectedDocument(document);
-    setIsEditDialogOpen(true);
-  };
-
-  const handleDeleteDocument = (document: Document) => {
-    setSelectedDocument(document);
-    setIsDeleteDialogOpen(true);
-  };
-
   const confirmDeleteDocument = async () => {
     if (!selectedDocument) return;
-    
-    try {
-      const success = await deleteDocument(selectedDocument.id);
-      if (success) {
-        toast.success('Document deleted successfully');
-        await loadDocuments(); // Reload documents
-      } else {
-        toast.error('Failed to delete document');
-      }
-    } catch (error) {
-      console.error('Error deleting document:', error);
-      toast.error('Failed to delete document');
-    } finally {
-      setIsDeleteDialogOpen(false);
-      setSelectedDocument(null);
+    const success = await deleteDocument(selectedDocument.id);
+    if (success) {
+      toast.success('Document deleted');
+      await loadDocuments();
     }
+    setIsDeleteDialogOpen(false);
   };
 
-  const handleDialogSuccess = () => {
-    loadDocuments(); // Reload documents after add/edit
-  };
-
-  // Category to Icon mapping with colors
   const getCategoryIcon = (category: string | null | undefined) => {
-    const baseClassName = "h-8 w-8 flex-shrink-0";
-  
-    if (!category) {
-        return <Folder className={`${baseClassName} text-gray-500`} />;
-    }
-    
+    const baseClassName = "h-8 w-8 flex-shrink-0 mb-4";
+    if (!category) return <Folder className={`${baseClassName} text-red-600`} />;
     const normalized = category.trim().toLowerCase().replace(/[-_]/g, " ");
-  
     switch (normalized) {
-      case "general":
-        return <FileText className={`${baseClassName} text-slate-500`} />;
-      case "guides":
-        return <BookOpen className={`${baseClassName} text-green-500`} />;
-      case "templates":
-        return <LayoutTemplate className={`${baseClassName} text-blue-500`} />;
-      case "reference":
-        return <Bookmark className={`${baseClassName} text-indigo-500`} />;
-      case "reworks":
-        return <RotateCw className={`${baseClassName} text-amber-500`} />;
-      case "manual":
-      case "manuals":
-        return <Book className={`${baseClassName} text-sky-500`} />;
-      case "issue fix":
-        return <Wrench className={`${baseClassName} text-red-500`} />;
-      default:
-        return <Folder className={`${baseClassName} text-gray-500`} />;
+      case "general": return <FileText className={`${baseClassName} text-slate-500`} />;
+      case "guides": return <BookOpen className={`${baseClassName} text-green-500`} />;
+      case "templates": return <LayoutTemplate className={`${baseClassName} text-blue-500`} />;
+      case "reference": return <Bookmark className={`${baseClassName} text-indigo-500`} />;
+      case "reworks": return <RotateCw className={`${baseClassName} text-amber-500`} />;
+      case "manual": case "manuals": return <Book className={`${baseClassName} text-sky-500`} />;
+      case "issue fix": return <Wrench className={`${baseClassName} text-red-600`} />;
+      default: return <Folder className={`${baseClassName} text-gray-500`} />;
     }
   };
 
-  // Get unique categories from documents
   const categories = ['all', ...new Set(documents.map(doc => doc.category).filter(Boolean))];
 
-  if (!isAuthenticated) {
-    return null; // Don't render anything if not authenticated
-  }
+  if (!isAuthenticated) return null;
 
   return (
-    <div>
-      {/* Hero Section */}
-      <div className="relative overflow-hidden text-center">
-        <div className="absolute inset-0 z-0">
-          <video
-            className="absolute inset-0 w-full h-full object-cover object-center opacity-60"
-            autoPlay
-            loop
-            muted
-            playsInline
-          >
-            <source src={BackVideo} type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-        </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-4 py-20">
-          <h1 className="text-5xl font-bold text-white">
-            Technical Documents
-          </h1>
-          <p className="text-xl text-blue-50 mt-2 max-w-2xl text-center mx-auto drop-shadow">
-            Access guides, reference tools, and templates for all your technical needs.
-          </p>
-        </div>
+    <div className="relative min-h-screen text-foreground bg-[#050505] selection:bg-red-500/30">
+      
+      {/* Background Video */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <video className="w-full h-full object-cover opacity-40 contrast-125 saturate-100" autoPlay loop muted playsInline>
+          <source src={BackVideo} type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60" />
       </div>
 
-      {/* Main Content */}
-      <div className="container py-10 max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">Documents Library</h2>
-            <p className="text-muted-foreground mt-1">
-              Search all available documents.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 mt-4 md:mt-0">
-            <div className="relative">
-              
-              <Input
-                type="search"
-                placeholder="🔎Search Documents..."
-                className="pl-9 w-[200px] sm:w-[300px]"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            {isAdmin && (
-              <Button 
-                onClick={() => setIsAddDialogOpen(true)}
-                size="sm"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Document
-              </Button>
-            )}
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={loadDocuments}
-              disabled={loading}
-            >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Refresh'}
-			  
-            </Button>
-          </div>
-        </div>
+      <div className="relative z-10">
+        <section className="pt-20 pb-12">
+          <div className="container mx-auto px-6">
+            <motion.div initial="hidden" animate="visible" variants={fadeUp} className="max-w-4xl">
+              <h1 className="text-4xl md:text-6xl font-light tracking-tight mb-4 text-white">
+                Technical <span className="font-bold uppercase text-red-600">Documents</span>
+              </h1>
+              <p className="text-lg text-zinc-200 max-w-lg leading-relaxed border-l-2 border-red-600 pl-6 drop-shadow-md">
+                Access guides, reference tools, and templates for all your technical needs.
+              </p>
 
-        {error && (
-            <p className="text-red-500 text-sm mb-4 text-center bg-red-50 p-3 rounded-md">
-              {error}
-            </p>
-          )}
-
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin" />
-            <span className="ml-2">Loading documents...</span>
+              <div className="mt-10 max-w-3xl">
+                <div className="relative flex items-center shadow-2xl gap-3">
+                  <Input
+                    placeholder="🔎 Search Documents..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="h-14 pl-6 text-lg bg-white/90 backdrop-blur-md border-none text-slate-950 rounded-xl focus-visible:ring-red-600"
+                  />
+                  {isAdmin && (
+                    <Button onClick={() => setIsAddDialogOpen(true)} className="h-14 bg-red-600 hover:bg-red-700 px-6 rounded-xl font-bold uppercase">
+                      <Plus className="h-5 w-5 mr-2" /> Add
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </motion.div>
           </div>
-        ) : (
-          <Tabs defaultValue="all" value={activeCategory} onValueChange={setActiveCategory}>
-            <TabsList className="mb-6">
-              {categories.map(category => (
-                <TabsTrigger key={category} value={category}>
-                  {category === 'all' ? 'All Documents' : category.charAt(0).toUpperCase() + category.slice(1)}
+        </section>
+
+        <div className="container mx-auto px-6 pb-32">
+          <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-full">
+            <TabsList className="flex w-full bg-slate-100 dark:bg-slate-800 p-1 mb-12 rounded-lg h-auto">
+              {categories.map(cat => (
+                <TabsTrigger 
+                  key={cat} 
+                  value={cat} 
+                  className="flex-1 capitalize py-1.5 px-3 text-xs md:text-sm transition-all data-[state=active]:bg-red-600 data-[state=active]:text-white data-[state=active]:font-bold data-[state=active]:shadow-sm rounded-md text-slate-600 dark:text-zinc-400"
+                >
+                  {cat === 'all' ? 'All Docs' : cat}
                 </TabsTrigger>
               ))}
             </TabsList>
             
             <TabsContent value={activeCategory} className="mt-0">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                {filteredDocuments.length > 0 ? (
-                  filteredDocuments.map((document) => (
-                    <Card key={document.id} className="hover:shadow-lg transition-shadow flex flex-col">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start gap-4">
-                          {getCategoryIcon(document.category)}
-                          <div className="flex-1">
-                             <CardTitle className="text-lg leading-snug">{document.title}</CardTitle>
-                             <CardDescription className="mt-2 line-clamp-3 h-[60px]">{document.desc}</CardDescription>
+              {loading ? (
+                <div className="text-center py-20 text-white animate-pulse uppercase tracking-widest text-sm">
+                  Loading Library...
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredDocuments.map((doc) => (
+                    <div 
+                      key={doc.id}
+                      className="group relative flex flex-col overflow-hidden rounded-2xl bg-white/80 p-8 backdrop-blur-xl border border-slate-200 transition-all duration-300 hover:scale-[1.01] hover:bg-white/95 dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/20"
+                    >
+                      <div className="relative z-10 flex flex-col h-full">
+                        <div className="group-hover:scale-110 transition-transform duration-300 origin-left">
+                          {getCategoryIcon(doc.category)}
+                        </div>
+
+                        <h3 className="text-xl font-bold mb-2 tracking-tight uppercase text-slate-950 dark:text-white group-hover:text-red-600 transition-colors">
+                          {doc.title}
+                        </h3>
+                        
+                        <p className="text-sm text-slate-800 dark:text-zinc-100/80 leading-relaxed mb-6 line-clamp-2 font-medium">
+                          {doc.desc}
+                        </p>
+
+                        <div className="mt-auto pt-6 border-t border-slate-200 dark:border-white/10 flex items-center justify-between">
+                          {/* PREVIEW BUTTON - FIXED COLORS */}
+                          <Button 
+                            onClick={() => handlePreviewDocument(doc)}
+                            variant="ghost"
+                            className="p-0 h-auto bg-transparent hover:bg-transparent text-red-600 dark:text-white font-bold uppercase tracking-wider text-xs transition-colors"
+                          >
+                            <span className="flex items-center">
+                              Preview <Eye className="ml-2 h-4 w-4" />
+                            </span>
+                          </Button>
+                          
+                          <div className="flex gap-2">
+                            {isAdmin && (
+                              <>
+                                <Button variant="ghost" size="icon" onClick={() => { setSelectedDocument(doc); setIsEditDialogOpen(true); }} className="h-8 w-8 text-slate-600 hover:bg-transparent dark:text-white border border-slate-200 dark:border-white/10">
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" onClick={() => { setSelectedDocument(doc); setIsDeleteDialogOpen(true); }} className="h-8 w-8 text-red-500 hover:bg-transparent border border-slate-200 dark:border-white/10">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+                            <div className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 self-center ml-2">
+                              {doc.fileSize}
+                            </div>
                           </div>
                         </div>
-                      </CardHeader>
-                      <CardContent className="pb-3 flex-grow">
-                        <div className="flex items-center justify-between text-sm text-muted-foreground">
-                          <span>
-                            {document.type.toUpperCase()}
-                            {document.fileSize && ` • ${document.fileSize}`}
-                          </span>
-                          {document.dateAdded && (
-                            <span>
-                              {new Date(document.dateAdded).toLocaleDateString()}
-                            </span>
-                          )}
-                        </div>
-                        {document.category && (
-                          <div className="mt-2">
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                              {document.category}
-                            </span>
-                          </div>
-                        )}
-                      </CardContent>
-                      <CardFooter className="flex justify-center gap-2">
-                        <Button 
-                           
-                          size="sm" 
-                          onClick={() => handlePreviewDocument(document)}
-                          variant="outline"
-						className={`w-full mt-2 ${outlinePillButton}`}
-						  
-                        >
-                          <Eye className="mr-2 h-4 w-4" />
-                          Preview
-                        </Button>
-                        {isAdmin && (
-                          <div className="flex gap-1">
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => handleEditDocument(document)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => handleDeleteDocument(document)}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </CardFooter>
-                    </Card>
-                  ))
-                ) : (
-                  <div className="col-span-full text-center py-8">
-                    <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-xl font-medium">No documents found</h3>
-                    <p className="text-muted-foreground mt-2">
-                      {searchTerm ? 'Try a different search term or category' : 'There are no documents in this category'}
-                    </p>
-                    {isAdmin && (
-                      <Button 
-                        onClick={() => setIsAddDialogOpen(true)}
-                        className="mt-4"
-                      >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add First Document
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
+                      </div>
+                      <div className="mt-6 h-[1px] w-12 bg-slate-300 dark:bg-red-600/50 group-hover:w-full group-hover:bg-red-500 transition-all duration-500" />
+                    </div>
+                  ))}
+                </div>
+              )}
             </TabsContent>
           </Tabs>
-        )}
-
-        {/* Add Document Dialog */}
-        <DocumentManagementDialog
-          isOpen={isAddDialogOpen}
-          onClose={() => setIsAddDialogOpen(false)}
-          onSuccess={handleDialogSuccess}
-          mode="add"
-        />
-
-        {/* Edit Document Dialog */}
-        <DocumentManagementDialog
-          isOpen={isEditDialogOpen}
-          onClose={() => {
-            setIsEditDialogOpen(false);
-            setSelectedDocument(null);
-          }}
-          onSuccess={handleDialogSuccess}
-          document={selectedDocument}
-          mode="edit"
-        />
-
-        {/* Delete Confirmation Dialog */}
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the document
-                "{selectedDocument?.title}" from the database.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => {
-                setIsDeleteDialogOpen(false);
-                setSelectedDocument(null);
-              }}>
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={confirmDeleteDocument}
-                className="bg-red-600 hover:bg-red-700"
-              >
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        </div>
       </div>
+
+      <DocumentManagementDialog isOpen={isAddDialogOpen} onClose={() => setIsAddDialogOpen(false)} onSuccess={loadDocuments} mode="add" />
+      <DocumentManagementDialog isOpen={isEditDialogOpen} onClose={() => { setIsEditDialogOpen(false); setSelectedDocument(null); }} onSuccess={loadDocuments} document={selectedDocument} mode="edit" />
+      
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent className="bg-zinc-900 border-zinc-800 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Document?</AlertDialogTitle>
+            <AlertDialogDescription className="text-zinc-400">
+              This action cannot be undone. This will permanently remove "{selectedDocument?.title}".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setSelectedDocument(null)} className="bg-zinc-800 border-zinc-700 text-white hover:bg-zinc-700">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteDocument} className="bg-red-600 hover:bg-red-700">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

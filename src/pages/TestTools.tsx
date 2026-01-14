@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
+import { motion } from "framer-motion";
 import { 
   Download, 
   Check, 
@@ -13,7 +14,8 @@ import {
   HardDrive, 
   Network, 
   Thermometer, 
-  Battery 
+  Battery,
+  ShieldCheck
 } from "lucide-react";
 import Home from "@/assets/wtpth/Home.jpg";
 import maininf from "@/assets/wtpth/maininf.jpg";
@@ -30,12 +32,28 @@ import BackVideo from "@/assets/wtpth/backvi.mp4";
 export default function TestTools() {
   const { isAuthenticated } = useAuth();
 
+  const fadeUp = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+  };
+
+  // 1. Updated the constant to use !important for dark text
+  const outlinePillButton =
+    "relative rounded-md px-6 py-2 text-sm font-medium " +
+    "text-gray-900 dark:!text-white bg-transparent " +
+    "transition-all duration-300 ease-in-out transform " +
+    "hover:bg-gray-100 dark:hover:bg-red-600/20 " +
+    "focus:outline-none focus:ring-2 focus:ring-gray-400/40 focus:ring-offset-2 focus:ring-offset-transparent " +
+    "before:absolute before:inset-0 before:rounded-md before:border-2 before:border-red-500 dark:before:border-white before:opacity-0 before:transition-opacity before:duration-300 before:ease-in-out " +
+    "hover:before:opacity-100 " +
+    "active:scale-95";
+
   const featuredTool = {
     name: "WTPTH",
     version: "2.5.1",
     description: "Windows Test Powered Tool for Hardware (WTPTH) is a comprehensive diagnostic tool that tests all major hardware components of your computer.",
     features: [
-      "Computer specifications check ",
+      "Computer specifications check",
       "RAM capacity",
       "Storage check",
       "Keyboard test",
@@ -60,16 +78,7 @@ export default function TestTools() {
     },
     downloadLink: "https://drive.google.com/file/d/1bEBVk9Wgd9DK9xHH_Kwy_vCBbmH7frLg/view?usp=sharing"
   };
-const outlinePillButton =
-  "relative rounded-md px-6 py-2 text-sm font-medium " +
-  "text-gray-900 dark:text-gray-100 bg-transparent " +
-  "transition-all duration-300 ease-in-out transform " +
-  "hover:bg-gray-100 dark:hover:bg-red-600/20 " + // background hover effect
-  "focus:outline-none focus:ring-2 focus:ring-gray-400/40 focus:ring-offset-2 focus:ring-offset-transparent " +
-  // animated border pseudo-element
-  "before:absolute before:inset-0 before:rounded-md before:border-2 before:border-red-500 dark:before:border-white before:opacity-0 before:transition-opacity before:duration-300 before:ease-in-out " +
-  "hover:before:opacity-100 " +
-  "active:scale-95";
+
   const otherTools = [
     {
       name: "Memtest86",
@@ -79,7 +88,7 @@ const outlinePillButton =
       os: ["windows10", "windows11"],
       size: "15 MB",
       link: "https://www.memtest86.com/downloads/memtest86-usb.zip",
-      icon: <MemoryStick className="h-8 w-8 text-blue-600" />
+      icon: <MemoryStick className="h-8 w-8 text-red-600" />
     },
     {
       name: "CrystalDiskMark",
@@ -89,7 +98,7 @@ const outlinePillButton =
       os: ["windows10", "windows11"],
       size: "28 MB",
       link: "https://crystalmark.info/redirect.php?product=CrystalDiskMark",
-      icon: <HardDrive className="h-8 w-8 text-blue-600" />
+      icon: <HardDrive className="h-8 w-8 text-red-600" />
     },
     {
       name: "NetworkAnalyzer",
@@ -99,27 +108,27 @@ const outlinePillButton =
       os: ["windows10", "windows11"],
       size: "257 MB",
       link: "https://www.manageengine.com/products/netflow/2028821/ManageEngine_NetFlowAnalyzer_64bit.exe",
-      icon: <Network className="h-8 w-8 text-blue-600" />
+      icon: <Network className="h-8 w-8 text-red-600" />
     },
     {
-      name: "Core Temp",
-      version: "1.18.1",
-      description: "Temperature monitoring tool that tracks CPU, GPU, and other component temperatures over time.",
-      category: "Hardware",
-      os: ["windows10"],
-      size: "18 MB",
-      link: "https://www.alcpu.com/CoreTemp/Core-Temp-setup-v1.18.1.0.exe",
-      icon: <Thermometer className="h-8 w-8 text-blue-600" />
+        name: "Core Temp",
+        version: "1.18.1",
+        description: "Temperature monitoring tool that tracks CPU, GPU, and other component temperatures over time.",
+        category: "Hardware",
+        os: ["windows10"],
+        size: "18 MB",
+        link: "https://www.alcpu.com/CoreTemp/Core-Temp-setup-v1.18.1.0.exe",
+        icon: <Thermometer className="h-8 w-8 text-red-600" />
     },
     {
-      name: "BatteryInfoView",
-      version: "1.26",
-      description: "Laptop battery tool that check capacity, discharge rate, and estimates remaining battery life.",
-      category: "Hardware",
-      os: ["windows10", "windows11"],
-      size: "12 MB",
-      link: "https://www.nirsoft.net/utils/batteryinfoview-x64.zip",
-      icon: <Battery className="h-8 w-8 text-blue-600" />
+        name: "BatteryInfoView",
+        version: "1.26",
+        description: "Laptop battery tool that check capacity, discharge rate, and estimates remaining battery life.",
+        category: "Hardware",
+        os: ["windows10", "windows11"],
+        size: "12 MB",
+        link: "https://www.nirsoft.net/utils/batteryinfoview-x64.zip",
+        icon: <Battery className="h-8 w-8 text-red-600" />
     }
   ];
 
@@ -146,269 +155,233 @@ const outlinePillButton =
   ];
 
   return (
-    <div className="w-full">
-      {/* Full-width Hero with video background */}
-      <div className="relative w-full overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <video
-            className="absolute inset-0 w-full h-full object-cover object-center opacity-60"
-            autoPlay
-            loop
-            muted
-            playsInline
-          >
-            <source src={BackVideo} type="video/mp4" />
-          </video>
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-        </div>
-
-        <div className="relative z-10 px-4 py-16 text-center">
-          <h1 className="text-5xl font-bold text-white mb-2">
-            Testing Tools & Diagnostics Tools
-          </h1>
-          <p className="text-xl text-blue-50 mb-4 max-w-2xl text-center mx-auto drop-shadow">
-            Professional diagnostic tools to test and verify your computer's hardware and performance
-          </p>
-        </div>
+    <div className="relative min-h-screen text-foreground bg-[#050505] selection:bg-red-500/30">
+      
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <video className="w-full h-full object-cover opacity-40 contrast-125 saturate-100" autoPlay loop muted playsInline>
+          <source src={BackVideo} type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60" />
       </div>
 
-      {/* Page content below */}
-      <div className="container py-6 space-y-10">
-        {/* Featured Tool Section */}
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl overflow-hidden shadow-sm border">
-          <div className="p-8">
-            <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-8">
-              <div>
-                <Badge variant="outline" className="mb-4">Featured Tool</Badge>
-                <div className="flex items-center gap-4">
-                  <img src={WtpthIcon} alt="WTPTH Icon" className="h-14 w-14" />
+      <div className="relative z-10">
+        <section className="pt-20 pb-12">
+          <div className="container mx-auto px-6">
+            <motion.div initial="hidden" animate="visible" variants={fadeUp} className="max-w-4xl">
+              <h1 className="text-4xl md:text-6xl font-light tracking-tight mb-4 text-white">
+                Technical <span className="font-bold uppercase text-red-600">Diagnostics</span>
+              </h1>
+              <p className="text-lg text-zinc-200 max-w-lg leading-relaxed border-l-2 border-red-600 pl-6 drop-shadow-md">
+                Professional hardware verification suites and performance benchmarking utilities.
+              </p>
+            </motion.div>
+          </div>
+        </section>
+
+        <div className="container mx-auto px-6 space-y-16 pb-32">
+          
+          <motion.div 
+            initial="hidden" animate="visible" variants={fadeUp}
+            className="group relative overflow-hidden rounded-2xl bg-white/80 p-8 backdrop-blur-xl border border-slate-200 shadow-sm transition-all duration-300 hover:scale-[1.01] dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/20"
+          >
+            <div className="relative z-10 flex flex-col h-full">
+              <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-8 gap-6">
+                <div className="flex items-center gap-6">
+                  <div className="p-1 group-hover:scale-110 transition-transform duration-300">
+                    <img src={WtpthIcon} alt="WTPTH Icon" className="h-16 w-16 object-contain" />
+                  </div>
                   <div>
-                    <h2 className="text-3xl font-bold">{featuredTool.name}</h2>
-                    <p className="text-gray-600">Version {featuredTool.version}</p>
+                    <Badge className="bg-red-600 hover:bg-red-700 text-white mb-2">FEATURED TOOL</Badge>
+                    <h2 className="text-4xl font-bold text-slate-950 dark:text-white uppercase tracking-tighter transition-colors group-hover:text-red-600">
+                        {featuredTool.name}
+                    </h2>
+                    <p className="text-slate-600 dark:text-zinc-400 font-mono">v{featuredTool.version}</p>
                   </div>
                 </div>
+                
+                <div className="min-w-[220px]">
+                  {isAuthenticated ? (
+                    <Button asChild variant="outline" className={`${outlinePillButton} dark:!text-white`}>
+                      <a href={featuredTool.downloadLink} target="_blank" rel="noreferrer" className="dark:!text-white">
+                        <Download className="mr-2 h-5 w-5 dark:!text-white" /> DOWNLOAD NOW
+                      </a>
+                    </Button>
+                  ) : (
+                    <Button asChild variant="outline" className={`${outlinePillButton} dark:!text-white`}>
+                      <Link to="/login" className="dark:!text-white">LOGIN TO DOWNLOAD</Link>
+                    </Button>
+                  )}
+                </div>
               </div>
-              <div className="mt-4 md:mt-0">
-                {isAuthenticated ? (
-                  <Button asChild  size="sm"
-                                          variant="outline"
-                                          className={`w-full ${outlinePillButton}`}>
-                    <a href={featuredTool.downloadLink} target="_blank" rel="noreferrer">
-                      <Download className="mr-2 h-5 w-5" />
-                      Download Now
-                    </a>
-                  </Button>
-                ) : (
-                  <Button asChild size="lg" className="bg-gray-400 hover:bg-gray-500">
-                    <Link to="/login" className="flex items-center">
-                      <Download className="mr-2 h-5 w-5" />
-                      Login to Download
-                    </Link>
-                  </Button>
-                )}
-              </div>
+
+              <Tabs defaultValue="overview" className="w-full">
+                <TabsList className="bg-slate-100 dark:bg-slate-800/50 p-1 mb-8 h-auto flex-wrap justify-start border border-slate-200 dark:border-white/10">
+                  {["overview", "features", "screenshots", "requirements", "guides"].map((tab) => (
+                    <TabsTrigger 
+                      key={tab} value={tab} 
+                      className="capitalize py-2 px-6 data-[state=active]:bg-red-600 data-[state=active]:text-white data-[state=active]:font-bold transition-all"
+                    >
+                      {tab}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+
+                <TabsContent value="overview">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="md:col-span-2 space-y-4">
+                      <h3 className="text-2xl font-bold text-slate-950 dark:text-white uppercase">System Integrity Check</h3>
+                      <p className="text-slate-800 dark:text-zinc-300 leading-relaxed text-lg font-medium dark:font-normal">
+                        {featuredTool.description}
+                      </p>
+                      
+                      {/* 2. Admin Privileges: Forced white in dark mode */}
+                      <div className="flex items-center gap-2 text-red-600 dark:!text-white font-bold text-sm uppercase tracking-widest">
+                        <ShieldCheck className="h-5 w-5 text-red-600" /> Administrator Privileges Required
+                      </div>
+                    </div>
+                    {/* ... (Quick Facts) */}
+                    <div className="bg-slate-50/50 dark:bg-black/40 p-6 rounded-xl border border-slate-200 dark:border-white/10">
+                      <h4 className="font-bold text-slate-950 dark:text-white mb-4 flex items-center gap-2 uppercase text-xs tracking-widest">
+                        <Info className="h-4 w-4 text-red-600" /> Quick Facts
+                      </h4>
+                      <ul className="space-y-4 text-sm">
+                        {[
+                          "Tests all critical hardware",
+                          "Generates detailed PDF reports",
+                          "Mainboard Serial Number Replace",
+                          "Touchpad & Keyboard verification"
+                        ].map((fact, i) => (
+                          <li key={i} className="flex items-start gap-3 text-slate-700 dark:text-zinc-300 font-semibold dark:font-normal">
+                            <Check className="h-4 w-4 text-red-600 mt-1 shrink-0" /> {fact}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </TabsContent>
+                
+                {/* ... (Features, Screenshots, Requirements, Guides) */}
+                <TabsContent value="features">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {featuredTool.features.map((feature, index) => (
+                      <div key={index} className="bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 rounded-xl flex items-center gap-4">
+                        <CheckCircle2 className="h-5 w-5 text-red-600 shrink-0" />
+                        <span className="text-slate-800 dark:text-zinc-200 font-bold dark:font-medium">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="screenshots">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {featuredTool.screenshots.map((s, i) => (
+                      <div key={i} className="group relative rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 bg-black shadow-lg">
+                        <img src={s.path} alt={s.title} className="aspect-video object-cover opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300" />
+                        <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
+                          <span className="text-[10px] font-bold text-white uppercase tracking-widest">{s.title}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="requirements">
+                   <Card className="bg-white/50 dark:bg-black/40 border-slate-200 dark:border-white/10 text-slate-950 dark:text-white">
+                    <CardHeader>
+                      <CardTitle className="uppercase tracking-widest text-red-600">Technical Specifications</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      {Object.entries(featuredTool.systemRequirements).map(([key, value]) => (
+                        <div key={key} className="flex justify-between py-3 border-b border-slate-200 dark:border-white/5">
+                          <span className="text-slate-500 dark:text-zinc-400 uppercase text-xs font-bold">{key}</span>
+                          <span className="font-semibold dark:font-normal">{value}</span>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="guides">
+                  <Accordion type="single" collapsible className="w-full space-y-4">
+                    {usageGuides.map((guide, index) => (
+                      <AccordionItem key={index} value={`item-${index}`} className="border-slate-200 dark:border-white/10 bg-white/50 dark:bg-white/5 rounded-xl px-4">
+                        <AccordionTrigger className="text-slate-900 dark:text-white hover:text-red-600 font-bold uppercase tracking-tight text-left">
+                          {guide.title}
+                        </AccordionTrigger>
+                        <AccordionContent className="text-slate-700 dark:text-zinc-400 pb-6">
+                          <ol className="list-decimal list-inside space-y-3">
+                            {guide.steps.map((step, sIndex) => (
+                              <li key={sIndex} className="pl-2 border-l-2 border-red-600/30 ml-2 font-medium dark:font-normal">{step}</li>
+                            ))}
+                          </ol>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                </TabsContent>
+              </Tabs>
+              <div className="mt-6 h-[1px] w-12 bg-slate-300 dark:bg-red-600/50 group-hover:w-full group-hover:bg-red-500 transition-all duration-500" />
             </div>
+          </motion.div>
 
-            <Tabs defaultValue="overview">
-              <TabsList>
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="features">Features</TabsTrigger>
-                <TabsTrigger value="screenshots">Screenshots</TabsTrigger>
-                <TabsTrigger value="requirements">System Requirements</TabsTrigger>
-                <TabsTrigger value="guides">Usage Guides</TabsTrigger>
-              </TabsList>
-              <TabsContent value="overview" className="mt-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  <div className="md:col-span-2">
-                    <h3 className="text-xl font-semibold mb-4">About {featuredTool.name}</h3>
-                    <p className="text-gray-700 mb-6">
-                      {featuredTool.description}
+          <section>
+            <h2 className="text-2xl font-bold text-white uppercase tracking-widest border-l-4 border-red-600 pl-4 mb-10">
+              Utility <span className="text-red-600">Library</span>
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {otherTools.map((tool, index) => (
+                <div 
+                  key={index}
+                  className="group relative flex flex-col overflow-hidden rounded-2xl bg-white/80 p-10 backdrop-blur-xl border border-slate-200 shadow-sm transition-all duration-300 hover:scale-[1.01] dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/20"
+                >
+                  <div className="relative z-10 flex flex-col h-full">
+                    <div className="flex justify-between items-start mb-8">
+                      <div className="text-red-600 dark:text-red-500 group-hover:scale-110 transition-transform duration-300 origin-left">
+                        {tool.icon}
+                      </div>
+                      <Badge variant="outline" className="text-red-600 border-red-600/30 uppercase text-[10px] tracking-widest font-bold">
+                        {tool.category}
+                      </Badge>
+                    </div>
+
+                    <h3 className="text-xl font-bold mb-2 tracking-tight uppercase text-slate-950 dark:text-white group-hover:text-red-600 transition-colors">
+                      {tool.name}
+                    </h3>
+                    
+                    <p className="text-sm text-slate-800 dark:text-zinc-100/80 leading-relaxed font-semibold dark:font-medium mb-6">
+                      {tool.description}
                     </p>
-                    <p className="text-gray-700">
-                      Our comprehensive testing utility helps you identify hardware issues before they cause system failures.
-                      Regular testing with WTPTH can help extend the life of your computer by catching problems early.
-                    </p>
-                  </div>
-                  <div className="bg-white p-6 rounded-lg shadow-sm border">
-                    <h4 className="font-semibold mb-4 flex items-center">
-                      <Info className="h-4 w-4 mr-2 text-blue-600" />
-                      Quick Facts
-                    </h4>
-                    <ul className="space-y-3 text-sm">
-                      <li className="flex items-start">
-                        <Check className="h-4 w-4 mr-2 text-green-500 mt-0.5" />
-                        <span>Tests all critical hardware components</span>
-                      </li>
-                      <li className="flex items-start">
-                        <Check className="h-4 w-4 mr-2 text-green-500 mt-0.5" />
-                        <span>Generates detailed reports .pdf</span>
-                      </li>
-                      <li className="flex items-start">
-                        <Check className="h-4 w-4 mr-2 text-green-500 mt-0.5" />
-                        <span>Quick tests and diagnostics</span>
-                      </li>
-                      <li className="flex items-start">
-                        <Check className="h-4 w-4 mr-2 text-green-500 mt-0.5" />
-                        <span>Regular updates to support new hardware</span>
-                      </li>
-                      <li className="flex items-start">
-                        <Check className="h-4 w-4 mr-2 text-green-500 mt-0.5" />
-                        <span>Mainboard Serial Number Replace </span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </TabsContent>
-              <TabsContent value="features" className="mt-6">
-                <h3 className="text-xl font-semibold mb-4">Key Features</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {featuredTool.features.map((feature, index) => (
-                    <div key={index} className="bg-white p-4 rounded-lg border flex items-start">
-                      <div className="bg-blue-100 p-2 rounded-full mr-3">
-                        <CheckCircle2 className="h-5 w-5 text-blue-700" />
-                      </div>
-                      <div className="text-gray-700">{feature}</div>
-                    </div>
-                  ))}
-                </div>
-              </TabsContent>
-              <TabsContent value="screenshots" className="mt-6">
-                <h3 className="text-xl font-semibold mb-4">Screenshots</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {featuredTool.screenshots.map((screenshot, index) => (
-                    <div key={index} className="bg-gray-100 rounded-lg overflow-hidden border">
-                      <div className="aspect-video bg-gray-200 overflow-hidden">
-                        <img
-                          src={screenshot.path}
-                          alt={screenshot.title}
-                          className="object-cover w-full h-full"
-                        />
-                      </div>
-                      <div className="p-4 bg-white">
-                        <h4 className="font-medium">{screenshot.title}</h4>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </TabsContent>
-              <TabsContent value="requirements" className="mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>System Requirements</CardTitle>
-                    <CardDescription>Minimum specifications to run WTPTH</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-3 border-b">
-                        <div className="font-medium">Operating System</div>
-                        <div className="md:col-span-2 text-gray-600">{featuredTool.systemRequirements.os}</div>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-3 border-b">
-                        <div className="font-medium">Processor</div>
-                        <div className="md:col-span-2 text-gray-600">{featuredTool.systemRequirements.cpu}</div>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-3 border-b">
-                        <div className="font-medium">Memory</div>
-                        <div className="md:col-span-2 text-gray-600">{featuredTool.systemRequirements.ram}</div>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-3 border-b">
-                        <div className="font-medium">Storage</div>
-                        <div className="md:col-span-2 text-gray-600">{featuredTool.systemRequirements.storage}</div>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="font-medium">Other</div>
-                        <div className="md:col-span-2 text-gray-600">{featuredTool.systemRequirements.other}</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              <TabsContent value="guides" className="mt-6">
-                <h3 className="text-xl font-semibold mb-4">Usage Guides</h3>
-                <Accordion type="single" collapsible className="w-full">
-                  {usageGuides.map((guide, index) => (
-                    <AccordionItem key={index} value={`item-${index}`}>
-                      <AccordionTrigger className="text-left">{guide.title}</AccordionTrigger>
-                      <AccordionContent>
-                        <ol className="list-decimal list-inside space-y-2 pl-4">
-                          {guide.steps.map((step, stepIndex) => (
-                            <li key={stepIndex} className="text-gray-600">{step}</li>
-                          ))}
-                        </ol>
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
-              </TabsContent>
-            </Tabs>
-          </div>
-        </div>
 
-        {/* Other Tools Section */}
-        <div>
-          <h2 className="text-2xl font-bold mb-6">Other Testing Utilities</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {otherTools.map((tool, index) => (
-              <Card key={index} className="flex flex-col">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-start gap-4">
-                      {tool.icon}
-                      <div>
-                        <CardTitle>{tool.name}</CardTitle>
-                        <CardDescription>Version {tool.version}</CardDescription>
-                      </div>
-                    </div>
-                    <Badge variant="outline" className="text-blue-700 border-blue-700 whitespace-nowrap">
-                      {tool.category}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <p className="text-gray-600 mb-4">{tool.description}</p>
-                  <div className="flex items-center justify-between text-sm text-gray-500">
-                    <div>Size: {tool.size}</div>
-                    <div className="flex space-x-1">
-                      {tool.os.includes("windows10") && (
-                        <Badge className="text-xs bg-blue-100 text-blue-800 pointer-events-none">Win 10</Badge>
-                      )}
-                      {tool.os.includes("windows11") && (
-                        <Badge className="text-xs bg-blue-100 text-blue-800 pointer-events-none">Win 11</Badge>
-                      )}
+                    <div className="mt-auto pt-6 border-t border-slate-200 dark:border-white/10 flex items-center justify-between">
+                        {/* 3. Utility Download Button: Forced white text using !important logic */}
+                        <Button asChild variant="ghost" className="p-0 h-auto text-red-600 dark:!text-white font-bold uppercase tracking-wider text-xs hover:bg-transparent">
+                            <a href={tool.link} target="_blank" rel="noreferrer" className="dark:!text-white flex items-center">
+                                <Download className="mr-2 h-4 w-4 dark:!text-white" /> Download
+                            </a>
+                        </Button>
+                        <span className="text-[10px] font-mono text-slate-500 dark:text-zinc-500 uppercase">{tool.size}</span>
                     </div>
                   </div>
-                </CardContent>
-                <CardFooter className="border-t pt-4">
-                  <Button asChild  size="sm"
-                                          variant="outline"
-                                          className={`w-full ${outlinePillButton}`}>
-                    <a href={tool.link} target="_blank" rel="noreferrer">
-                      <Download className="mr-2 h-4 w-4" /> Download
-                    </a>
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        </div>
+                  <div className="mt-6 h-[1px] w-12 bg-slate-300 dark:bg-red-600/50 group-hover:w-full group-hover:bg-red-500 transition-all duration-500" />
+                </div>
+              ))}
+            </div>
+          </section>
 
-        {/* Support Section */}
-        <div className="bg-gray-50 rounded-xl p-8 text-center">
-          <div className="max-w-3xl mx-auto">
-            <AlertTriangle className="h-10 w-10 text-amber-500 mx-auto mb-4" />
-            <h3 className="text-2xl font-bold mb-4">Need Help with Testing?</h3>
-            <p className="text-gray-600 mb-6">
-              If you're experiencing issues with our testing tools or need assistance interpreting test results,
-              our technical support team is ready to help.
+          {/* Support Section */}
+          <motion.div 
+            initial="hidden" whileInView="visible" variants={fadeUp}
+            className="bg-red-600/5 dark:bg-red-600/10 border border-red-600/20 rounded-2xl p-12 text-center backdrop-blur-md"
+          >
+            <AlertTriangle className="h-12 w-12 text-red-600 mx-auto mb-6" />
+            <h3 className="text-3xl font-bold text-slate-950 dark:text-white mb-4 uppercase tracking-tighter">Need Interpretations?</h3>
+            <p className="text-slate-800 dark:text-zinc-300 mb-8 max-w-2xl mx-auto text-lg leading-relaxed font-medium dark:font-normal">
+              If you're experiencing issues with our testing tools or need assistance interpreting results, our technical support team is ready to help.
             </p>
-            <Button asChild size="sm"
-                                          variant="outline"
-                                          className={`w-full ${outlinePillButton}`}>
-              <Link to="/requests">Get Technical Support</Link>
-			  
+            <Button asChild variant="outline" className={`${outlinePillButton} dark:!text-white w-auto px-12 h-14`}>
+              <Link to="/requests" className="dark:!text-white">GET TECHNICAL SUPPORT</Link>
             </Button>
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>
