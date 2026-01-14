@@ -56,7 +56,7 @@ const categories = ['all', 'laptops', 'desktops', 'AIO', 'monitors', 'storage'];
 const outlinePillButton =
   "relative rounded-md px-6 py-2 text-sm font-medium " +
   "transition-all duration-300 ease-in-out transform " +
-  "hover:bg-gray-100 dark:hover:bg-red-600/20 " +
+  "hover:bg-gray-100 dark:hover:bg-white/10 " + // Changed dark:hover:bg-red-600/20 to dark:hover:bg-white/10
   "focus:outline-none focus:ring-2 focus:ring-gray-400/40 " +
   "before:absolute before:inset-0 before:rounded-md before:border-2 " +
   "before:border-red-500 dark:before:border-white before:opacity-0 " +

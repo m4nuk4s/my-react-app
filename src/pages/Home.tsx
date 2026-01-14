@@ -70,20 +70,25 @@ export default function Home() {
       {/* SCROLLABLE CONTENT LAYER */}
       <div className="relative z-10">
         
-        {/* Hero Section */}
-        <section className="h-[60vh] flex items-center">
-          <div className="container mx-auto px-6">
-            <motion.div initial="hidden" animate="visible" variants={fadeUp} className="max-w-4xl">
-              <img src={logo} alt="Thomson" className="h-24 mb-8 object-contain" />
-              <h1 className="text-4xl md:text-6xl font-light tracking-tight mb-4 text-white">
-                Technical <span className="font-bold uppercase text-red-600">Support</span>
-              </h1>
-              <p className="text-lg text-zinc-200 max-w-lg leading-relaxed border-l-2 border-red-600 pl-6 drop-shadow-md">
-                Simplified access to drivers, manuals, and diagnostic tools.
-              </p>
-            </motion.div>
-          </div>
-        </section>
+   {/* Hero Section */}
+{/* Reduced section height from 60vh to 40vh or 50vh to bring content up */}
+<section className="h-[45vh] flex items-center">
+  <div className="container mx-auto px-6">
+    <motion.div initial="hidden" animate="visible" variants={fadeUp} className="max-w-4xl">
+      {/* Logo: h-16 as requested, mb-4 to tighten gap with text */}
+      <img src={logo} alt="Thomson" className="h-16 mb-4 object-contain" />
+      
+      {/* Title: mb-2 to pull the description closer */}
+      <h1 className="text-4xl md:text-6xl font-light tracking-tight mb-2 text-white">
+        Technical <span className="font-bold uppercase text-red-600">Support</span>
+      </h1>
+      
+      <p className="text-lg text-zinc-200 max-w-lg leading-relaxed border-l-2 border-red-600 pl-6 drop-shadow-md">
+        Simplified access to drivers, manuals, and diagnostic tools.
+      </p>
+    </motion.div>
+  </div>
+</section>
 
         {/* Frosted Light Tiles Section */}
         <section className="pb-32">
