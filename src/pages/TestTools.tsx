@@ -91,7 +91,7 @@ export default function TestTools() {
       icon: <MemoryStick className="h-8 w-8 text-red-600" />
     },
     {
-      name: "CrystalDiskMark",
+      name: "Crystal Disk Mark",
       version: "9.0.1",
       description: "Hard drive and SSD diagnostic tool that monitors health, performs read/write tests, and predicts failures.",
       category: "Storage",
@@ -101,7 +101,7 @@ export default function TestTools() {
       icon: <HardDrive className="h-8 w-8 text-red-600" />
     },
     {
-      name: "NetworkAnalyzer",
+      name: "Network Analyzer",
       version: "12.8",
       description: "Network diagnostic utility that tests connection speed, latency, and identifies connectivity issues.",
       category: "Network",
@@ -121,7 +121,7 @@ export default function TestTools() {
         icon: <Thermometer className="h-8 w-8 text-red-600" />
     },
     {
-        name: "BatteryInfoView",
+        name: "Battery Info View",
         version: "1.26",
         description: "Laptop battery tool that check capacity, discharge rate, and estimates remaining battery life.",
         category: "Hardware",
