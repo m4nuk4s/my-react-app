@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+	import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -138,28 +138,42 @@ const Docs = () => {
                 Access guides, reference tools, and templates for all your technical needs.
               </p>
 
-              <div className="mt-10 max-w-3xl">
-                <div className="relative flex items-center shadow-2xl gap-3">
-                  <Input
-                    placeholder="🔎 Search Documents..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="h-14 pl-6 text-lg bg-white/90 backdrop-blur-md border-none text-slate-950 rounded-xl focus-visible:ring-red-600"
-                  />
-                  {isAdmin && (
-                    <Button onClick={() => setIsAddDialogOpen(true)} className="h-14 bg-red-600 hover:bg-red-700 px-6 rounded-xl font-bold uppercase">
-                      <Plus className="h-5 w-5 mr-2" /> Add
-                    </Button>
-                  )}
-                </div>
-              </div>
+         <div className="mt-10 max-w-3xl">
+  <div className="relative flex items-center shadow-2xl gap-3">
+    <div className="relative flex-1">
+      <Input
+        placeholder="🔎 Search Documents..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="h-14 pl-6 pr-12 text-lg border-none rounded-xl 
+          /* Light Mode Styles */
+          bg-white/90 text-slate-950 shadow-lg
+          /* Dark Mode Styles */
+          dark:bg-white/5 dark:backdrop-blur-xl dark:text-white 
+          dark:ring-1 dark:ring-white/10 dark:placeholder:text-zinc-500
+          /* Interaction Styles */
+          focus-visible:ring-2 focus-visible:ring-red-600 transition-all"
+      />
+    </div>
+    
+    {isAdmin && (
+      <Button 
+        onClick={() => setIsAddDialogOpen(true)} 
+        className="h-14 bg-red-600 hover:bg-red-700 px-8 rounded-xl font-bold uppercase shadow-lg transition-transform active:scale-95"
+      >
+        <Plus className="h-5 w-5 mr-2" /> 
+        Add
+      </Button>
+    )}
+  </div>
+</div>
             </motion.div>
           </div>
         </section>
 
         <div className="container mx-auto px-6 pb-32">
           <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-full">
-            <TabsList className="flex w-full bg-slate-100 dark:bg-slate-800 p-1 mb-12 rounded-lg h-auto">
+            <TabsList className="flex w-full bg-slate-100 bold dark:bg-slate-800 p-1 mb-12 rounded-lg h-auto">
               {categories.map(cat => (
                 <TabsTrigger 
                   key={cat} 
