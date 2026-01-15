@@ -23,9 +23,9 @@ const outlinePillButton =
   "before:border-red-500 dark:before:border-white before:opacity-0 " +
   "hover:before:opacity-100 active:scale-95";
 
-const tileClassName = "group relative  rounded-2xl backdrop-blur-xl border shadow-sm transition-colors duration-300 " + 
-                       "bg-white/90 border-slate-200 " + 
-                       "dark:bg-zinc-900/90 dark:border-white/10";
+const tileClassName = "group relative overflow-hidden rounded-2xl backdrop-blur-xl border shadow-sm transition-colors duration-300 " + 
+                       "bg-white/90 border-slate-200 " + // Light Mode (Matches Windows.tsx)
+                       "dark:bg-zinc-900/90 dark:border-white/10"; // Dark Mode
 
 const cardVariants = {
   hidden: { opacity: 0, y: 10 },
@@ -36,7 +36,16 @@ const cardVariants = {
   },
   exit: { opacity: 0, y: -10, transition: { duration: 0.2 } }
 };
-
+const categoryIcons: Record<string, React.ReactNode> = {
+  "Keyboard": <Search className="h-4 w-4" />, // Or a keyboard icon if available
+  "Display": <Laptop className="h-4 w-4" />,
+  "Battery": <Clock className="h-4 w-4" />,
+  "Motherboard": <Wrench className="h-4 w-4" />,
+  "Storage": <Search className="h-4 w-4" />,
+  "Memory": <Search className="h-4 w-4" />,
+  "Full Disassembly": <Wrench className="h-4 w-4" />,
+  "All Categories": <Laptop className="h-4 w-4" />
+};
 // Type definitions for guides from diss_table
 type Step = {
   id?: string;
@@ -316,34 +325,63 @@ useEffect(() => {
                 <CardContent className="p-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-                      <Input
-                        placeholder="Search guides..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 bg-black/40 border-white/10 text-white focus:ring-red-600"
-                      />
-                    </div>
+  <Input
+    placeholder="🔎   Search guides..."
+    onChange={(e) => setSearchTerm(e.target.value)}
+    className="pl-10 bg-white/80 dark:bg-black/60 border-slate-300 dark:border-white/20 text-black dark:text-white font-medium placeholder:text-slate-600 dark:placeholder:text-zinc-400 focus:ring-red-600 focus:bg-white dark:focus:bg-black transition-all"
+  />
+</div>
                     
-                    <Select value={selectedModel} onValueChange={setSelectedModel}>
-                      <SelectTrigger className="bg-black/40 border-white/10 text-white">
-                        <SelectValue placeholder="Model" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-zinc-900 border-white/10 text-white">
-                        <SelectItem value="all">All Models</SelectItem>
-                        {computerModels.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    
-                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                      <SelectTrigger className="bg-black/40 border-white/10 text-white">
-                        <SelectValue placeholder="Category" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-zinc-900 border-white/10 text-white">
-                        <SelectItem value="all">All Categories</SelectItem>
-                        {categories.filter(c => c !== "All Categories").map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+<Select value={selectedModel} onValueChange={setSelectedModel}>
+  <SelectTrigger className="bg-white/80 dark:bg-black/60 border-slate-300 dark:border-white/20 text-black dark:text-white font-medium focus:ring-red-600 focus:bg-white dark:focus:bg-black transition-all">
+    <SelectValue placeholder="Model" />
+  </SelectTrigger>
+  <SelectContent className="bg-white dark:bg-zinc-900 border-slate-300 dark:border-white/20 text-black dark:text-white">
+    <SelectItem value="all">
+      <div className="flex items-center gap-2">
+        <Laptop className="h-4 w-4 text-red-600" />
+        <span>All Models</span>
+      </div>
+    </SelectItem>
+    {computerModels.map((m) => (
+      <SelectItem key={m} value={m}>
+        <div className="flex items-center gap-2">
+          <Laptop className="h-4 w-4 text-red-600" />
+          <span>{m}</span>
+        </div>
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
+<Select value={selectedCategory} onValueChange={setSelectedCategory}>
+  {/* Trigger: Adapts background and border color based on mode */}
+  <SelectTrigger className="pl-10 bg-white/80 dark:bg-black/60 border-slate-300 dark:border-white/20 text-black dark:text-white font-medium placeholder:text-slate-600 dark:placeholder:text-zinc-400 focus:ring-red-600 focus:bg-white dark:focus:bg-black transition-all">
+    <SelectValue placeholder="Category" />
+  </SelectTrigger>
+  
+  {/* Content: Matches the tile styles for consistency */}
+  <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
+    <SelectItem value="all">
+      <div className="flex items-center gap-2">
+        <Laptop className="h-4 w-4 text-red-500" />
+        <span>All Categories</span>
+      </div>
+    </SelectItem>
+
+    {categories
+      .filter((c) => c !== "All Categories")
+      .map((c) => (
+        <SelectItem key={c} value={c}>
+          <div className="flex items-center gap-2">
+            <span className="text-red-500">
+              {categoryIcons[c] || <Wrench className="h-4 w-4" />}
+            </span>
+            <span>{c}</span>
+          </div>
+        </SelectItem>
+      ))}
+  </SelectContent>
+</Select>
                   </div>
                 </CardContent>
               </Card>
@@ -386,25 +424,27 @@ useEffect(() => {
   )}
                           
                           {/* Right Column: Info */}
-                         <div className="flex-1 p-8 border-l border-white/5">
-                            <div className="flex flex-wrap justify-between items-start gap-4 mb-4">
-                              <div>
-                                <h2 className="text-2xl font-bold text-white group-hover:text-red-500 transition-colors uppercase tracking-tight">
-                                  {guide.title}
-                                </h2>
-                                <p className="text-red-500 font-medium text-sm mt-1">{guide.model}</p>
-                              </div>
-                              <Badge className={`${getDifficultyColor(guide.difficulty)} uppercase text-[10px] tracking-widest px-3`}>
-                                {guide.difficulty}
-                              </Badge>
-                            </div>
+                       <div className="flex-1 p-8 border-l border-slate-200 dark:border-white/5">
+  <div className="flex flex-wrap justify-between items-start gap-4 mb-4">
+    <div>
+      <h2 className="text-2xl font-bold text-slate-950 dark:text-white group-hover:text-red-600 transition-colors uppercase tracking-tight">
+        {guide.title}
+      </h2>
+      <p className="text-red-600 dark:text-red-500 font-bold text-sm mt-1">{guide.model}</p>
+    </div>
+    <Badge className={`${getDifficultyColor(guide.difficulty)} uppercase text-[10px] tracking-widest px-3`}>
+      {guide.difficulty}
+    </Badge>
+  </div>
 
-                            <div className="flex flex-wrap items-center gap-6 text-xs text-zinc-400 mb-6">
-                              <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-red-500" /> {guide.time}</div>
-                              <div className="flex items-center gap-2"><Wrench className="h-4 w-4 text-red-500" /> {guide.category}</div>
-                            </div>
+                           <div className="flex flex-wrap items-center gap-6 text-xs text-slate-800 dark:text-zinc-400 mb-6 font-semibold">
+    <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-red-600" /> {guide.time}</div>
+    <div className="flex items-center gap-2"><Wrench className="h-4 w-4 text-red-600" /> {guide.category}</div>
+  </div>
 
-                            <p className="text-zinc-400 text-sm mb-8 leading-relaxed line-clamp-3">{guide.description}</p>
+                           <p className="text-slate-700 dark:text-zinc-400 text-sm mb-8 leading-relaxed line-clamp-3 font-medium">
+    {guide.description}
+  </p>
 
                             {/* Steps Accordion */}
                             {guide.steps && guide.steps.length > 0 ? (
@@ -415,7 +455,7 @@ useEffect(() => {
                                   </AccordionTrigger>
                                   <AccordionContent className="pt-6 space-y-4">
                                  {guide.steps.map((step, idx) => (
-  <div key={idx} className="bg-black/40 border border-white/5 rounded-xl p-6 transition-all hover:border-red-500/30">
+<div key={idx} className="bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 rounded-xl p-6 transition-all hover:border-red-500/30">
     <div className="flex flex-col md:flex-row gap-6 items-start">
       
     {/* STEP IMAGE (LEFT) - Large size with 'Contain' fit */}
@@ -444,11 +484,11 @@ useEffect(() => {
           <span className="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded tracking-tighter">
             STEP {step.step_number || idx + 1}
           </span>
-          <h4 className="font-bold text-white uppercase text-sm tracking-wide">
+<h4 className="font-bold text-slate-950 dark:text-white uppercase text-sm tracking-wide">
             {step.step_des || step.title}
           </h4>
         </div>
-        <p className="text-zinc-400 text-sm leading-relaxed whitespace-pre-line border-l border-red-600/30 pl-4">
+        <p className="text-slate-800 dark:text-zinc-400 text-sm leading-relaxed whitespace-pre-line border-l border-red-600/30 pl-4 font-medium">
           {step.procedure || step.step_description || step.description}
         </p>
       </div>
