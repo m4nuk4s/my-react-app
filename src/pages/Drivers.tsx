@@ -227,12 +227,19 @@ export default function Drivers() {
 
               <div className="mt-10 max-w-3xl">
                 <div className="relative flex items-center shadow-2xl">
-                  <Input
-                    placeholder="🔎 Search by model, serial, or file name..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="h-14 pl-6 pr-44 text-lg bg-white/90 backdrop-blur-md border-none text-slate-950 rounded-xl focus-visible:ring-red-600"
-                  />
+              <Input
+  placeholder="🔎 Search by model, serial, or file name..."
+  value={searchQuery}
+  onChange={(e) => setSearchQuery(e.target.value)}
+  className="h-14 pl-6 pr-44 text-lg border-none rounded-xl 
+    /* Light Mode Styles */
+    bg-white/90 text-slate-950 shadow-lg
+    /* Dark Mode Styles */
+    dark:bg-white/5 dark:backdrop-blur-xl dark:text-white 
+    dark:ring-1 dark:ring-white/10 dark:placeholder:text-zinc-500
+    /* Interaction Styles */
+    focus-visible:ring-2 focus-visible:ring-red-600 transition-all"
+/>
                   <div className="absolute right-1">
                     <Dialog>
                       <DialogTrigger asChild>

@@ -21,6 +21,7 @@ import plane from '../assets/wtpth/plane.jpg';
 export default function Guides() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [visibleGuides, setVisibleGuides] = useState(4); // Shows 4 by default
 
   const guides = [
 	{// ID 1
@@ -195,100 +196,112 @@ export default function Guides() {
     }
   };
 
-  return (
-    <div>
-      {/* Hero Section */}
-      <div className="relative overflow-hidden text-center">
-        <div className="absolute inset-0 z-0">
-          <video
-            className="absolute inset-0 w-full h-full object-cover object-center opacity-60"
-            autoPlay
-            loop
-            muted
-            playsInline
-          >
-            <source src={BackVideo} type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-purple-600/30 mix-blend-multiply" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-        </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-4 py-20">
-          <h1 className="text-5xl font-bold text-white mb-0">
-            Computer Repair Guides
-          </h1>
-          <p className="text-xl text-blue-50 mb-10 max-w-2xl text-center mx-auto drop-shadow">
-            Step-by-step disassembly and repair guides for your devices
-          </p>
-        </div>
+return (
+    <div className="relative min-h-screen text-foreground bg-[#050505] selection:bg-red-500/30">
+      {/* BACKGROUND VIDEO LAYER */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <video 
+          className="w-full h-full object-cover opacity-40 contrast-125 saturate-100" 
+          autoPlay loop muted playsInline
+        >
+          <source src={BackVideo} type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60" />
+      </div>
+
+      <div className="relative z-10">
+       <section className="pt-20 pb-12">
+  <div className="container mx-auto px-6">
+    <div className="max-w-4xl">
+      <h1 className="text-4xl md:text-6xl font-light tracking-tight mb-4 text-white text-left">
+        Computer Repair <span className="font-bold uppercase text-red-600">Guides</span>
+      </h1>
+      <p className="text-lg text-zinc-200 max-w-lg leading-relaxed border-l-2 border-red-600 pl-6 drop-shadow-md text-left">
+        Step-by-step disassembly and repair guides for your devices. 
+        Follow official procedures to diagnose and fix common issues.
+      </p>
+    </div>
+  </div>
+</section>
       </div>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-10 space-y-10">
-        {/* Featured Guide */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl overflow-hidden shadow-xl">
-          <div className="md:flex">
-            <div className="md:w-3/5 p-8 md:p-12 flex flex-col justify-center">
-              <Badge variant="outline" className="w-fit text-white border-white mb-4">
-                Featured Guide
-              </Badge>
-              <h2 className="text-3xl font-bold mb-4">Troubleshooting Guides</h2>
-              <p className="mb-6">
-                Our comprehensive troubleshooting guides covers everything from boot issues to performance
-                problems. Learn how to diagnose and fix the most common computer problems by yourself.
-              </p>
-              
-            </div>
-            <div className="md:w-2/5 bg-blue-900 flex items-center justify-center p-8">
-              <div className="text-8xl">🔧</div>
-            </div>
-          </div>
-        </div>
+  
 
-        {/* Search and Filter Section */}
-        <div className="grid grid-cols-4 md:grid-cols-5 gap-2">
-          <div className="md:col-span-4">
-            <div className="relative">
-              
-              <Input
-                placeholder="🔎Search for guides..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+<div className="w-full flex justify-center px-4 py-12 relative z-[20]">
+  {/* Unified Container - Solid White in Light Mode */}
+  <div className="flex items-center w-full max-w-4xl h-16 bg-white border border-slate-200 rounded-2xl shadow-xl transition-all duration-200 focus-within:ring-2 focus-within:ring-red-600 overflow-hidden">
+    
+    {/* Left Side: Search Input */}
+    <div className="flex items-center flex-1 h-full px-6">
+      <Search className="h-6 w-6 text-slate-400 shrink-0" />
+      <input
+        type="text"
+        placeholder="Search for guides..."
+        value={searchTerm}
+        onChange={(e) => {
+          setSearchTerm(e.target.value);
+          if (typeof setVisibleGuides === 'function') setVisibleGuides(4);
+        }}
+        className="w-full h-full bg-white border-none text-slate-950 pl-4 text-lg outline-none focus:ring-0 placeholder:text-slate-400"
+      />
+    </div>
+
+    {/* The Red Button Section */}
+    <div className="h-full shrink-0">
+      <Select 
+        value={selectedCategory} 
+        onValueChange={(val) => {
+          setSelectedCategory(val);
+          if (typeof setVisibleGuides === 'function') setVisibleGuides(4);
+        }}
+      >
+        {/* Button is now Solid Red regardless of mode */}
+        <SelectTrigger 
+          className="h-full w-[140px] md:w-[220px] border-none bg-red-600 hover:bg-red-700 text-white rounded-none px-6 focus:ring-0 shadow-none transition-colors cursor-pointer"
+        >
+          <div className="truncate font-bold flex items-center justify-center">
+            <SelectValue placeholder="Category" />
           </div>
-          <div>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger>
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category.value} value={category.value} className="flex items-center">
-                    <div className="flex items-center">
-                      <span className="mr-2">{category.icon}</span>
-                      {category.label}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        </SelectTrigger>
+        
+        {/* Dropdown Options - White background in light mode */}
+        <SelectContent className="bg-white border-slate-200 text-slate-950 shadow-2xl rounded-xl overflow-hidden z-[999] min-w-[200px]">
+          {categories.map((category) => (
+            <SelectItem 
+              key={category.value} 
+              value={category.value} 
+              className="text-slate-900 cursor-pointer py-3 px-4 transition-colors border-none outline-none  "
+            >
+              <div className="flex items-center">
+                <span className="mr-3 text-lg">{category.icon}</span>
+                <span className="font-medium">{category.label}</span>
+              </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  </div>
+</div>
 
         {/* Guide Results */}
         <div>
           {filteredGuides.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-2">
               {filteredGuides.map((guide) => (
-                <Card key={guide.id} className="overflow-hidden flex flex-col h-full">
-                  <div className="aspect-video bg-gray-100 flex items-center justify-center text-gray-400">
+<Card 
+  key={guide.id} 
+  className="group relative overflow-hidden rounded-2xl flex flex-col h-full backdrop-blur-xl border shadow-sm transition-colors duration-300 bg-white/90 border-slate-200 dark:bg-zinc-900/90 dark:border-white/10"
+>                  <div className="aspect-video bg-gray-100 flex items-center justify-center text-gray-400">
                     <span className="text-5xl">{/* texto */}</span>
                   </div>
                   <CardHeader>
                     <div className="flex justify-between items-start text-lg text-blue-800 pointer-events-none">
-                      <CardTitle className="text-lg">{guide.title}</CardTitle>
+                    <CardTitle className="text-lg font-bold text-red-500 transition-colors duration-300 dark:text-white">
+  {guide.title}
+</CardTitle>
                       <Badge className={getDifficultyColor(guide.difficulty)}>
                         {guide.difficulty.charAt(0).toUpperCase() + guide.difficulty.slice(1)}
                       </Badge>
@@ -305,8 +318,8 @@ export default function Guides() {
                     ))}
                   </CardContent>
                   {/* Accordion added here for each guide */}{/* Accordion added here for each guide */}{/* Accordion added here for each guide */}
-                  <div className="bg-white rounded-xl shadow p-4 mt-4">
-                  <Accordion defaultActiveKey={null}>
+                 <div className="bg-white/90 border-slate-200 dark:bg-zinc-900/90 dark:border-white/10 rounded-2xl border backdrop-blur-xl p-4 mt-4 shadow-sm transition-colors duration-300">
+  <Accordion defaultActiveKey={null}>
 				 
 			 
 				 
@@ -2246,12 +2259,44 @@ WHOSE SERIAL NUMBER BEGINS WITH:
         {/* Your existing Quick Help accordion and other content below... */}
 
         {/* Quick Help Accordion */}
-        <div className="bg-white rounded-xl shadow p-6 space-y-4">
-        
-
-        
-        </div>
+       
       </div>
+
     </div>
   );
+<style>{`
+  /* LIGHT MODE: Bright Red */
+  .accordion-button {
+    color: #ef4444 !important; /* Bright Red-500 */
+    background: transparent !important;
+    font-weight: 700;
+  }
+
+  /* DARK MODE: Pure White */
+  .dark .accordion-button {
+    color: #ffffff !important; 
+  }
+
+  /* Sync the arrow icon */
+  .accordion-button::after {
+    filter: sepia(100%) saturate(1000%) hue-rotate(340deg); /* Red arrow in Light */
+  }
+
+  .dark .accordion-button::after {
+    filter: invert(1) !important; /* White arrow in Dark */
+  }
+
+  /* Match Windows.tsx tile style */
+  .card {
+    background-color: rgba(255, 255, 255, 0.9) !important; /* bg-white/90 */
+    backdrop-filter: blur(20px);
+    border-radius: 1rem;
+  }
+
+  .dark .card {
+    background-color: rgba(24, 24, 27, 0.9) !important; /* dark:bg-zinc-900/90 */
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+`}</style>
+  
 }
