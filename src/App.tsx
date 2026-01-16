@@ -61,7 +61,7 @@ const App = () => (
                   <Route path="/test-tools" element={<ProtectedRoute allowedRoles={USER_ADMIN_ROLES}>{<TestTools />}</ProtectedRoute>} />
                   <Route path="/disassembly-guides" element={<ProtectedRoute allowedRoles={USER_ADMIN_ROLES}>{<DisassemblyGuides />}</ProtectedRoute>} />
                   <Route path="/disassembly/:id" element={<ProtectedRoute allowedRoles={USER_ADMIN_ROLES}>{<DisassemblyGuideDetail />}</ProtectedRoute>} />
-				  <Route path="/stock" element={<ProtectedRoute allowedRoles={USER_ADMIN_ROLES}>{<stock />}</ProtectedRoute>} />
+				  <Route path="/Stock" element={<ProtectedRoute allowedRoles={USER_ADMIN_ROLES}>{<Stock />}</ProtectedRoute>} />
                   
                   {/* Admin-only routes */}
                   <Route path="/admin" element={<ProtectedRoute allowedRoles={ADMIN_ROLE}>{<Admin />}</ProtectedRoute>} />
