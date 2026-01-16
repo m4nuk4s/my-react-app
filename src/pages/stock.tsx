@@ -155,7 +155,7 @@ export default function Stock() {
                 <div className="flex flex-col md:flex-row gap-3">
                   <div className="relative flex-1">
                     <Input
-                      placeholder="🔎 Search by Part Code Match..."
+                      placeholder="🔎 Search by Part Code Match.."
                       value={partCodeSearch}
                       onChange={(e) => {setPartCodeSearch(e.target.value); setVisibleCount(40);}}
                       className="h-14 pl-6 pr-12 text-lg border-none rounded-xl bg-white/90 text-slate-950 shadow-lg dark:bg-white/5 dark:backdrop-blur-xl dark:text-white dark:ring-1 dark:ring-white/10 dark:placeholder:text-zinc-500 focus-visible:ring-2 focus-visible:ring-red-600 transition-all font-normal"
