@@ -20,7 +20,7 @@ import Admin from './pages/Admin';
 import GuideEditor from './pages/GuideEditor';
 import DriverEditor from './pages/DriverEditor';
 import UserEditor from './pages/UserEditor';
-import Stock from './pages/Stock';
+import stock from './pages/stock';
 import { AuthProvider } from './contexts/AuthContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { ThemeProvider } from './components/ui/theme-provider';
@@ -61,7 +61,7 @@ const App = () => (
                   <Route path="/test-tools" element={<ProtectedRoute allowedRoles={USER_ADMIN_ROLES}>{<TestTools />}</ProtectedRoute>} />
                   <Route path="/disassembly-guides" element={<ProtectedRoute allowedRoles={USER_ADMIN_ROLES}>{<DisassemblyGuides />}</ProtectedRoute>} />
                   <Route path="/disassembly/:id" element={<ProtectedRoute allowedRoles={USER_ADMIN_ROLES}>{<DisassemblyGuideDetail />}</ProtectedRoute>} />
-				  <Route path="/Stock" element={<ProtectedRoute allowedRoles={USER_ADMIN_ROLES}>{<Stock />}</ProtectedRoute>} />
+				  <Route path="/stock" element={<ProtectedRoute allowedRoles={USER_ADMIN_ROLES}>{<stock />}</ProtectedRoute>} />
                   
                   {/* Admin-only routes */}
                   <Route path="/admin" element={<ProtectedRoute allowedRoles={ADMIN_ROLE}>{<Admin />}</ProtectedRoute>} />
