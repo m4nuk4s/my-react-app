@@ -59,6 +59,7 @@ export default function Navbar() {
       roles: ["admin", "user"],
     },
     { name: "Test Tools", href: "/test-tools", roles: ["admin", "user"] },
+	{ name: "Stock", href: "/stock", roles: ["admin", "user"] },
     { name: "Requests", href: "/requests", roles: ["admin", "user", "client"] },
   ];
 
