@@ -90,30 +90,44 @@ export default function Stock() {
   };
 
   /**
-   * EXPORT LOGIC (No libraries)
-   * Converts the filtered data into a CSV string and triggers a browser download.
+   * REFINED EXPORT LOGIC
+   * Adds titles and ensures data alignment by escaping special characters.
    */
   const exportToDatasheet = () => {
     if (filtered.length === 0) return toast.error("No data to export");
 
+    // 1. Define your column titles
     const headers = ["Description", "Model", "Part Code", "Location", "Stock", "Status"];
     
+    // Helper to safely format values for CSV
+    const formatCSVCell = (val: any) => {
+      if (val === null || val === undefined) return '""';
+      const stringVal = String(val);
+      // Escape double quotes by doubling them and wrap the whole thing in quotes
+      return `"${stringVal.replace(/"/g, '""')}"`;
+    };
+
+    // 2. Map data to rows using the formatter for every field
     const csvRows = filtered.map(item => [
-      `"${item.category.replace(/"/g, '""')}"`, // Handle commas/quotes in names
-      `"${item.model.replace(/"/g, '""')}"`,
-      `"${item.partcode}"`,
-      `"${item.loc || 'N/A'}"`,
-      item.stock,
-      item.status.toUpperCase()
+      formatCSVCell(item.category),
+      formatCSVCell(item.model),
+      formatCSVCell(item.partcode),
+      formatCSVCell(item.loc || 'N/A'),
+      formatCSVCell(item.stock),
+      formatCSVCell(item.status.toUpperCase())
     ].join(","));
 
+    // 3. Combine headers and rows with newlines
     const csvContent = [headers.join(","), ...csvRows].join("\n");
+    
+    // 4. Create Blob and trigger download
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `Notebook_Inventory_${new Date().toLocaleDateString()}.csv`);
+    // Filename includes the current date
+    link.setAttribute("download", `Inventory_Export_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
