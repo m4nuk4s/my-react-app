@@ -27,6 +27,7 @@ import './styles/soft-dark-mode.css';
 import './styles/soft-dark-mode-overrides.css';
 import './styles/test-tools-dark-mode-fixes.css';
 import Stock from './pages/Stock';
+
 const queryClient = new QueryClient();
 
 // Define roles for easier management
@@ -58,11 +59,9 @@ const App = () => (
                   <Route path="/windows11" element={<ProtectedRoute allowedRoles={USER_ADMIN_ROLES}>{<Navigate to="/windows" state={{ tab: "win11" }} />}</ProtectedRoute>} />
                   <Route path="/docs" element={<ProtectedRoute allowedRoles={USER_ADMIN_ROLES}>{<Docs />}</ProtectedRoute>} />
                   <Route path="/test-tools" element={<ProtectedRoute allowedRoles={USER_ADMIN_ROLES}>{<TestTools />}</ProtectedRoute>} />
-				  
                   <Route path="/disassembly-guides" element={<ProtectedRoute allowedRoles={USER_ADMIN_ROLES}>{<DisassemblyGuides />}</ProtectedRoute>} />
                   <Route path="/disassembly/:id" element={<ProtectedRoute allowedRoles={USER_ADMIN_ROLES}>{<DisassemblyGuideDetail />}</ProtectedRoute>} />
-				 <Route
-  path="/stock"
+				    path="/stock"
   element={
     <ProtectedRoute allowedRoles={USER_ADMIN_ROLES}>
       <Stock />
