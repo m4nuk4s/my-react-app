@@ -101,38 +101,50 @@ export default function Stock() {
     }
   };
 
-  const exportToDatasheet = () => {
+const exportToDatasheet = () => {
     if (filtered.length === 0) return toast.error("No data to export");
 
-    const headers = ["Description", "Model", "Part Code", "Location", "Stock", "Status"];
+    // Defined headers to match your UI Table exactly
+    const headers = [
+      "Component Description", 
+      "Model", 
+      "Part Code", 
+      "Location", 
+      "Stock Count", 
+      "Current Status"
+    ];
     
     const formatCSVCell = (val: any) => {
       if (val === null || val === undefined) return '""';
       const stringVal = String(val);
+      // Escape quotes for CSV safety
       return `"${stringVal.replace(/"/g, '""')}"`;
     };
 
     const csvRows = filtered.map(item => [
-      formatCSVCell(item.category),
-      formatCSVCell(item.model),
-      formatCSVCell(item.partcode),
-      formatCSVCell(item.loc || 'N/A'),
-      formatCSVCell(item.stock),
-      formatCSVCell(item.status.toUpperCase())
+      formatCSVCell(item.category),      // Matches 'Component Description'
+      formatCSVCell(item.model),         // Matches 'Model'
+      formatCSVCell(item.partcode),      // Matches 'Part Code'
+      formatCSVCell(item.loc || 'N/A'),  // Matches 'Loc'
+      formatCSVCell(item.stock),         // Matches 'Stock'
+      formatCSVCell(item.status.replace("_", " ").toUpperCase()) // Matches 'Status'
     ].join(","));
 
+    // Combine headers and rows
     const csvContent = [headers.join(","), ...csvRows].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    
+    // Create blob with UTF-8 BOM to ensure Excel opens special characters correctly
+    const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `Inventory_Export_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `Inventory_Report_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     
-    toast.success("Datasheet exported successfully");
+    toast.success("Table data exported successfully");
   };
 
   const filtered = data.filter(item => {
