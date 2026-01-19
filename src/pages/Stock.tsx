@@ -16,7 +16,8 @@ import {
   ShieldCheck, 
   Laptop, 
   ChevronDown, 
-  Download 
+  Download,
+  RotateCcw
 } from "lucide-react";
 import BackVideo from "@/assets/wtpth/backvi.mp4";
 
@@ -49,6 +50,9 @@ const fadeUp = {
 export default function Stock() {
   const [data, setData] = useState<StockItem[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Filtering States
+  const [modelSearch, setModelSearch] = useState("");
   const [modelFilter, setModelFilter] = useState("");
   const [partCodeSearch, setPartCodeSearch] = useState(""); 
   const [visibleCount, setVisibleCount] = useState(40);
@@ -77,6 +81,14 @@ export default function Stock() {
     setLoading(false);
   };
 
+  const resetFilters = () => {
+    setModelSearch("");
+    setModelFilter("");
+    setPartCodeSearch("");
+    setVisibleCount(40);
+    toast.info("Filters reset to default");
+  };
+
   const handleSave = async () => {
     const stockCount = currentItem.stock || 0;
     const autoStatus = stockCount === 0 ? "out" : stockCount <= 10 ? "low_stock" : "in_stock";
@@ -89,25 +101,17 @@ export default function Stock() {
     }
   };
 
-  /**
-   * REFINED EXPORT LOGIC
-   * Adds titles and ensures data alignment by escaping special characters.
-   */
   const exportToDatasheet = () => {
     if (filtered.length === 0) return toast.error("No data to export");
 
-    // 1. Define your column titles
     const headers = ["Description", "Model", "Part Code", "Location", "Stock", "Status"];
     
-    // Helper to safely format values for CSV
     const formatCSVCell = (val: any) => {
       if (val === null || val === undefined) return '""';
       const stringVal = String(val);
-      // Escape double quotes by doubling them and wrap the whole thing in quotes
       return `"${stringVal.replace(/"/g, '""')}"`;
     };
 
-    // 2. Map data to rows using the formatter for every field
     const csvRows = filtered.map(item => [
       formatCSVCell(item.category),
       formatCSVCell(item.model),
@@ -117,16 +121,12 @@ export default function Stock() {
       formatCSVCell(item.status.toUpperCase())
     ].join(","));
 
-    // 3. Combine headers and rows with newlines
     const csvContent = [headers.join(","), ...csvRows].join("\n");
-    
-    // 4. Create Blob and trigger download
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     
     const link = document.createElement("a");
     link.href = url;
-    // Filename includes the current date
     link.setAttribute("download", `Inventory_Export_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
@@ -136,9 +136,10 @@ export default function Stock() {
   };
 
   const filtered = data.filter(item => {
-    const matchesModel = !modelFilter || item.model === modelFilter;
+    const matchesModelDropdown = !modelFilter || item.model === modelFilter;
+    const matchesModelSearch = !modelSearch || item.model.toLowerCase().includes(modelSearch.toLowerCase());
     const matchesPartCode = !partCodeSearch || item.partcode.toLowerCase().includes(partCodeSearch.toLowerCase());
-    return matchesModel && matchesPartCode;
+    return matchesModelDropdown && matchesModelSearch && matchesPartCode;
   });
 
   const displayedItems = filtered.slice(0, visibleCount);
@@ -155,65 +156,81 @@ export default function Stock() {
       <div className="relative z-10">
         <section className="pt-20 pb-12">
           <div className="container mx-auto px-6">
-            <motion.div initial="hidden" animate="visible" variants={fadeUp} className="max-w-4xl">
+            <motion.div initial="hidden" animate="visible" variants={fadeUp} className="max-w-5xl">
               
               <h1 className="text-4xl md:text-6xl font-light tracking-tight mb-4 text-white">
                 Notebook Parts <span className="font-bold uppercase text-red-600">Inventory</span>
               </h1>
 
-              <p className="text-lg text-zinc-200 max-w-lg leading-relaxed border-l-2 border-red-600 pl-6 drop-shadow-md">
+              <p className="text-lg text-zinc-200 max-w-lg leading-relaxed border-l-2 border-red-600 pl-6 drop-shadow-md mb-10">
                 Access real-time stock tracking and component compatibility database.
               </p>
 
-              <div className="mt-10 max-w-4xl">
-                <div className="flex flex-col md:flex-row gap-3">
-                  <div className="relative flex-1">
-                    <Input
-                      placeholder="🔎 Search by Part Code Match.."
-                      value={partCodeSearch}
-                      onChange={(e) => {setPartCodeSearch(e.target.value); setVisibleCount(40);}}
-                      className="h-14 pl-6 pr-12 text-lg border-none rounded-xl bg-white/90 text-slate-950 shadow-lg dark:bg-white/5 dark:backdrop-blur-xl dark:text-white dark:ring-1 dark:ring-white/10 dark:placeholder:text-zinc-500 focus-visible:ring-2 focus-visible:ring-red-600 transition-all font-normal"
-                    />
-                  </div>
-                  
-                  <div className="relative group min-w-[240px]">
-                    <Laptop className="absolute left-4 top-1/2 -translate-y-1/2 text-red-600 z-20" size={20} />
-                    <select 
-                      className="w-full h-14 pl-12 pr-10 rounded-xl appearance-none cursor-pointer
-                        bg-white/90 text-slate-950 
-                        dark:bg-white/5 dark:backdrop-blur-xl dark:text-white dark:ring-1 dark:ring-white/10
-                        font-normal border-none shadow-lg outline-none focus:ring-2 focus:ring-red-600 transition-all"
-                      value={modelFilter}
-                      onChange={(e) => setModelFilter(e.target.value)}
-                    >
-                      <option value="" className="bg-white dark:bg-zinc-900">All Notebooks</option>
-                      {Array.from(new Set(data.map(i => i.model))).sort().map(m => (
-                        <option key={m} value={m} className="bg-white dark:bg-zinc-900">{m}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 group-hover:text-red-600 transition-colors pointer-events-none" size={18} />
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+                <div className="md:col-span-3 relative">
+                  <Input
+                    placeholder="🔍 Search Part Code..."
+                    value={partCodeSearch}
+                    onChange={(e) => {setPartCodeSearch(e.target.value); setVisibleCount(40);}}
+                    className="h-14 pl-6 text-lg border-none rounded-xl bg-white/90 text-slate-950 dark:bg-white/5 dark:backdrop-blur-xl dark:text-white dark:ring-1 dark:ring-white/10 shadow-lg"
+                  />
+                </div>
 
-                  <div className="flex gap-2">
-                    {/* EXPORT BUTTON */}
+                <div className="md:col-span-3 relative">
+                  <Input
+                    placeholder="🔍 Search Model..."
+                    value={modelSearch}
+                    onChange={(e) => {setModelSearch(e.target.value); setVisibleCount(40);}}
+                    className="h-14 pl-6 text-lg border-none rounded-xl bg-white/90 text-slate-950 dark:bg-white/5 dark:backdrop-blur-xl dark:text-white dark:ring-1 dark:ring-white/10 shadow-lg"
+                  />
+                </div>
+                
+                <div className="md:col-span-2 relative group">
+                  <select 
+                    className="w-full h-14 pl-4 pr-10 rounded-xl appearance-none cursor-pointer
+                      bg-white/90 text-slate-950 dark:bg-white/5 dark:backdrop-blur-xl dark:text-white dark:ring-1 dark:ring-white/10
+                      font-bold uppercase text-[10px] border-none shadow-lg outline-none focus:ring-2 focus:ring-red-600 transition-all"
+                    value={modelFilter}
+                    onChange={(e) => setModelFilter(e.target.value)}
+                  >
+                    <option value="" className="bg-white dark:bg-zinc-900">💻 All Notebooks</option>
+                    {Array.from(new Set(data.map(i => i.model))).sort().map(m => (
+                      <option key={m} value={m} className="bg-white dark:bg-zinc-900">
+                        💻 {m}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 group-hover:text-red-600 transition-colors pointer-events-none" size={16} />
+                </div>
+
+                <div className="md:col-span-4 flex gap-2">
+                  <Button 
+                    onClick={resetFilters}
+                    variant="outline"
+                    title="Reset Filters"
+                    className="h-14 w-14 shrink-0 border-white/10 bg-white/5 hover:bg-red-600/20 text-white rounded-xl shadow-lg transition-transform active:scale-95"
+                  >
+                    <RotateCcw className="h-5 w-5" />
+                  </Button>
+
+                  <Button 
+                    onClick={exportToDatasheet}
+                    variant="outline"
+                    className="flex-1 h-14 border-white/10 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold uppercase shadow-lg transition-transform active:scale-95"
+                  >
+                    <Download className="h-5 w-5 md:mr-2" />
+                    <span className="hidden lg:inline">Export</span>
+                  </Button>
+
+                  {isAdmin && (
                     <Button 
-                      onClick={exportToDatasheet}
-                      variant="outline"
-                      className="h-14 border-white/10 bg-white/5 hover:bg-white/10 text-white px-6 rounded-xl font-bold uppercase shadow-lg transition-transform active:scale-95"
+                      onClick={() => {setCurrentItem({}); setIsModalOpen(true);}} 
+                      className="flex-1 h-14 bg-red-600 hover:bg-red-700 rounded-xl font-bold uppercase shadow-lg transition-transform active:scale-95"
                     >
-                      <Download className="h-5 w-5 mr-0 md:mr-2" />
-                      <span className="hidden md:inline">Export</span>
+                      <Plus className="h-6 w-6 lg:mr-2" />
+                      <span className="hidden lg:inline">Add</span>
                     </Button>
-
-                    {isAdmin && (
-                      <Button 
-                        onClick={() => {setCurrentItem({}); setIsModalOpen(true);}} 
-                        className="h-14 bg-red-600 hover:bg-red-700 px-8 rounded-xl font-bold uppercase shadow-lg transition-transform active:scale-95"
-                      >
-                        <Plus className="h-6 w-6 mr-2" /> Add Part
-                      </Button>
-                    )}
-                  </div>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -304,7 +321,7 @@ export default function Stock() {
         </div>
       </div>
       
-      {/* Admin Modal Update */}
+      {/* Admin Modal */}
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-50 p-4">
