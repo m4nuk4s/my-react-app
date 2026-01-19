@@ -104,7 +104,7 @@ export default function Stock() {
 const exportToDatasheet = () => {
     if (filtered.length === 0) return toast.error("No data to export");
 
-    // Defined headers to match your UI Table exactly
+    // Headers matching your table columns
     const headers = [
       "Component Description", 
       "Model", 
@@ -117,34 +117,34 @@ const exportToDatasheet = () => {
     const formatCSVCell = (val: any) => {
       if (val === null || val === undefined) return '""';
       const stringVal = String(val);
-      // Escape quotes for CSV safety
       return `"${stringVal.replace(/"/g, '""')}"`;
     };
 
     const csvRows = filtered.map(item => [
-      formatCSVCell(item.category),      // Matches 'Component Description'
-      formatCSVCell(item.model),         // Matches 'Model'
-      formatCSVCell(item.partcode),      // Matches 'Part Code'
-      formatCSVCell(item.loc || 'N/A'),  // Matches 'Loc'
-      formatCSVCell(item.stock),         // Matches 'Stock'
-      formatCSVCell(item.status.replace("_", " ").toUpperCase()) // Matches 'Status'
+      formatCSVCell(item.category),
+      formatCSVCell(item.model),
+      formatCSVCell(item.partcode),
+      formatCSVCell(item.loc || 'N/A'),
+      formatCSVCell(item.stock),
+      formatCSVCell(item.status.replace("_", " ").toUpperCase())
     ].join(","));
 
-    // Combine headers and rows
-    const csvContent = [headers.join(","), ...csvRows].join("\n");
+    // FIX: Add 'sep=,' at the start. 
+    // This forces Excel on any computer to recognize the comma as the column separator.
+    const csvContent = "sep=,\n" + [headers.join(","), ...csvRows].join("\n");
     
-    // Create blob with UTF-8 BOM to ensure Excel opens special characters correctly
+    // Add UTF-8 BOM (\ufeff) to support international characters (accents, emojis)
     const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `Inventory_Report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `Inventory_Export_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     
-    toast.success("Table data exported successfully");
+    toast.success("Compatible datasheet exported");
   };
 
   const filtered = data.filter(item => {
