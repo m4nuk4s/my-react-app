@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,10 +14,9 @@ import {
 } from "@/components/ui/dialog";
 
 import AnimatedWelcome from "@/components/auth/AnimatedWelcome";
-import { motion } from "framer-motion";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-// ✨ MODIFIED: Removed CheckCircle2, UserCheck is no longer needed directly. Custom SVG will be used.
-import { Mail, Lock, User, AlertCircle, Clock, LogIn, UserPlus } from "lucide-react"; 
+import { motion, AnimatePresence } from "framer-motion";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Mail, Lock, User, AlertCircle, Clock, LogIn, UserPlus, AlertTriangle } from "lucide-react"; 
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import BackVideo from "@/assets/wtpth/backvi.mp4";
@@ -34,7 +33,6 @@ export default function Login() {
   const [showPendingDialog, setShowPendingDialog] = useState(false);
   const [showRegSuccessDialog, setShowRegSuccessDialog] = useState(false);
 
-  // States to manage placeholders disappearing on click
   const [emailPlaceholder, setEmailPlaceholder] = useState("example@mail.com");
   const [passPlaceholder, setPassPlaceholder] = useState("••••••••");
   const [userPlaceholder, setUserPlaceholder] = useState("johnsmith");
@@ -52,19 +50,17 @@ export default function Login() {
   }, []);
 
 const outlinePillButton =
-  "relative rounded-md px-6 py-2 text-sm font-medium " +
-  "border border-gray-300 dark:border-gray-700 " +
-  "text-gray-900 dark:text-gray-100 bg-transparent " +
+  "relative rounded-md px-6 py-2 text-sm font-bold uppercase tracking-widest " +
+  "text-white !bg-red-600 !bg-none " + // !bg-none removes any existing gradients
   "transition-all duration-300 ease-in-out transform " +
-  "hover:bg-gray-100 dark:hover:bg-red-600/20 " +
-  "focus:outline-none focus:ring-2 focus:ring-gray-400/40 focus:ring-offset-2 focus:ring-offset-transparent " +
-  "before:absolute before:inset-0 before:rounded-md before:border-2 " +
-  "before:border-red-500 dark:before:border-white " +
-  "before:opacity-0 before:transition-opacity before:duration-300 before:ease-in-out " +
-  "hover:before:opacity-100 " +
-  "active:scale-95";
+  "hover:!bg-red-700 hover:scale-[1.02] active:scale-95 " +
+  "shadow-lg shadow-red-500/40 dark:shadow-red-900/40 " +
+  "border-none outline-none focus:ring-2 focus:ring-red-500/50";
 
-  
+  const tileClassName = "group relative overflow-hidden rounded-2xl p-1 backdrop-blur-xl border shadow-2xl transition-all duration-300 " + 
+                       "bg-white/80 border-slate-200 text-slate-900 " + 
+                       "dark:bg-zinc-900/90 dark:border-white/10 dark:text-white";
+
   const handleWelcomeComplete = () => {
     window.setTimeout(() => {
       setShowWelcomeAnimation(false);
@@ -80,15 +76,13 @@ const outlinePillButton =
     try {
       const result = await login(email, password);
       if (result === true) {
-        console.log("Login successful");
         navigate(from);
       } else if (result === "pending") {
         setShowPendingDialog(true);
       } else {
-        setLoginError("Invalid email or password");
+        setLoginError("Invalid User or Passsword.");
       }
     } catch (error: unknown) {
-      console.error("Login error:", error);
       setLoginError(error instanceof Error ? error.message : "An error occurred during login");
     } finally {
       setIsLoading(false);
@@ -101,7 +95,7 @@ const outlinePillButton =
     setIsLoading(true);
     
     if (!email || !password || !username) {
-      setRegistrationError("All fields are required");
+      setRegistrationError("All fields are required to create an account.");
       setIsLoading(false);
       return;
     }
@@ -114,170 +108,92 @@ const outlinePillButton =
         setEmail("");
         setPassword("");
       } else if (!result) {
-        setRegistrationError("Email already in use");
+        setRegistrationError("Registration failed. Please try a different email or check password criteria.");
       }
     } catch (error: unknown) {
-      console.error("Registration error:", error);
       setRegistrationError(error instanceof Error ? error.message : "An error occurred during registration");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: { duration: 0.5 },
-    },
-  };
-
   return (
-    <>
-      {showWelcomeAnimation && (
-        <AnimatedWelcome onContinue={handleWelcomeComplete} />
-      )}
+    <div className="relative min-h-screen bg-slate-50 dark:bg-[#050505] text-foreground selection:bg-red-500/30 transition-colors duration-500">
+      {showWelcomeAnimation && <AnimatedWelcome onContinue={handleWelcomeComplete} />}
       
-      {/* Dialog for pending approval status on LOGIN */}
-      <Dialog open={showPendingDialog} onOpenChange={setShowPendingDialog}>
-        <DialogContent className="sm:max-w-md bg-card/95 backdrop-blur-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-amber-500" />
-              Account Pending Approval
-            </DialogTitle>
-            <DialogDescription className="pt-2 text-left">
-              Your account has been created but is still awaiting approval from an administrator.
-            </DialogDescription>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
-      
-      {/* ✨ NEW: Professional dialog for successful REGISTRATION with combined user and check icon */}
-      <Dialog open={showRegSuccessDialog} onOpenChange={setShowRegSuccessDialog}>
-        <DialogContent className="sm:max-w-md bg-card/95 backdrop-blur-sm">
-          <div className="flex flex-col items-center justify-center text-center p-4 pt-8">
-            <motion.div
-              initial={{ scale: 0.5, opacity: 0, y: -50 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
-            >
-              <div className="relative w-24 h-24 rounded-full bg-green-500/10 flex items-center justify-center">
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="1.5" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  className="lucide lucide-user h-14 w-14 text-green-600"
-                >
-                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-                </svg>
-                <motion.div
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.4, type: "spring", stiffness: 300, damping: 20 }}
-                  className="absolute bottom-2 right-2 p-1 rounded-full bg-green-500 text-white shadow-lg"
-                >
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="3" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    className="lucide lucide-check h-6 w-6"
-                  >
-                    <path d="M20 6 9 17l-5-5"/>
-                  </svg>
-                </motion.div>
-              </div>
-            </motion.div>
+   {/* Background Video Section */}
+<div className="fixed inset-0 z-0 pointer-events-none">
+  <video 
+    className="w-full h-full object-cover opacity-80 dark:opacity-60 contrast-125 saturate-150 transition-opacity duration-500" 
+    autoPlay 
+    loop 
+    muted 
+    playsInline
+  >
+    <source src={BackVideo} type="video/mp4" />
+  </video>
+  
+  {/* Minimal Adaptive Overlay - Ensures UI readability without washing out the video */}
+  <div className="absolute inset-0 bg-white/5 dark:bg-black/40 backdrop-brightness-95 dark:backdrop-brightness-100 transition-colors duration-500" />
+</div>
 
-            <DialogTitle className="mt-5 text-2xl font-bold">
-              Registration Submitted
-            </DialogTitle>
-            <DialogDescription className="mt-2 text-center text-muted-foreground">
-              Your account is pending approval from an administrator. You'll be able to log in once it has been activated.
-            </DialogDescription>
-          </div>
-        </DialogContent>
-      </Dialog>
-      
-      <div className="min-h-screen flex items-center justify-center py-12 px-4 relative overflow-hidden bg-black">
-        <div className="absolute inset-0 z-0">
-          <video
-            className="absolute inset-0 w-full h-full object-cover opacity-40"
-            autoPlay loop muted playsInline
-          >
-            <source src={BackVideo} type="video/mp4" />
-          </video>
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black" />
-        </div>
-
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 py-12">
         <motion.div 
-          className="w-full max-w-md space-y-8 relative z-10"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-lg"
         >
-          {/* ✨ REPLACED: Professional Welcome Header */}
-          <motion.div variants={itemVariants} className="text-center">
-            <h1 className="text-7xl md:text-8xl font-extralight tracking-tighter text-white mb-2">
-              Welcome
-            </h1>
-            <div className="h-[1px] w-16 bg-red-600 mx-auto mb-4 opacity-80" />
-            <p className="text-slate-400 text-xs uppercase tracking-[0.3em] font-medium">
-              Technical Support Portal
-            </p>
-          </motion.div>
+          {/* Header - Simplified as requested */}
+          <div className="mb-10 text-center">
+            <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-slate-900 dark:text-white mb-2 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">
+    WELCOME<span className="text-red-600 drop-shadow-[0_0_12px_rgba(220,38,38,0.7)]">.</span>
+  </h1>
+           <div className="flex justify-center">
+  <p className="text-[10px] md:text-xs uppercase tracking-[0.5em] font-bold py-2 px-6 
+    /* Text: High-visibility Red */
+    text-red-500 dark:text-red-400
+    /* Borders: Glowing edges */
+    border-y border-red-600 dark:border-red-500/50
+    /* Glow: Adds the brightness you're looking for */
+    drop-shadow-[0_0_10px_rgba(239,68,68,0.6)]
+    transition-all duration-500">
+    Technical Support
+  </p>
+</div>
+          </div>
           
-          {location.state?.from && location.state.from !== '/' && (
-            <motion.div variants={itemVariants}>
-              <Alert variant="warning" className="bg-amber-50/70 dark:bg-amber-950/70 border border-amber-200 dark:border-amber-800 backdrop-blur-sm">
-                <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                <AlertDescription>
-                  You need to login to access <strong>{location.state.from}</strong>
-                </AlertDescription>
-              </Alert>
-            </motion.div>
-          )}
+          <div className={tileClassName}>
+            <CardHeader className="pt-8 px-8">
+              <CardTitle className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-zinc-400"> Login</CardTitle>
+            </CardHeader>
+            
+            <CardContent className="px-8 pb-8">
+              <Tabs defaultValue="login" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 gap-2 bg-slate-200/50 dark:bg-white/10 p-1 mb-8 rounded-xl backdrop-blur-md border border-slate-300 dark:border-white/10 h-auto">
+                  <TabsTrigger value="login" className="capitalize transition-all duration-200 data-[state=active]:bg-red-600 data-[state=active]:text-white data-[state=inactive]:text-slate-600 dark:data-[state=inactive]:text-zinc-400 rounded-lg py-2.5 flex items-center gap-2">
+                    <LogIn className="h-4 w-4" /> Login
+                  </TabsTrigger>
+                  <TabsTrigger value="register" className="capitalize transition-all duration-200 data-[state=active]:bg-red-600 data-[state=active]:text-white data-[state=inactive]:text-slate-600 dark:data-[state=inactive]:text-zinc-400 rounded-lg py-2.5 flex items-center gap-2">
+                    <UserPlus className="h-4 w-4" /> Register
+                  </TabsTrigger>
+                </TabsList>
 
-          <motion.div variants={itemVariants}>
-            <Card className="border-primary/20 shadow-xl bg-card/95 backdrop-blur-sm">
-              <CardHeader className="pb-4">
-                <CardDescription className="text-center">
-                  Access your tech support account
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="login" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-8 bg-transparent p-0">
-                    <TabsTrigger value="login" className={cn(outlinePillButton, "flex items-center gap-2")}>
-                      <LogIn className="h-4 w-4" /> Login
-                    </TabsTrigger>
-                    <TabsTrigger value="register" className={cn(outlinePillButton, "flex items-center gap-2")}>
-                      <UserPlus className="h-4 w-4" /> Register
-                    </TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="login">
-                    <form onSubmit={handleLogin} className="space-y-4">
+                <AnimatePresence mode="wait">
+                  <TabsContent value="login" className="space-y-6">
+                    {loginError && (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}>
+                        <Alert variant="destructive" className="bg-red-50 dark:bg-red-950/40 border-red-600 text-red-900 dark:text-white rounded-xl backdrop-blur-md mb-4">
+                          <AlertTriangle className="h-4 w-4 text-red-600" />
+                          <AlertTitle className="font-bold uppercase text-xs">Access Denied</AlertTitle>
+                          <AlertDescription className="text-sm font-medium">{loginError}</AlertDescription>
+                        </Alert>
+                      </motion.div>
+                    )}
+
+                    <form onSubmit={handleLogin} className="space-y-5">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-muted-foreground" /> Email
+                        <label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 flex items-center gap-2">
+                          <Mail className="h-3 w-3" /> Email Address
                         </label>
                         <Input
                           type="email"
@@ -286,13 +202,13 @@ const outlinePillButton =
                           placeholder={emailPlaceholder}
                           onFocus={() => setEmailPlaceholder("")}
                           onBlur={() => setEmailPlaceholder("example@mail.com")}
-                          className="border-primary/20 focus-visible:ring-primary/30"
+                          className="bg-slate-100 dark:bg-zinc-800/50 border-slate-300 dark:border-white/10 text-slate-900 dark:text-white h-12 focus:ring-red-600"
                           required
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium flex items-center gap-2">
-                          <Lock className="h-4 w-4 text-muted-foreground" /> Password
+                        <label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 flex items-center gap-2">
+                          <Lock className="h-3 w-3" /> Password
                         </label>
                         <Input
                           type="password"
@@ -301,22 +217,59 @@ const outlinePillButton =
                           placeholder={passPlaceholder}
                           onFocus={() => setPassPlaceholder("")}
                           onBlur={() => setPassPlaceholder("••••••••")}
-                          className="border-primary/20 focus-visible:ring-primary/30"
+                          className="bg-slate-100 dark:bg-zinc-800/50 border-slate-300 dark:border-white/10 text-slate-900 dark:text-white h-12 focus:ring-red-600"
                           required
                         />
                       </div>
-                      {loginError && <p className="text-red-500 text-xs font-medium">{loginError}</p>}
-                      <Button type="submit" variant="outline" className={cn("w-full py-6 flex items-center justify-center gap-2", outlinePillButton)} disabled={isLoading}>
-                        {isLoading ? "Signing in..." : <><LogIn className="h-4 w-4" /> Sign In</>}
-                      </Button>
+					  
+                     <Button 
+  type="submit" 
+  /* Removing variant prop ensures Shadcn doesn't inject default colors */
+  className={cn("w-full py-7", outlinePillButton)} 
+  disabled={isLoading}
+>
+  {isLoading ? "Verifying..." : "Sign In"}
+</Button>
                     </form>
+					{/* SUPPORT LINK FOOTER */}
+<div className="mt-auto pt-8 flex justify-start w-full">
+  <a 
+    href="mailto:Operateur.sav.5@groupsfit.eu"
+    className="group flex items-center gap-2 px-2 py-1
+               /* Light Mode: Slate to Red */
+               text-slate-600 hover:text-red-600 
+               /* Dark Mode: Zinc to Red */
+               dark:text-zinc-500 dark:hover:text-red-500"
+  >
+    {/* Support Icon */}
+    <Mail className="h-4 w-4" />
+    
+    {/* Static Label */}
+    <span className="text-xs font-bold uppercase tracking-[0.3em]">
+      Support
+    </span>
+
+    {/* Subtle Red Indicator (Visible only on hover) */}
+    <div className="w-1 h-1 rounded-full bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+  </a>
+</div>
                   </TabsContent>
-                  
-                  <TabsContent value="register">
-                    <form onSubmit={handleRegister} className="space-y-4">
+
+                  <TabsContent value="register" className="space-y-6">
+                    {registrationError && (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}>
+                        <Alert variant="destructive" className="bg-red-50 dark:bg-red-950/40 border-red-600 text-red-900 dark:text-white rounded-xl backdrop-blur-md mb-4">
+                          <AlertTriangle className="h-4 w-4 text-red-600" />
+                          <AlertTitle className="font-bold uppercase text-xs">Registration Error</AlertTitle>
+                          <AlertDescription className="text-sm font-medium">{registrationError}</AlertDescription>
+                        </Alert>
+                      </motion.div>
+                    )}
+
+                    <form onSubmit={handleRegister} className="space-y-5">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium flex items-center gap-2">
-                          <User className="h-4 w-4 text-muted-foreground" /> Username
+                        <label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 flex items-center gap-2">
+                          <User className="h-3 w-3" /> Full Name
                         </label>
                         <Input
                           value={username}
@@ -324,52 +277,80 @@ const outlinePillButton =
                           placeholder={userPlaceholder}
                           onFocus={() => setUserPlaceholder("")}
                           onBlur={() => setUserPlaceholder("johnsmith")}
-                          className="border-primary/20 focus-visible:ring-primary/30"
+                          className="bg-slate-100 dark:bg-zinc-800/50 border-slate-300 dark:border-white/10 text-slate-900 dark:text-white h-12"
                           required
                         />
                       </div>
+					  
                       <div className="space-y-2">
-                        <label className="text-sm font-medium flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-muted-foreground" /> Email
+                        <label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 flex items-center gap-2">
+                          <Mail className="h-3 w-3" /> Email Address
                         </label>
                         <Input
                           type="email"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          placeholder={emailPlaceholder}
-                          onFocus={() => setEmailPlaceholder("")}
-                          onBlur={() => setEmailPlaceholder("example@mail.com")}
-                          className="border-primary/20 focus-visible:ring-primary/30"
+                          className="bg-slate-100 dark:bg-zinc-800/50 border-slate-300 dark:border-white/10 text-slate-900 dark:text-white h-12"
                           required
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium flex items-center gap-2">
-                          <Lock className="h-4 w-4 text-muted-foreground" /> Password
+                        <label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 flex items-center gap-2">
+                          <Lock className="h-3 w-3" /> Password
                         </label>
                         <Input
                           type="password"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          placeholder={passPlaceholder}
-                          onFocus={() => setPassPlaceholder("")}
-                          onBlur={() => setPassPlaceholder("••••••••")}
-                          className="border-primary/20 focus-visible:ring-primary/30"
+                          className="bg-slate-100 dark:bg-zinc-800/50 border-slate-300 dark:border-white/10 text-slate-900 dark:text-white h-12"
                           required
                         />
                       </div>
-                      {registrationError && <p className="text-red-500 text-xs font-medium">{registrationError}</p>}
-                      <Button type="submit" variant="outline" className={cn("w-full py-6 flex items-center justify-center gap-2", outlinePillButton)} disabled={isLoading}>
-                        {isLoading ? "Processing..." : <><UserPlus className="h-4 w-4" /> Create Account</>}
+                      <Button type="submit" className={cn("w-full py-7 font-bold uppercase tracking-widest", outlinePillButton)} disabled={isLoading}>
+                        {isLoading ? "Processing..." : "Request Access"}
                       </Button>
                     </form>
                   </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
-          </motion.div>
+                </AnimatePresence>
+              </Tabs>
+            </CardContent>
+          </div>
         </motion.div>
+		
       </div>
-    </>
+	  
+
+      {/* Dialogs */}
+      <Dialog open={showPendingDialog} onOpenChange={setShowPendingDialog}>
+        <DialogContent className="sm:max-w-md bg-white dark:bg-zinc-900/95 border-slate-200 dark:border-white/10 backdrop-blur-2xl text-slate-900 dark:text-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600 font-bold uppercase tracking-tighter">
+              <Clock className="h-5 w-5" />
+              Pending Approval
+            </DialogTitle>
+            <DialogDescription className="pt-2 text-slate-500 dark:text-zinc-400">
+              Your account is currently under review by the administration. You will be notified once access is granted.
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={showRegSuccessDialog} onOpenChange={setShowRegSuccessDialog}>
+        <DialogContent className="sm:max-w-md bg-white dark:bg-zinc-900/95 border-slate-200 dark:border-white/10 backdrop-blur-2xl text-slate-900 dark:text-white">
+          <div className="flex flex-col items-center justify-center text-center p-4 pt-8">
+            <div className="relative w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center border border-green-500/20 mb-6">
+              <User className="h-10 w-10 text-green-500" />
+              <div className="absolute bottom-0 right-0 p-1 rounded-full bg-green-500 text-white">
+                <AlertCircle className="h-4 w-4" />
+              </div>
+            </div>
+            <DialogTitle className="text-2xl font-bold uppercase tracking-tighter">Request Received</DialogTitle>
+            <DialogDescription className="mt-2 text-slate-500 dark:text-zinc-400">
+              Your registration request has been submitted for administrative approval.
+            </DialogDescription>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
