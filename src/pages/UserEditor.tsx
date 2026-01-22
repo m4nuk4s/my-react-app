@@ -23,6 +23,7 @@ const UserEditor = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isUserAdmin, setIsUserAdmin] = useState(false);
   const [userRole, setUserRole] = useState("user");
+  const [editStock, setEditStock] = useState(false);
 
   useEffect(() => {
     if (!user || !isAdmin) {
@@ -43,7 +44,7 @@ const UserEditor = () => {
     try {
       const { data: userData, error } = await supabase
         .from('users')
-        .select('id, username, email, isadmin, role')
+        .select('id, username, email, isadmin, role, editstock')
         .eq('id', userId)
         .single();
       
@@ -56,6 +57,7 @@ const UserEditor = () => {
         setEmail(userData.email);
         setIsUserAdmin(userData.isadmin);
         setUserRole(userData.role || "user");
+		setEditStock(userData.editstock || false); // Set the state
       } else {
         toast.error("User not found in database.");
         navigate("/admin");
@@ -109,7 +111,9 @@ const UserEditor = () => {
               username,
               isadmin: isUserAdmin,
               role: userRole,
-              isapproved: true
+              isapproved: true,
+			  editstock: editStock // Added here
+			  
             });
 
           if (insertError) {
@@ -125,6 +129,7 @@ const UserEditor = () => {
           email,
           isadmin: isUserAdmin,
           role: userRole,
+		  editstock: editStock, // Added here
         };
 
         const { error: updateError } = await supabase
@@ -257,6 +262,19 @@ const UserEditor = () => {
                 onCheckedChange={setIsUserAdmin}
               />
             </div>
+			{/* NEW: Edit Stock Switch */}
+  <div className="flex items-center justify-between pt-2">
+    <div>
+      <h3 className="text-sm font-medium">Edit Stock</h3>
+      <p className="text-sm text-muted-foreground">
+        Allow this user to modify inventory levels
+      </p>
+    </div>
+    <Switch
+      checked={editStock}
+      onCheckedChange={setEditStock}
+    />
+  </div>
             <div className="grid gap-2 pt-4">
               <Label htmlFor="role">User Role</Label>
               <select

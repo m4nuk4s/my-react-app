@@ -75,21 +75,30 @@ export default function Stock() {
 const [isLogsModalOpen, setIsLogsModalOpen] = useState(false);
 const [movements, setMovements] = useState<any[]>([]);
 const [logsLoading, setLogsLoading] = useState(false);
-
+const [canEditStock, setCanEditStock] = useState(false);
 
   useEffect(() => {
     fetchStock();
     checkAdminStatus();
   }, []);
 
-  const checkAdminStatus = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      setUserEmail(user.email || "Unknown User");
-      const { data: userData } = await supabase.from('users').select('isadmin').eq('id', user.id).single();
-      if (userData) setIsAdmin(userData.isadmin === true);
+const checkAdminStatus = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    setUserEmail(user.email || "Unknown User");
+    // Fetch both isadmin and editstock
+    const { data: userData } = await supabase
+      .from('users')
+      .select('isadmin, editstock') // Added editstock here
+      .eq('id', user.id)
+      .single();
+
+    if (userData) {
+      setIsAdmin(userData.isadmin === true);
+      setCanEditStock(userData.editstock === true); // Set the permission state
     }
-  };
+  }
+};
 
   const fetchStock = async () => {
     setLoading(true);
@@ -337,14 +346,16 @@ const fetchMovements = async () => {
                       </td>
                       <td className="p-6 text-center">
                         <div className="flex justify-center gap-3">
-                          {/* MOVEMENT BUTTON: Visible to everyone */}
-                          <button 
-                            onClick={() => { setMovingItem(item); setIsMoveModalOpen(true); }}
-                            className="p-3 rounded-xl transition-all bg-slate-100 text-slate-600 hover:bg-amber-500 hover:text-white dark:bg-white/5 dark:text-zinc-400 dark:hover:bg-amber-500 dark:hover:text-white"
-                            title="Consume 1 Part"
-                          >
-                            <MinusCircle size={18} />
-                          </button>
+                         {/* MOVEMENT BUTTON: Now restricted to users with editstock permission */}
+    {canEditStock && (
+      <button 
+        onClick={() => { setMovingItem(item); setIsMoveModalOpen(true); }}
+        className="p-3 rounded-xl transition-all bg-slate-100 text-slate-600 hover:bg-amber-500 hover:text-white dark:bg-white/5 dark:text-zinc-400 dark:hover:bg-amber-500 dark:hover:text-white"
+        title="Consume 1 Part"
+      >
+        <MinusCircle size={18} />
+      </button>
+    )}
 
                           {/* ADMIN ONLY BUTTONS */}
                           {isAdmin && (

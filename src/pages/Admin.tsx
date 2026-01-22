@@ -151,7 +151,8 @@ const Admin = () => {
         const processedUser = {
           ...userWithoutPassword,
           isAdmin: user.isadmin, // Transform lowercase db field
-          isApproved: user.isapproved // Transform lowercase db field
+          isApproved: user.isapproved, // Transform lowercase db field
+		  canEditStock: user.editstock // Map your 'editstock' database column here
         };
         
         if (!user.isapproved) {
@@ -727,181 +728,151 @@ const loadDrivers = async () => {
 </div>
 
 
-              {/* Active Users Section */}
-<div>
-  <div className="flex justify-between items-center mb-6">
-    <h3 className="text-xl font-semibold">Active Users</h3>
-    <Button onClick={() => navigate("/admin/users/new")}>
-      Add New User
-    </Button>
-  </div>
-
-  {isLoading ? (
-    <p>Loading users...</p>
-  ) : users.length > 0 ? (
-    <div className="space-y-10">
-      {/* Admins Section */}
-      <div>
-        <h4 className="text-lg font-medium mb-4 flex items-center gap-2 text-green-700">
-          <UserCircle className="h-5 w-5 text-green-600" /> Admins
-        </h4>
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {users.filter((u) => u.isAdmin).length > 0 ? (
-            users.filter((u) => u.isAdmin).map((user) => (
-              <Card
-                key={user.id}
-                className="hover:shadow-lg hover:scale-[1.02] transition-all rounded-2xl border border-green-200"
-              >
-                <CardHeader className="flex flex-row items-center gap-3 bg-green-50 rounded-t-2xl p-4">
-                  <UserCircle className="h-10 w-10 text-green-600" />
-                  <div>
-                    <CardTitle className="text-base font-semibold text-green-700">
-                      {user.username}
-                    </CardTitle>
-                    <CardDescription>{user.email}</CardDescription>
-                  </div>
-                </CardHeader>
-                <CardContent className="flex justify-between items-center p-4">
-                  <Badge className="bg-green-600 text-white shadow-sm">
-                    Admin
-                  </Badge>
-                  <div className="flex gap-2">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => navigate(`/admin/users/edit/${user.id}`)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    {/* ***** FIXED CODE STARTS HERE ***** */}
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => handleDeleteUser(user.id, user.username)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                    {/* ***** FIXED CODE ENDS HERE ***** */}
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <p className="text-muted-foreground">No admins found</p>
-          )}
-        </div>
+<div className="space-y-8 py-2 animate-in fade-in duration-500">
+  
+  {/* 1. COMPACT HEADER - Using "Docs" styling */}
+  <div className="relative overflow-hidden rounded-2xl p-6 
+    bg-white dark:bg-zinc-900/40 
+    border border-slate-200 dark:border-white/10 
+    shadow-sm dark:shadow-2xl backdrop-blur-xl group">
+    
+    <div className="relative flex flex-col md:flex-row justify-between items-center gap-4">
+      <div className="space-y-1">
+        <h1 className="text-3xl md:text-4xl font-light tracking-tight text-slate-950 dark:text-white uppercase">
+          Node <span className="font-bold text-red-600">Registry</span>
+        </h1>
+        <p className="text-[10px] font-mono text-slate-500 dark:text-zinc-400 uppercase tracking-[0.2em] border-l-2 border-red-600 pl-4">
+          Total Entities: {users.length} // Security Active
+        </p>
       </div>
-
-      {/* Users Section */}
-      <div>
-        <h4 className="text-lg font-medium mb-4 flex items-center gap-2 text-blue-700">
-          <UserCircle className="h-5 w-5 text-blue-600" /> Users
-        </h4>
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {users.filter((u) => !u.isAdmin && u.role === 'user').length > 0 ? (
-            users.filter((u) => !u.isAdmin && u.role === 'user').map((user) => (
-              <Card
-                key={user.id}
-                className="hover:shadow-lg hover:scale-[1.02] transition-all rounded-2xl border border-blue-200"
-              >
-                <CardHeader className="flex flex-row items-center gap-3 bg-blue-50 rounded-t-2xl p-4">
-                  <UserCircle className="h-10 w-10 text-blue-600" />
-                  <div>
-                    <CardTitle className="text-base font-semibold text-blue-700">
-                      {user.username}
-                    </CardTitle>
-                    <CardDescription>{user.email}</CardDescription>
-                  </div>
-                </CardHeader>
-                <CardContent className="flex justify-between items-center p-4">
-                  <Badge className="bg-blue-600 text-white shadow-sm">
-                    User
-                  </Badge>
-                  <div className="flex gap-2">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => navigate(`/admin/users/edit/${user.id}`)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    {/* ***** FIXED CODE STARTS HERE ***** */}
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => handleDeleteUser(user.id, user.username)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                    {/* ***** FIXED CODE ENDS HERE ***** */}
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <p className="text-muted-foreground">No users found</p>
-          )}
+      
+      <div className="flex items-center gap-2 bg-slate-100 dark:bg-black/40 p-1.5 rounded-xl border border-slate-200 dark:border-white/10">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <input 
+            placeholder="Search credentials..." 
+            className="pl-10 w-48 h-10 rounded-lg bg-transparent border-none focus:ring-0 text-slate-950 dark:text-white font-mono text-xs uppercase placeholder:text-slate-400"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
-      </div>
-
-      {/* Clients Section */}
-      <div>
-        <h4 className="text-lg font-medium mb-4 flex items-center gap-2 text-purple-700">
-          <UserCircle className="h-5 w-5 text-purple-600" /> Clients
-        </h4>
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {users.filter((u) => u.role === 'client').length > 0 ? (
-            users.filter((u) => u.role === 'client').map((user) => (
-              <Card
-                key={user.id}
-                className="hover:shadow-lg hover:scale-[1.02] transition-all rounded-2xl border border-purple-200"
-              >
-                <CardHeader className="flex flex-row items-center gap-3 bg-green-50 rounded-t-2xl p-4">
-                  <UserCircle className="h-10 w-10 text-purple-600" />
-                  <div>
-                    <CardTitle className="text-base font-semibold text-purple-700">
-                      {user.username}
-                    </CardTitle>
-                    <CardDescription>{user.email}</CardDescription>
-                  </div>
-                </CardHeader>
-                <CardContent className="flex justify-between items-center p-4">
-                  <Badge className="bg-purple-600 text-white shadow-sm">
-                    Client
-                  </Badge>
-                  <div className="flex gap-2">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => navigate(`/admin/users/edit/${user.id}`)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    {/* ***** FIXED CODE STARTS HERE ***** */}
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => handleDeleteUser(user.id, user.username)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                    {/* ***** FIXED CODE ENDS HERE ***** */}
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <p className="text-muted-foreground">No clients found</p>
-          )}
-        </div>
+        <Button 
+          onClick={() => navigate("/admin/users/new")}
+          className="h-10 px-6 rounded-lg bg-red-600 hover:bg-red-700 dark:hover:bg-white dark:hover:text-black text-white font-bold text-[11px] transition-all"
+        >
+          <Plus className="mr-1 h-4 w-4" /> Add User
+        </Button>
       </div>
     </div>
-  ) : (
-    <p className="text-muted-foreground">No users found</p>
-  )}
+  </div>
+
+  {/* 2. CATEGORIZED COMPACT GRID */}
+  {['admin', 'user', 'client'].map((roleGroup) => {
+    const groupUsers = users.filter(u => roleGroup === 'admin' ? u.isAdmin : u.role === roleGroup);
+    if (groupUsers.length === 0) return null;
+
+    // Define Role-Specific Color Logic
+    const roleStyles = {
+      admin: {
+        label: "Admin",
+        border: "border-red-600/30",
+        text: "text-red-600",
+        bg: "bg-red-500/10",
+        dot: "bg-red-600"
+      },
+      user: {
+        label: "User",
+        border: "border-emerald-600/30",
+        text: "text-emerald-600",
+        bg: "bg-emerald-500/10",
+        dot: "bg-emerald-600"
+      },
+      client: {
+        label: "Customer",
+        border: "border-purple-600/30",
+        text: "text-purple-600",
+        bg: "bg-purple-500/10",
+        dot: "bg-purple-600"
+      }
+    }[roleGroup];
+
+    return (
+      <div key={roleGroup} className="space-y-4">
+        <div className="flex items-center gap-3 px-2">
+          <div className={`h-1.5 w-1.5 rounded-full ${roleStyles.dot}`} />
+          <span className={`text-[10px] font-black uppercase tracking-[0.4em] ${roleStyles.text}`}>
+            {roleStyles.label} Registry
+          </span>
+          <div className="h-[1px] flex-1 bg-slate-200 dark:bg-zinc-800" />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {groupUsers.map((u) => (
+            <div 
+              key={u.id}
+              className="group relative flex flex-col overflow-hidden rounded-xl p-4
+                bg-white/90 dark:bg-white/5 
+                border border-slate-200 dark:border-white/10 
+                backdrop-blur-xl transition-all duration-300 
+                hover:scale-[1.01] hover:border-slate-300 dark:hover:border-white/20"
+            >
+              {/* Top Identity Row */}
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`h-10 w-10 rounded-lg flex items-center justify-center font-black text-white text-base shadow-lg ${roleStyles.dot}`}>
+                  {u.username.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-sm font-bold text-slate-950 dark:text-white truncate group-hover:text-red-600 transition-colors">
+                    {u.username}
+                  </span>
+                  <span className="text-[12px] font-mono text-slate-500 dark:text-zinc-400 truncate lowercase">{u.email}</span>
+                </div>
+              </div>
+
+              {/* PERMISSION LABEL (Move Stocks) */}
+              <div className={`flex items-center justify-center py-1.5 rounded-lg border text-[8px] font-black tracking-widest uppercase mb-4 transition-all ${
+                u.canEditStock 
+                ? 'bg-green-600 border-orange-500/30 text-white dark:text-white-700' 
+                : 'bg-slate-50 dark:bg-zinc-950/50 border-slate-100 dark:border-white/5 text-slate-400 dark:text-zinc-600'
+              }`}>
+                {u.canEditStock ? (
+                  <><CheckCircle className="h-3 w-3 mr-1.5" /> Move Stock: YES</>
+                ) : (
+                  <><XCircle className="h-3 w-3 mr-1.5" /> Move Stock: NO</>
+                )}
+              </div>
+
+              {/* Action Bar */}
+              <div className="mt-auto pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+                <div className="flex gap-1">
+                  <Button 
+                    variant="ghost" size="icon" 
+                    className="h-8 w-8 rounded-md text-slate-400 dark:text-zinc-500 hover:text-red-600 dark:hover:text-white"
+                    onClick={() => navigate(`/admin/users/edit/${u.id}`)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" size="icon" 
+                    className="h-8 w-8 rounded-md text-slate-400 dark:text-zinc-500 hover:text-red-600"
+                    onClick={() => handleDeleteUser(u.id, u.username)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className={`text-[8px] font-bold px-2 py-0.5 rounded border uppercase ${roleStyles.bg} ${roleStyles.text} ${roleStyles.border}`}>
+                  {roleGroup}
+                </div>
+              </div>
+
+              {/* Decorative accent line like Docs.tsx */}
+              <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-red-600 group-hover:w-full transition-all duration-500" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  })}
 </div>
 
             </CardContent>
