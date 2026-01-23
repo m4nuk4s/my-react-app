@@ -277,7 +277,9 @@ const filtered = data.filter(item => {
       className="h-14 pl-6 text-lg border-none rounded-xl bg-white/90 text-slate-950 dark:bg-white/5 dark:backdrop-blur-xl dark:text-white dark:ring-1 dark:ring-white/10 shadow-lg"
     />
   </div>
+  
                 <div className="md:col-span-2 relative group">
+				
                   <select 
                     className="w-full h-14 pl-4 pr-10 rounded-xl appearance-none cursor-pointer bg-white/90 text-slate-950 dark:bg-white/5 dark:backdrop-blur-xl dark:text-white ring-1 ring-slate-200 dark:ring-white/10 shadow-lg font-bold uppercase text-[10px] border-none outline-none focus:ring-2 focus:ring-red-600 transition-all"
                     value={modelFilter}
@@ -288,12 +290,14 @@ const filtered = data.filter(item => {
                       <option key={m} value={m} className="bg-white dark:bg-zinc-900">{m}</option>
                     ))}
                   </select>
+				  
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 group-hover:text-red-600 transition-colors pointer-events-none" size={16} />
                 </div>
-                <div className="md:col-span-4 flex gap-2">
-                  <Button onClick={resetFilters} variant="outline" className="h-14 w-14 shrink-0 border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 hover:dark:bg-white/5 dark:hover:bg-red-500/20 text-slate-600 dark:text-white rounded-xl shadow-sm backdrop-blur-md transition-all active:scale-95 group">
+				 <Button onClick={resetFilters} variant="outline" className="h-14 w-14 shrink-0 border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 hover:dark:bg-white/5 dark:hover:bg-red-500/20 text-slate-600 dark:text-white rounded-xl shadow-sm backdrop-blur-md transition-all active:scale-95 group">
                     <RotateCcw className="h-5 w-5 group-hover:rotate-[-45deg] transition-transform" />
                   </Button>
+                <div className="md:col-span-4 flex gap-2">
+                 
                   <Button onClick={exportToDatasheet} variant="outline" className="flex-1 h-14 border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white rounded-xl font-bold uppercase tracking-wider shadow-sm backdrop-blur-md transition-all active:scale-95 flex items-center justify-center gap-2">
                     <Download className="h-5 w-5 text-red-600" />
                     <span className="hidden lg:inline">Export</span>
