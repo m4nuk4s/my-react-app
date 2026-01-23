@@ -61,6 +61,7 @@ export default function Stock() {
   const [modelFilter, setModelFilter] = useState("");
   const [partCodeSearch, setPartCodeSearch] = useState(""); 
   const [visibleCount, setVisibleCount] = useState(40);
+  const [locSearch, setLocSearch] = useState(""); // Add this line
   
   const [isAdmin, setIsAdmin] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -119,13 +120,14 @@ const fetchMovements = async () => {
   if (!error) setMovements(data || []);
   setLogsLoading(false);
 };
-  const resetFilters = () => {
-    setModelSearch("");
-    setModelFilter("");
-    setPartCodeSearch("");
-    setVisibleCount(40);
-    toast.info("Filters reset to default");
-  };
+ const resetFilters = () => {
+  setModelSearch("");
+  setModelFilter("");
+  setPartCodeSearch("");
+  setLocSearch(""); // Add this line
+  setVisibleCount(40);
+  toast.info("Filters reset to default");
+};
 
 const handleStockMovement = async () => {
   if (!movingItem || !movingItem.id) return;
@@ -217,12 +219,15 @@ const handleStockMovement = async () => {
     toast.success("Compatible datasheet exported");
   };
 
-  const filtered = data.filter(item => {
-    const matchesModelDropdown = !modelFilter || item.model === modelFilter;
-    const matchesModelSearch = !modelSearch || item.model.toLowerCase().includes(modelSearch.toLowerCase());
-    const matchesPartCode = !partCodeSearch || item.partcode.toLowerCase().includes(partCodeSearch.toLowerCase());
-    return matchesModelDropdown && matchesModelSearch && matchesPartCode;
-  });
+const filtered = data.filter(item => {
+  const matchesModelDropdown = !modelFilter || item.model === modelFilter;
+  const matchesModelSearch = !modelSearch || item.model.toLowerCase().includes(modelSearch.toLowerCase());
+  const matchesPartCode = !partCodeSearch || item.partcode.toLowerCase().includes(partCodeSearch.toLowerCase());
+  // Add the location match logic below:
+  const matchesLoc = !locSearch || (item.loc && item.loc.toLowerCase().includes(locSearch.toLowerCase()));
+  
+  return matchesModelDropdown && matchesModelSearch && matchesPartCode && matchesLoc;
+});
 
   const displayedItems = filtered.slice(0, visibleCount);
 
@@ -263,6 +268,15 @@ const handleStockMovement = async () => {
                     className="h-14 pl-6 text-lg border-none rounded-xl bg-white/90 text-slate-950 dark:bg-white/5 dark:backdrop-blur-xl dark:text-white dark:ring-1 dark:ring-white/10 shadow-lg"
                   />
                 </div>
+				{/* NEW: Location Search */}
+  <div className="md:col-span-2 relative">
+    <Input
+      placeholder="📍Loc"
+      value={locSearch}
+      onChange={(e) => {setLocSearch(e.target.value); setVisibleCount(40);}}
+      className="h-14 pl-6 text-lg border-none rounded-xl bg-white/90 text-slate-950 dark:bg-white/5 dark:backdrop-blur-xl dark:text-white dark:ring-1 dark:ring-white/10 shadow-lg"
+    />
+  </div>
                 <div className="md:col-span-2 relative group">
                   <select 
                     className="w-full h-14 pl-4 pr-10 rounded-xl appearance-none cursor-pointer bg-white/90 text-slate-950 dark:bg-white/5 dark:backdrop-blur-xl dark:text-white ring-1 ring-slate-200 dark:ring-white/10 shadow-lg font-bold uppercase text-[10px] border-none outline-none focus:ring-2 focus:ring-red-600 transition-all"
