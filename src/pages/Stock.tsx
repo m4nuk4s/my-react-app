@@ -436,12 +436,11 @@ const handleStockMovement = async () => {
 				  
 				 {/* Technician Selection */}
   <div className="space-y-2">
-    <label className="text-[10px] uppercase font-black tracking-widest text-zinc-500">Assign Technician</label>
+    <label className="text-[12px] font-bold uppercase font-red-500 tracking-widest text-white/95-500">Assign Technician</label>
     <select 
       value={selectedTech}
       onChange={(e) => setSelectedTech(e.target.value)}
-      className="w-full h-11 px-4 rounded-xl bg-zinc-100 dark:bg-white/5 border-none text-sm font-bold dark:text-white outline-none ring-1 ring-zinc-200 dark:ring-white/10 focus:ring-2 focus:ring-amber-500 transition-all"
-    >
+className="w-full h-11 px-4 rounded-xl bg-white dark:bg-zinc-900 border-none text-sm font-bold text-zinc-900 dark:text-white outline-none ring-1 ring-zinc-200 dark:ring-white/10 focus:ring-2 focus:ring-amber-500 transition-all"    >
       <option value="">Select Tech...</option>
       {techs.map(t => <option key={t} value={t}>{t}</option>)}
       <option value="other">Type name...</option>
@@ -520,7 +519,7 @@ const handleStockMovement = async () => {
         </td>
 
         <td className="p-4 text-sm font-bold dark:text-red-500 text-center">{log.part}</td>
-        <td className="p-4 text-center text-zinc-500 font-medium">{log.oldqt}</td>
+        <td className="p-4 text-center  text-zinc-500 font-bold">{log.oldqt}</td>
         <td className="p-4 text-center font-bold text-green-500 dark:text-green-400">{log.newqt}</td>
         <td className="p-4 text-right text-xs font-bold uppercase dark:text-red-500">{log.location}</td>
       </tr>
