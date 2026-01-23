@@ -251,18 +251,18 @@ const filtered = data.filter(item => {
                 Access real-time stock tracking and component compatibility database.
               </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+              <div className="grid grid-cols-1 md:grid-cols-10 gap-2 items-center">
                 <div className="md:col-span-3 relative">
                   <Input
-                    placeholder="🔎  Ex. LCD-OR1623"
+                    placeholder="🔎Ex. LCD-OR1623"
                     value={partCodeSearch}
                     onChange={(e) => {setPartCodeSearch(e.target.value); setVisibleCount(40);}}
                     className="h-14 pl-6 text-lg border-none rounded-xl bg-white/90 text-slate-950 dark:bg-white/5 dark:backdrop-blur-xl dark:text-white dark:ring-1 dark:ring-white/10 shadow-lg"
                   />
                 </div>
-                <div className="md:col-span-3 relative">
+                <div className="md:col-span-2 relative">
                   <Input
-                    placeholder="🔎  Ex N17C12"
+                    placeholder="🔎Ex N17C12"
                     value={modelSearch}
                     onChange={(e) => {setModelSearch(e.target.value); setVisibleCount(40);}}
                     className="h-14 pl-6 text-lg border-none rounded-xl bg-white/90 text-slate-950 dark:bg-white/5 dark:backdrop-blur-xl dark:text-white dark:ring-1 dark:ring-white/10 shadow-lg"
