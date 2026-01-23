@@ -296,12 +296,17 @@ const filtered = data.filter(item => {
 				 <Button onClick={resetFilters} variant="outline" className="h-14 w-14 shrink-0 border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 hover:dark:bg-white/5 dark:hover:bg-red-500/20 text-slate-600 dark:text-white rounded-xl shadow-sm backdrop-blur-md transition-all active:scale-95 group">
                     <RotateCcw className="h-5 w-5 group-hover:rotate-[-45deg] transition-transform" />
                   </Button>
-                <div className="md:col-span-4 flex gap-2">
+                <div className="md:col-span-4 flex gap-1">
                  
-                  <Button onClick={exportToDatasheet} variant="outline" className="flex-1 h-14 border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white rounded-xl font-bold uppercase tracking-wider shadow-sm backdrop-blur-md transition-all active:scale-95 flex items-center justify-center gap-2">
-                    <Download className="h-5 w-5 text-red-600" />
-                    <span className="hidden lg:inline">Export</span>
-                  </Button>
+                  <Button 
+  onClick={exportToDatasheet} 
+  variant="outline" 
+  // Changed "flex-1 shrink-0" to "w-fit" (or a fixed width like w-32)
+  className="w-fit whitespace-nowrap h-14 border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white rounded-xl font-bold uppercase tracking-wider shadow-sm backdrop-blur-md transition-all active:scale-95 flex items-center justify-center gap-4 px-6"
+>
+  <Download className="h-5 w-5 text-red-600" />
+  <span className="hidden lg:inline">Export</span>
+</Button>
                  {isAdmin && (
   <>
     <Button 
