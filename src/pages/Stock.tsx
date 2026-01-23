@@ -77,6 +77,10 @@ const [movements, setMovements] = useState<any[]>([]);
 const [logsLoading, setLogsLoading] = useState(false);
 const [canEditStock, setCanEditStock] = useState(false);
 
+const [selectedTech, setSelectedTech] = useState<string>("");
+const [customTech, setCustomTech] = useState<string>("");
+const techs = ["ESI", "TRE", "TBR", "MAI", "MKR"];
+
   useEffect(() => {
     fetchStock();
     checkAdminStatus();
@@ -123,46 +127,55 @@ const fetchMovements = async () => {
     toast.info("Filters reset to default");
   };
 
-  // Movement Logic
-  const handleStockMovement = async () => {
-    if (!movingItem || !movingItem.id) return;
+const handleStockMovement = async () => {
+  if (!movingItem || !movingItem.id) return;
+  
+  // Validation: Ensure a tech is selected or typed
+  const finalTech = selectedTech === "other" ? customTech : selectedTech;
+  if (!finalTech) {
+    toast.error("Please select or enter a technician");
+    return;
+  }
 
-    const oldQty = movingItem.stock;
-    if (oldQty <= 0) {
-      toast.error("Stock is already empty");
-      return;
-    }
+  const oldQty = movingItem.stock;
+  if (oldQty <= 0) {
+    toast.error("Stock is already empty");
+    return;
+  }
 
-    const newQty = oldQty - 1;
-    const autoStatus = newQty === 0 ? "Out of Stock" : newQty <= 10 ? "low_stock" : "in_stock";
+  const newQty = oldQty - 1;
+  const autoStatus = newQty === 0 ? "Out of Stock" : newQty <= 10 ? "low_stock" : "in_stock";
 
-    // 1. Update Inventory
-    const { error: updateError } = await supabase
-      .from("stock")
-      .update({ stock: newQty, status: autoStatus })
-      .eq("id", movingItem.id);
+  // 1. Update Inventory
+  const { error: updateError } = await supabase
+    .from("stock")
+    .update({ stock: newQty, status: autoStatus })
+    .eq("id", movingItem.id);
 
-    if (updateError) {
-      toast.error("Update failed");
-      return;
-    }
+  if (updateError) {
+    toast.error("Update failed");
+    return;
+  }
 
-    // 2. Log Movement
-    const { error: logError } = await supabase.from("movement").insert({
-      user: userEmail,
-      pkqt: 1,
-      part: movingItem.partcode,
-      location: movingItem.loc,
-      oldqt: oldQty,
-      newqt: newQty
-    });
+  // 2. Log Movement (Now including tech)
+  const { error: logError } = await supabase.from("movement").insert({
+    user: userEmail,
+    tech: finalTech, // Make sure this column exists in your Supabase table
+    pkqt: 1,
+    part: movingItem.partcode,
+    location: movingItem.loc,
+    oldqt: oldQty,
+    newqt: newQty
+  });
 
-    if (!logError) {
-      toast.success("Part consumed and logged successfully");
-      setIsMoveModalOpen(false);
-      fetchStock();
-    }
-  };
+  if (!logError) {
+    toast.success(`Part consumed by ${finalTech}`);
+    setIsMoveModalOpen(false);
+    setSelectedTech(""); // Reset
+    setCustomTech("");   // Reset
+    fetchStock();
+  }
+};
 
   const handleSave = async () => {
     const stockCount = currentItem.stock || 0;
@@ -419,7 +432,33 @@ const fetchMovements = async () => {
                   <div className="flex justify-between p-3 border-y border-zinc-200 dark:border-white/10">
                     <span className="text-sm text-zinc-500">Current Stock</span>
                     <span className="font-bold dark:text-white">{movingItem.stock} → <span className="text-red-500">{movingItem.stock - 1}</span></span>
-                  </div>
+                  
+				  
+				 {/* Technician Selection */}
+  <div className="space-y-2">
+    <label className="text-[10px] uppercase font-black tracking-widest text-zinc-500">Assign Technician</label>
+    <select 
+      value={selectedTech}
+      onChange={(e) => setSelectedTech(e.target.value)}
+      className="w-full h-11 px-4 rounded-xl bg-zinc-100 dark:bg-white/5 border-none text-sm font-bold dark:text-white outline-none ring-1 ring-zinc-200 dark:ring-white/10 focus:ring-2 focus:ring-amber-500 transition-all"
+    >
+      <option value="">Select Tech...</option>
+      {techs.map(t => <option key={t} value={t}>{t}</option>)}
+      <option value="other">Type name...</option>
+    </select>
+
+    {selectedTech === "other" && (
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+        <Input 
+          placeholder="Enter Technician Name" 
+          value={customTech}
+          onChange={(e) => setCustomTech(e.target.value.toUpperCase())}
+          className="h-11 bg-zinc-100 dark:bg-white/5 border-none ring-1 ring-amber-500"
+        />
+      </motion.div>
+    )}
+  </div>
+</div>
                 </div>
 
                 <div className="flex gap-3">
@@ -451,33 +490,43 @@ const fetchMovements = async () => {
           {/* Scrollable Container */}
           <div className="max-h-[60vh] overflow-y-auto custom-scrollbar">
             <table className="w-full text-left border-collapse">
-              <thead className="bg-zinc-50 dark:bg-zinc-900/50 sticky top-0 z-10">
-                <tr>
-                  <th className="p-4 text-[11px] font-black uppercase tracking-widest text-zinc-500">Timestamp</th>
-                  <th className="p-4 text-[11px] font-black uppercase tracking-widest text-zinc-500">User</th>
-                  <th className="p-4 text-[11px] font-black uppercase tracking-widest text-zinc-500 text-center">Part Code</th>
-                  <th className="p-4 text-[11px] font-black uppercase tracking-widest text-zinc-500 text-center">Old Qty</th>
-                  <th className="p-4 text-[11px] font-black uppercase tracking-widest text-zinc-500 text-center">New Qty</th>
-                  <th className="p-4 text-[11px] font-black uppercase tracking-widest text-zinc-500 text-right">Loc</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                {logsLoading ? (
-                  <tr><td colSpan={6} className="p-10 text-center text-zinc-500">Loading records...</td></tr>
-                ) : movements.map((log) => (
-                  <tr key={log.id} className="hover:bg-red-500/5 transition-colors">
-                    <td className="p-4 text-[12px] font-mono text-white-500">
-                      {new Date(log.created_at).toLocaleString()}
-                    </td>
-                    <td className="p-4 text-sm font-bold dark:text-zinc-200">{log.user}</td>
-                    <td className="p-4 text-sm font-bold dark:text-red-500">{log.part}</td>
-                    <td className="p-4 text-center text-white-500 font-medium">{log.oldqt}</td>
-                    <td className="p-4 text-center font-bold text-green-500 dark:text-green-400">{log.newqt}</td>
-                    <td className="p-4 text-right text-xs font-bold uppercase dark:text-red-500">{log.location}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+  <thead className="bg-zinc-50 dark:bg-zinc-900/50 sticky top-0 z-10">
+    <tr>
+      <th className="p-4 text-[11px] font-black uppercase tracking-widest text-zinc-500">Timestamp</th>
+      <th className="p-4 text-[11px] font-black uppercase tracking-widest text-zinc-500">User</th>
+      {/* ADDED TECH TITLE HERE */}
+      <th className="p-4 text-[11px] font-black uppercase tracking-widest text-zinc-500 text-center">Tech</th>
+      <th className="p-4 text-[11px] font-black uppercase tracking-widest text-zinc-500 text-center">Part Code</th>
+      <th className="p-4 text-[11px] font-black uppercase tracking-widest text-zinc-500 text-center">Old Qty</th>
+      <th className="p-4 text-[11px] font-black uppercase tracking-widest text-zinc-500 text-center">New Qty</th>
+      <th className="p-4 text-[11px] font-black uppercase tracking-widest text-zinc-500 text-right">Loc</th>
+    </tr>
+  </thead>
+  <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+    {logsLoading ? (
+      <tr><td colSpan={7} className="p-10 text-center text-zinc-500">Loading records...</td></tr>
+    ) : movements.map((log) => (
+      <tr key={log.id} className="hover:bg-red-500/5 transition-colors">
+        <td className="p-4 text-[12px] font-bold text-white-500">
+          {new Date(log.created_at).toLocaleString()}
+        </td>
+        <td className="p-4 text-sm font-bold dark:text-zinc-200">{log.user}</td>
+        
+        {/* ADDED TECH DATA CELL HERE */}
+        <td className="p-4 text-center">
+          <Badge className="bg-amber-500/10 text-red-400 border-amber-500/20 text-[12px] font-black">
+            {log.tech || "N/A"}
+          </Badge>
+        </td>
+
+        <td className="p-4 text-sm font-bold dark:text-red-500 text-center">{log.part}</td>
+        <td className="p-4 text-center text-zinc-500 font-medium">{log.oldqt}</td>
+        <td className="p-4 text-center font-bold text-green-500 dark:text-green-400">{log.newqt}</td>
+        <td className="p-4 text-right text-xs font-bold uppercase dark:text-red-500">{log.location}</td>
+      </tr>
+    ))}
+  </tbody>
+</table>
           </div>
           
           <div className="p-4 bg-zinc-50 dark:bg-zinc-900/30 text-center border-t border-zinc-100 dark:border-white/5">
