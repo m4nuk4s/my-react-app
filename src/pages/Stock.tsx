@@ -269,79 +269,130 @@ export default function Stock() {
       </div>
 
       <div className="relative z-10">
-        <section className="pt-20 pb-12">
-          <div className="container mx-auto px-6">
-            <motion.div initial="hidden" animate="visible" variants={fadeUp} className="max-w-5xl">
-              <h1 className="text-4xl md:text-6xl font-light tracking-tight mb-4 text-white">
-                Notebook Parts <span className="font-bold uppercase text-red-600">Inventory</span>
-              </h1>
-              <p className="text-lg text-zinc-200 max-w-lg leading-relaxed border-l-2 border-red-600 pl-6 drop-shadow-md mb-10">
-                Access real-time stock tracking and component compatibility database.
-              </p>
+        <section className="relative pt-12 pb-6 z-10">
+  <div className="container mx-auto px-6">
+    <div className="max-w-full">
+      
+      {/* 1. Header Area - Locked White for visibility over background */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+        <div>
+          <h1 className="text-4xl md:text-6xl font-light tracking-tight text-white transition-colors">
+            Notebook Parts <span className="font-bold uppercase text-red-600">Inventory</span>
+          </h1>
+          <p className="hidden md:block text-zinc-400 text-[10px] uppercase tracking-[0.3em] mt-2 italic font-medium">
+            System: Connected / Database: Live
+          </p>
+        </div>
+      </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-10 gap-2 items-center">
-                <div className="md:col-span-3 relative">
-                  <Input
-                    placeholder="🔎Ex. LCD-OR1623"
-                    value={partCodeSearch}
-                    onChange={(e) => {setPartCodeSearch(e.target.value); setVisibleCount(20);}}
-                    className="h-14 pl-6 text-lg border-none rounded-xl bg-white/90 text-slate-950 dark:bg-white/5 dark:backdrop-blur-xl dark:text-white dark:ring-1 dark:ring-white/10 shadow-lg"
-                  />
-                </div>
-                <div className="md:col-span-2 relative">
-                  <Input
-                    placeholder="🔎Ex N17C12"
-                    value={modelSearch}
-                    onChange={(e) => {setModelSearch(e.target.value); setVisibleCount(20);}}
-                    className="h-14 pl-6 text-lg border-none rounded-xl bg-white/90 text-slate-950 dark:bg-white/5 dark:backdrop-blur-xl dark:text-white dark:ring-1 dark:ring-white/10 shadow-lg"
-                  />
-                </div>
-                <div className="md:col-span-2 relative">
-                  <Input
-                    placeholder="📍Loc"
-                    value={locSearch}
-                    onChange={(e) => {setLocSearch(e.target.value); setVisibleCount(20);}}
-                    className="h-14 pl-6 text-lg border-none rounded-xl bg-white/90 text-slate-950 dark:bg-white/5 dark:backdrop-blur-xl dark:text-white dark:ring-1 dark:ring-white/10 shadow-lg"
-                  />
-                </div>
-                <div className="md:col-span-2 relative group">
-                  <select 
-                    className="w-full h-14 pl-4 pr-10 rounded-xl appearance-none cursor-pointer bg-white/90 text-slate-950 dark:bg-white/5 dark:backdrop-blur-xl dark:text-white ring-1 ring-slate-200 dark:ring-white/10 shadow-lg font-bold uppercase text-[10px] border-none outline-none focus:ring-2 focus:ring-red-600 transition-all"
-                    value={modelFilter}
-                    onChange={(e) => setModelFilter(e.target.value)}
-                  >
-                    <option value="" className="bg-white dark:bg-zinc-900">All Notebooks</option>
-                    {Array.from(new Set(data.map(i => i.model))).sort().map(m => (
-                      <option key={m} value={m} className="bg-white dark:bg-zinc-900">{m}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 group-hover:text-red-600 transition-colors pointer-events-none" size={16} />
-                </div>
-                <Button onClick={resetFilters} variant="outline" className="h-14 w-14 shrink-0 border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 hover:dark:bg-white/5 dark:hover:bg-red-500/20 text-slate-600 dark:text-white rounded-xl shadow-sm backdrop-blur-md transition-all active:scale-95 group">
-                  <RotateCcw className="h-5 w-5 group-hover:rotate-[-45deg] transition-transform" />
-                </Button>
-                <div className="md:col-span-4 flex gap-1">
-                  <Button onClick={exportToDatasheet} variant="outline" className="w-fit whitespace-nowrap h-14 border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white rounded-xl font-bold uppercase tracking-wider shadow-sm backdrop-blur-md transition-all active:scale-95 flex items-center justify-center gap-4 px-6">
-                    <Download className="h-5 w-5 text-red-600" />
-                    <span className="hidden lg:inline">Export</span>
-                  </Button>
-                  {isAdmin && (
-                    <>
-                      <Button onClick={() => { fetchMovements(); setIsLogsModalOpen(true); }} variant="outline" className="flex-1 h-14 border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white rounded-xl font-bold uppercase tracking-wider shadow-sm backdrop-blur-md transition-all active:scale-95 flex items-center justify-center gap-2">
-                        <Search className="h-5 w-5 text-red-600" />
-                        <span className="hidden lg:inline">Logs</span>
-                      </Button>
-                      <Button onClick={() => {setCurrentItem({}); setIsModalOpen(true);}} variant="outline" className="flex-1 h-14 border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white rounded-xl font-bold uppercase tracking-wider shadow-sm backdrop-blur-md transition-all active:scale-95 flex items-center justify-center gap-2">
-                        <Plus className="h-6 w-6 text-red-600" />
-                        <span className="hidden lg:inline">Add Part</span>
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </motion.div>
+      <p className="text-zinc-200 text-base max-w-lg leading-relaxed border-l-2 border-red-600 pl-6 drop-shadow-md mb-8">
+        Access real-time stock tracking and component compatibility database.
+      </p>
+
+      {/* 2. Main Search Section */}
+      <div className="bg-white/90 dark:bg-[#050505] border border-slate-200 dark:border-white/10 rounded-2xl p-3 shadow-lg dark:shadow-2xl transition-all backdrop-blur-md">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-2">
+          
+          {/* Part Code - Search Icon */}
+          <div className="md:col-span-3 relative group">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500 group-focus-within:text-red-600 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Ex. LCD-OR1623"
+              value={partCodeSearch || ''}
+              onChange={(e) => {setPartCodeSearch(e.target.value); setVisibleCount(20);}}
+              className="w-full h-12 pl-12 pr-4 bg-slate-100 dark:bg-white/5 border-none rounded-xl text-slate-950 dark:text-white placeholder:text-slate-500 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-600/50 transition-all text-sm"
+            />
           </div>
-        </section>
+
+          {/* Model Search - CPU/Chip Icon */}
+          <div className="md:col-span-2 relative group">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500 group-focus-within:text-red-600 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line></svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Ex N17C12"
+              value={modelSearch || ''}
+              onChange={(e) => {setModelSearch(e.target.value); setVisibleCount(20);}}
+              className="w-full h-12 pl-11 pr-4 bg-slate-100 dark:bg-white/5 border-none rounded-xl text-slate-950 dark:text-white placeholder:text-slate-500 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-600/50 transition-all text-sm"
+            />
+          </div>
+
+          {/* Location Search - Map Pin Icon */}
+          <div className="md:col-span-2 relative group">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500 group-focus-within:text-red-600 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Loc"
+              value={locSearch || ''}
+              onChange={(e) => {setLocSearch(e.target.value); setVisibleCount(20);}}
+              className="w-full h-12 pl-11 pr-4 bg-slate-100 dark:bg-white/5 border-none rounded-xl text-slate-950 dark:text-white placeholder:text-slate-500 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-600/50 transition-all text-sm"
+            />
+          </div>
+
+          {/* Category Dropdown - Layers Icon */}
+          <div className="md:col-span-3 relative group">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500 group-hover:text-red-600 transition-colors pointer-events-none">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+            </div>
+            <select 
+              value={modelFilter || ''}
+              onChange={(e) => setModelFilter(e.target.value)}
+              className="w-full h-12 pl-11 pr-10 bg-slate-100 dark:bg-white/5 border-none rounded-xl text-slate-950 dark:text-white appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-600 transition-all font-bold uppercase text-[10px] tracking-widest"
+            >
+              <option value="" className="bg-white dark:bg-zinc-900">All Notebooks</option>
+              {data && Array.from(new Set(data.map(i => i.model))).sort().map(m => (
+                <option key={m} value={m} className="bg-white dark:bg-zinc-900">{m}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Reset & Export Buttons - Red Glow Hover Dark Mode */}
+          <div className="md:col-span-2 flex gap-1">
+            <button 
+              onClick={resetFilters} 
+              className="flex-1 h-12 flex items-center justify-center bg-slate-200 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl text-slate-700 dark:text-white hover:bg-red-500 dark:hover:bg-red-600/20 dark:hover:border-red-600/40 dark:hover:shadow-[0_0_15px_rgba(220,38,38,0.3)] transition-all group"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-600 transition-transform group-hover:rotate-180 duration-500"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+            </button>
+            <button 
+              onClick={exportToDatasheet} 
+              className="flex-1 h-12 flex items-center justify-center bg-slate-200 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl text-slate-700 dark:text-white hover:bg-red-500 dark:hover:bg-red-600/20 dark:hover:border-red-600/40 dark:hover:shadow-[0_0_15px_rgba(220,38,38,0.3)] transition-all"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-600"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4"></path><polyline points="7 10 12 15 17 10"></polyline></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Admin Row - Matching Hover Effects */}
+      {isAdmin && (
+        <div className="flex items-center justify-end gap-2 mt-4">
+          <button 
+            onClick={() => { fetchMovements(); setIsLogsModalOpen(true); }}
+            className="h-8 px-4 bg-slate-200/80 dark:bg-white/5 hover:bg-red-500 dark:hover:bg-red-600/20 border border-slate-300 dark:border-white/10 dark:hover:border-red-600/40 text-slate-700 dark:text-white text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all flex items-center gap-2 dark:hover:shadow-[0_0_10px_rgba(220,38,38,0.2)]"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-red-600"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            Logs
+          </button>
+          <button 
+            onClick={() => {setCurrentItem({}); setIsModalOpen(true);}}
+            className="h-8 px-4 bg-slate-200/80 dark:bg-white/5 hover:bg-red-500 dark:hover:bg-red-600/20 border border-slate-300 dark:border-white/10 dark:hover:border-red-600/40 text-slate-700 dark:text-white text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all flex items-center gap-2 dark:hover:shadow-[0_0_10px_rgba(220,38,38,0.2)]"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-red-600"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add Part
+          </button>
+        </div>
+      )}
+
+    </div>
+  </div>
+</section>
 
         <div className="container mx-auto px-6 pb-32">
           <motion.div initial="hidden" animate="visible" variants={fadeUp} className="rounded-2xl overflow-hidden bg-white/80 dark:bg-zinc-900/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-2xl">
