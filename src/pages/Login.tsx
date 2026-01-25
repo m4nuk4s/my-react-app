@@ -118,7 +118,7 @@ export default function Login() {
 
   return (
     <div className="relative min-h-screen bg-slate-50 dark:bg-[#050505] text-foreground selection:bg-red-500/30 transition-colors duration-500">
-      {showWelcomeAnimation && <AnimatedWelcome onContinue={handleWelcomeComplete} />}
+
       
       <div className="fixed inset-0 z-0 pointer-events-none">
         <video className="w-full h-full object-cover opacity-80 dark:opacity-60 contrast-125 saturate-150" autoPlay loop muted playsInline>
