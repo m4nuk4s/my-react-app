@@ -4,13 +4,13 @@ import { supabase, User, setupSupabaseSchema, ensureAdminUser } from '@/lib/supa
 import emailjs from '@emailjs/browser';
 import { fixAllDatabaseIssues } from '@/lib/databaseFixes';
 
-// Note: We're importing apply-db-fixes dynamically in the useEffect to avoid circular dependencies
-
 type AuthContextType = {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean | "pending">;
   register: (email: string, username: string, password: string) => Promise<boolean | "pending">;
   logout: () => void;
+  resetPassword: (email: string) => Promise<void>;
+  updatePassword: (newPassword: string) => Promise<void>;
   isAuthenticated: boolean;
   isAdmin: boolean;
 };
@@ -19,9 +19,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };
 
@@ -29,212 +27,142 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize Supabase schema and admin user on component mount
   useEffect(() => {
     const initializeSupabase = async () => {
       try {
         const { applyUserRegistrationFixes } = await import('../lib/apply-db-fixes');
         await setupSupabaseSchema();
         await ensureAdminUser();
-        const fixResult = await applyUserRegistrationFixes();
-        console.log('User registration fixes applied:', fixResult);
+        await applyUserRegistrationFixes();
         await fixAllDatabaseIssues();
-        console.log('Supabase initialized successfully');
       } catch (error) {
         console.error('Error initializing Supabase:', error);
       }
     };
-
     initializeSupabase();
   }, []);
 
-  // ✅ FIX: Check for authenticated session on initial load
-  useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) throw error;
-
-        if (session?.user) {
-          const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-
-          if (userError) throw userError;
-
-          if (userData) {
-            // Only allow approved users or admins
-            if (userData.isadmin || userData.isapproved) {
-              setUser({
-                id: userData.id,
-                email: userData.email,
-                username: userData.username,
-                isAdmin: userData.isadmin,
-                isApproved: userData.isapproved,
-                role: userData.role // Ensure role is set from DB
-              });
-            } else {
-              // 🚫 Pending user: force logout
-              await supabase.auth.signOut();
-              setUser(null);
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Session check error:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkSession();
-  }, []);
-
-  const login = async (email: string, password: string) => {
+// Inside AuthContext.tsx
+useEffect(() => {
+  const checkSession = async () => {
     try {
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // Check if we are currently in a recovery flow
+      const isRecovering = window.location.search.includes('type=recovery');
 
-      if (signInError) {
-        console.log("Supabase auth error:", signInError);
-        return false;
-      }
-
-      if (signInData.user) {
-        const { data: userData, error: userError } = await supabase
+      if (session?.user) {
+        const { data: userData } = await supabase
           .from('users')
           .select('*')
-          .eq('id', signInData.user.id)
+          .eq('id', session.user.id)
           .single();
 
-        if (userError) throw userError;
-
-        if (userData) {
-          if (userData.isadmin || userData.isapproved) {
+        if (userData && (userData.isadmin || userData.isapproved)) {
+          // ONLY set the user state if NOT in recovery mode
+          // This prevents the protected routes from redirecting the user away
+          if (!isRecovering) {
             setUser({
               id: userData.id,
               email: userData.email,
               username: userData.username,
               isAdmin: userData.isadmin,
               isApproved: userData.isapproved,
-              role: userData.role // Ensure role is set from DB
+              role: userData.role
             });
-
-            if (userData.isadmin) {
-              initializeSampleData();
-            }
-
-            return true;
-          } else {
-            // 🚫 Logout immediately if not approved
-            await supabase.auth.signOut();
-            return "pending";
           }
+        } else {
+          await supabase.auth.signOut();
+          setUser(null);
         }
       }
+    } catch (error) {
+      console.error("Session check error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  checkSession();
+}, []);
+
+  const login = async (email: string, password: string) => {
+    try {
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) return false;
+      if (signInData.user) {
+        const { data: userData } = await supabase.from('users').select('*').eq('id', signInData.user.id).single();
+        if (userData?.isadmin || userData?.isapproved) {
+          setUser({
+            id: userData.id,
+            email: userData.email,
+            username: userData.username,
+            isAdmin: userData.isadmin,
+            isApproved: userData.isapproved,
+            role: userData.role
+          });
+          if (userData.isadmin) initializeSampleData();
+          return true;
+        } else {
+          await supabase.auth.signOut();
+          return "pending";
+        }
+      }
       return false;
     } catch (error) {
-      console.error("Login error:", error);
       return false;
     }
   };
 
   const register = async (email: string, username: string, password: string) => {
     try {
-      console.log("Starting user registration process...");
-
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: { username }
-        }
+        options: { data: { username } }
       });
-
-      if (signUpError) {
-        console.error("Supabase auth signup error:", signUpError);
-        throw signUpError;
-      }
-
-      console.log("Supabase auth sign up successful:", signUpData);
-
+      if (signUpError) throw signUpError;
       if (signUpData.user) {
-        const { error: insertError } = await supabase
-          .from('users')
-          .insert({
-            id: signUpData.user.id,
-            email,
-            username,
-            isadmin: false,
-            isapproved: false,
-            role: 'client' // Default role for new registrations
-          });
-
-        if (insertError) {
-          console.error("Supabase users table insert error:", insertError);
-          throw insertError;
-        }
-
-        try {
-          await emailjs.send(
-            'service_3nte2w8',
-            'template_ynyayik',
-            {
-              name: username,
-              email: email,
-              phone: 'N/A',
-              requestType: 'New User Registration - Pending Approval',
-              subject: 'New User Registration Pending Approval - ' + username,
-              message: `A new user has registered on TechSuptet and is awaiting admin approval:\n\nUsername: ${username}\nEmail: ${email}\n\nPlease log into the admin panel to approve this account.`,
-              deviceModel: 'N/A',
-              osVersion: 'N/A',
-            },
-            '_FaISaFJ5SBxVUtzl'
-          );
-          console.log("Notification email sent successfully");
-        } catch (emailError) {
-          console.log('Email notification failed:', emailError);
-        }
-
-        // 🚫 Sign the user out immediately after registration.
+        await supabase.from('users').insert({
+          id: signUpData.user.id,
+          email,
+          username,
+          isadmin: false,
+          isapproved: false,
+          role: 'client'
+        });
         await supabase.auth.signOut();
-
         return "pending";
       }
-
       return false;
     } catch (error) {
-      console.error("Registration error:", error);
       return false;
     }
+  };
+
+  // --- NEW RECOVERY METHODS ---
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/login?type=recovery`,
+    });
+    if (error) throw error;
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
   };
 
   const logout = async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      setUser(null);
-    }
+    await supabase.auth.signOut();
+    setUser(null);
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        login,
-        register,
-        logout,
-        isAuthenticated: !!user,
-        isAdmin: user?.isAdmin || false,
-      }}
-    >
+    <AuthContext.Provider value={{ 
+      user, login, register, logout, resetPassword, updatePassword, 
+      isAuthenticated: !!user, isAdmin: user?.isAdmin || false 
+    }}>
       {!isLoading && children}
     </AuthContext.Provider>
   );
