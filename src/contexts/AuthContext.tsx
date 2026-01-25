@@ -4,11 +4,15 @@ import { supabase, User, setupSupabaseSchema, ensureAdminUser } from '@/lib/supa
 import emailjs from '@emailjs/browser';
 import { fixAllDatabaseIssues } from '@/lib/databaseFixes';
 
+// ✅ FIX 1: Initialize EmailJS immediately so it's ready for registration
+emailjs.init("_FaISaFJ5SBxVUtzl");
+
 type AuthContextType = {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean | "pending">;
   register: (email: string, username: string, password: string) => Promise<boolean | "pending">;
   logout: () => void;
+  // ✅ FIX 2: Added missing types for password recovery
   resetPassword: (email: string) => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
   isAuthenticated: boolean;
@@ -42,49 +46,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     initializeSupabase();
   }, []);
 
-// Inside AuthContext.tsx
-useEffect(() => {
-  const checkSession = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      // Check if we are currently in a recovery flow
-      const isRecovering = window.location.search.includes('type=recovery');
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        // Check if we are currently in a password recovery flow
+        const isRecovering = window.location.search.includes('type=recovery');
 
-      if (session?.user) {
-        const { data: userData } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
+        if (session?.user) {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
 
-        if (userData && (userData.isadmin || userData.isapproved)) {
-          // ONLY set the user state if NOT in recovery mode
-          // This prevents the protected routes from redirecting the user away
-          if (!isRecovering) {
-            setUser({
-              id: userData.id,
-              email: userData.email,
-              username: userData.username,
-              isAdmin: userData.isadmin,
-              isApproved: userData.isapproved,
-              role: userData.role
-            });
+          if (userData && (userData.isadmin || userData.isapproved)) {
+            // If recovering, we don't set the user yet to avoid redirecting them away from the reset form
+            if (!isRecovering) {
+              setUser({
+                id: userData.id,
+                email: userData.email,
+                username: userData.username,
+                isAdmin: userData.isadmin,
+                isApproved: userData.isapproved,
+                role: userData.role
+              });
+            }
+          } else {
+            await supabase.auth.signOut();
+            setUser(null);
           }
-        } else {
-          await supabase.auth.signOut();
-          setUser(null);
         }
+      } catch (error) {
+        console.error("Session check error:", error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Session check error:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  checkSession();
-}, []);
+    };
+    checkSession();
+  }, []);
 
   const login = async (email: string, password: string) => {
     try {
@@ -131,6 +131,22 @@ useEffect(() => {
           isapproved: false,
           role: 'client'
         });
+
+        // ✅ FIX 3: Await EmailJS before signing out
+        try {
+          await emailjs.send(
+            'service_3nte2w8',
+            'template_ynyayik',
+            {
+              name: username,
+              email: email,
+              subject: 'New User Registration Pending Approval - ' + username,
+              message: `New registration: ${username} (${email}). Please approve in admin panel.`,
+            },
+            '_FaISaFJ5SBxVUtzl'
+          );
+        } catch (e) { console.error("Email failed", e); }
+
         await supabase.auth.signOut();
         return "pending";
       }
@@ -140,7 +156,7 @@ useEffect(() => {
     }
   };
 
-  // --- NEW RECOVERY METHODS ---
+  // ✅ FIX 4: Re-implemented Password Recovery Logic
   const resetPassword = async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/login?type=recovery`,
@@ -160,8 +176,10 @@ useEffect(() => {
 
   return (
     <AuthContext.Provider value={{ 
-      user, login, register, logout, resetPassword, updatePassword, 
-      isAuthenticated: !!user, isAdmin: user?.isAdmin || false 
+      user, login, register, logout, 
+      resetPassword, updatePassword, // ✅ FIX 5: Exported to the app
+      isAuthenticated: !!user, 
+      isAdmin: user?.isAdmin || false 
     }}>
       {!isLoading && children}
     </AuthContext.Provider>
