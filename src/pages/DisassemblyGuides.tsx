@@ -1,31 +1,35 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Laptop, Wrench, Clock, Loader2, AlertTriangle } from "lucide-react";
+import { Search, Laptop, Wrench, Clock, Loader2, AlertTriangle, Activity, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import BackVideo from "@/assets/wtpth/backvi.mp4"; // Import the video
+import BackVideo from "@/assets/wtpth/backvi.mp4";
 import { supabase } from "@/lib/supabase";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // --- STYLING CONSTANTS (Matched from Windows.tsx) ---
 const outlinePillButton =
   "relative rounded-md px-6 py-2 text-sm font-medium " +
-  "text-gray-900 dark:text-gray-100 bg-transparent " +
+  "text-slate-900 dark:text-white bg-transparent " +
   "transition-all duration-300 ease-in-out transform " +
-  "hover:bg-gray-100 dark:hover:bg-red-600/20 " +
-  "focus:outline-none focus:ring-2 focus:ring-gray-400/40 " +
+  "hover:bg-slate-100 dark:hover:bg-red-600/20 " +
+  "focus:outline-none focus:ring-2 focus:ring-slate-400/40 " +
   "before:absolute before:inset-0 before:rounded-md before:border-2 " +
-  "before:border-red-500 dark:before:border-white before:opacity-0 " +
+  "before:border-red-600 dark:before:border-red-600 before:opacity-0 " +
   "hover:before:opacity-100 active:scale-95";
 
-const tileClassName = "group relative overflow-hidden rounded-2xl backdrop-blur-xl border shadow-sm transition-colors duration-300 " + 
-                       "bg-white/90 border-slate-200 " + // Light Mode (Matches Windows.tsx)
-                       "dark:bg-zinc-900/90 dark:border-white/10"; // Dark Mode
+const tileClassName = (index: number, hoveredCard: number | null) => 
+  `group relative overflow-hidden rounded-2xl border p-8 backdrop-blur-md transition-all duration-500
+  ${hoveredCard === index 
+    ? 'translate-x-4 shadow-2xl bg-white dark:bg-zinc-900 border-red-600' 
+    : 'bg-white/40 border-slate-200/50 dark:bg-white/5 dark:border-white/10'
+  }`;
 
 const cardVariants = {
   hidden: { opacity: 0, y: 10 },
@@ -36,17 +40,18 @@ const cardVariants = {
   },
   exit: { opacity: 0, y: -10, transition: { duration: 0.2 } }
 };
+
 const categoryIcons: Record<string, React.ReactNode> = {
-  "Keyboard": <Search className="h-4 w-4" />, // Or a keyboard icon if available
+  "Keyboard": <Search className="h-4 w-4" />,
   "Display": <Laptop className="h-4 w-4" />,
   "Battery": <Clock className="h-4 w-4" />,
   "Motherboard": <Wrench className="h-4 w-4" />,
-  "Storage": <Search className="h-4 w-4" />,
-  "Memory": <Search className="h-4 w-4" />,
+  "Storage": <Download className="h-4 w-4" />,
+  "Memory": <Download className="h-4 w-4" />,
   "Full Disassembly": <Wrench className="h-4 w-4" />,
   "All Categories": <Laptop className="h-4 w-4" />
 };
-// Type definitions for guides from diss_table
+
 type Step = {
   id?: string;
   title: string;
@@ -82,8 +87,9 @@ export default function DisassemblyGuides() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { isAuthenticated } = useAuth();
-const [zoomedImage, setZoomedImage] = useState<string | null>(null);
-  // Categories
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+  
   const categories = [
     "Keyboard",
     "Display",
@@ -94,19 +100,19 @@ const [zoomedImage, setZoomedImage] = useState<string | null>(null);
     "Full Disassembly",
     "All Categories"
   ];
-useEffect(() => {
-  const handleEsc = (e: KeyboardEvent) => {
-    if (e.key === "Escape") setZoomedImage(null);
-  };
-  window.addEventListener("keydown", handleEsc);
-  return () => window.removeEventListener("keydown", handleEsc);
-}, []);
+
   useEffect(() => {
-    // Load guides from Supabase's diss_table
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setZoomedImage(null);
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, []);
+
+  useEffect(() => {
     async function loadGuidesFromSupabase() {
       setLoading(true);
       try {
-        // First get unique guides from disassembly-guides table
         const { data, error } = await supabase
           .from('disassembly-guides')
           .select('*');
@@ -120,7 +126,6 @@ useEffect(() => {
 
         if (data && data.length > 0) {
           const formattedGuides = await Promise.all(data.map(async (item) => {
-            // Logic for Step 1 Parsing
             let firstStep = null;
             try {
               const parsedSteps = typeof item.steps === 'string'
@@ -162,14 +167,12 @@ useEffect(() => {
               };
             }
             
-            // Fetch all related steps from diss_table using guide_title
             let { data: allSteps, error: stepsError } = await supabase
               .from('diss_table')
               .select('*')
               .ilike('guide_title', `%${item.guide_title || item.title}%`)
               .order('id', { ascending: true });
             
-            // Handle alternative query paths (Original Logic)
             if (stepsError || !allSteps || allSteps.length === 0) {
               const { data: altSteps } = await supabase.from('diss_table').select('*').eq('title', item.guide_title || item.title);
               if (altSteps && altSteps.length > 0) allSteps = altSteps;
@@ -282,24 +285,37 @@ useEffect(() => {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#050505] text-white selection:bg-red-500/30">
-      {/* Background Video Layer */}
+    <div className="relative min-h-screen transition-colors duration-700 overflow-hidden font-sans bg-[#f8f9fa] dark:bg-[#050505] text-slate-900 dark:text-white">
+      {/* BACKGROUND - Matches Windows.tsx exactly */}
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <video className="w-full h-full object-cover opacity-40 contrast-125 saturate-100" autoPlay loop muted playsInline>
+        <video 
+          className="w-full h-full object-cover transition-opacity duration-1000 grayscale opacity-40 contrast-125 dark:opacity-40" 
+          autoPlay loop muted playsInline
+        >
           <source src={BackVideo} type="video/mp4" />
         </video>
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60" />
+        <div className="absolute inset-0 transition-all duration-700 bg-gradient-to-r from-[#f8f9fa]/60 via-[#f8f9fa]/20 to-transparent dark:from-[#050505] dark:via-[#050505]/80 dark:to-transparent" />
       </div>
 
       <div className="relative z-10">
-        {/* Hero Section */}
-        <section className="h-[35vh] flex items-center">
+        {/* Hero Section - Matches Windows.tsx */}
+        <section className="h-[40vh] flex items-center">
           <div className="container mx-auto px-6">
-            <motion.div initial="hidden" animate="visible" variants={cardVariants} className="max-w-4xl">
-              <h1 className="text-4xl md:text-6xl font-light tracking-tight text-white mb-4">
-                Hardware <span className="font-bold uppercase text-red-600">Disassembly</span>
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }} 
+              animate={{ opacity: 1, y: 0 }}
+              className="max-w-4xl"
+            >
+              <div className="mb-6 flex items-center gap-4 text-[10px] font-black tracking-[0.3em] uppercase text-slate-600 dark:text-zinc-500">
+                <Activity size={14} className="text-red-600 animate-pulse" /> DISASSEMBLY // HARDWARE_GUIDES
+              </div>
+              
+              <h1 className="text-4xl md:text-[5rem] font-black tracking-[-0.05em] uppercase leading-[0.8] text-slate-950 dark:text-white mb-6">
+                Hardware <br />
+                <span className="outline-text">Disassembly</span>
               </h1>
-              <p className="text-lg text-zinc-200 max-w-lg leading-relaxed border-l-2 border-red-600 pl-6 drop-shadow-md">
+              
+              <p className="text-lg text-slate-600 dark:text-zinc-400 max-w-lg leading-relaxed border-l-2 border-red-600 pl-6 font-medium">
                 Step-by-step technical guides for repairing and maintaining Thomson devices.
               </p>
             </motion.div>
@@ -313,188 +329,209 @@ useEffect(() => {
               <Loader2 className="h-12 w-12 animate-spin text-red-600" />
             </div>
           ) : error ? (
-            <Alert variant="destructive" className="bg-red-950/20 border-red-600/50 text-white rounded-xl backdrop-blur-md">
-              <AlertTriangle className="h-4 w-4" />
-              <CardDescription className="text-white">{error}</CardDescription>
-              <Button onClick={() => window.location.reload()} variant="outline" className="mt-4 border-red-600 text-red-600 hover:bg-red-600 hover:text-white">Try Again</Button>
+            <Alert variant="destructive" className="bg-red-950/20 border-red-600/50 text-white rounded-2xl backdrop-blur-md">
+              <AlertTriangle className="h-5 w-5" />
+              <AlertTitle className="font-bold">Database Error</AlertTitle>
+              <AlertDescription className="font-medium">
+                {error}
+              </AlertDescription>
+              <Button 
+                onClick={() => window.location.reload()} 
+                variant="outline" 
+                className="mt-4 border-red-600 text-red-600 hover:bg-red-600 hover:text-white font-bold uppercase tracking-wider"
+              >
+                Try Again
+              </Button>
             </Alert>
           ) : (
             <>
-              {/* Filter Bar */}
-              <Card className="bg-white/5 backdrop-blur-md border-white/10 shadow-2xl">
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="relative">
-  <Input
-    placeholder="🔎   Search guides..."
-    onChange={(e) => setSearchTerm(e.target.value)}
-    className="pl-10 bg-white/80 dark:bg-black/60 border-slate-300 dark:border-white/20 text-black dark:text-white font-medium placeholder:text-slate-600 dark:placeholder:text-zinc-400 focus:ring-red-600 focus:bg-white dark:focus:bg-black transition-all"
-  />
-</div>
-                    
-<Select value={selectedModel} onValueChange={setSelectedModel}>
-  <SelectTrigger className="bg-white/80 dark:bg-black/60 border-slate-300 dark:border-white/20 text-black dark:text-white font-medium focus:ring-red-600 focus:bg-white dark:focus:bg-black transition-all">
-    <SelectValue placeholder="Model" />
-  </SelectTrigger>
-  <SelectContent className="bg-white dark:bg-zinc-900 border-slate-300 dark:border-white/20 text-black dark:text-white">
-    <SelectItem value="all">
-      <div className="flex items-center gap-2">
-        <Laptop className="h-4 w-4 text-red-600" />
-        <span>All Models</span>
-      </div>
-    </SelectItem>
-    {computerModels.map((m) => (
-      <SelectItem key={m} value={m}>
-        <div className="flex items-center gap-2">
-          <Laptop className="h-4 w-4 text-red-600" />
-          <span>{m}</span>
-        </div>
-      </SelectItem>
-    ))}
-  </SelectContent>
-</Select>
-<Select value={selectedCategory} onValueChange={setSelectedCategory}>
-  {/* Trigger: Adapts background and border color based on mode */}
-  <SelectTrigger className="pl-10 bg-white/80 dark:bg-black/60 border-slate-300 dark:border-white/20 text-black dark:text-white font-medium placeholder:text-slate-600 dark:placeholder:text-zinc-400 focus:ring-red-600 focus:bg-white dark:focus:bg-black transition-all">
-    <SelectValue placeholder="Category" />
-  </SelectTrigger>
-  
-  {/* Content: Matches the tile styles for consistency */}
-  <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
-    <SelectItem value="all">
-      <div className="flex items-center gap-2">
-        <Laptop className="h-4 w-4 text-red-500" />
-        <span>All Categories</span>
-      </div>
-    </SelectItem>
-
-    {categories
-      .filter((c) => c !== "All Categories")
-      .map((c) => (
-        <SelectItem key={c} value={c}>
-          <div className="flex items-center gap-2">
-            <span className="text-red-500">
-              {categoryIcons[c] || <Wrench className="h-4 w-4" />}
-            </span>
-            <span>{c}</span>
-          </div>
-        </SelectItem>
-      ))}
-  </SelectContent>
-</Select>
+              {/* Filter Bar - Matched to Windows.tsx tabs styling */}
+              <div className="bg-white/40 backdrop-blur-md border border-slate-200/50 dark:bg-white/5 dark:border-white/10 rounded-2xl p-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-600 dark:text-zinc-400" />
+                    <Input
+                      placeholder="Search guides..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 bg-white/40 dark:bg-white/5 border-slate-200/50 dark:border-white/10 text-slate-900 dark:text-white placeholder:text-slate-600 dark:placeholder:text-zinc-400 focus:ring-2 focus:ring-red-600/50"
+                    />
                   </div>
-                </CardContent>
-              </Card>
+                  
+                  <Select value={selectedModel} onValueChange={setSelectedModel}>
+                    <SelectTrigger className="bg-white/40 dark:bg-white/5 border-slate-200/50 dark:border-white/10 text-slate-900 dark:text-white focus:ring-2 focus:ring-red-600/50">
+                      <SelectValue placeholder="Select Model" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200/50 dark:border-white/10">
+                      <SelectItem value="all" className="hover:bg-red-600/10">
+                        <div className="flex items-center gap-2">
+                          <Laptop className="h-4 w-4 text-red-600" />
+                          <span>All Models</span>
+                        </div>
+                      </SelectItem>
+                      {computerModels.map((m) => (
+                        <SelectItem key={m} value={m} className="hover:bg-red-600/10">
+                          <div className="flex items-center gap-2">
+                            <Laptop className="h-4 w-4 text-red-600" />
+                            <span>{m}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger className="bg-white/40 dark:bg-white/5 border-slate-200/50 dark:border-white/10 text-slate-900 dark:text-white focus:ring-2 focus:ring-red-600/50">
+                      <SelectValue placeholder="Select Category" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200/50 dark:border-white/10">
+                      <SelectItem value="all" className="hover:bg-red-600/10">
+                        <div className="flex items-center gap-2">
+                          <Wrench className="h-4 w-4 text-red-600" />
+                          <span>All Categories</span>
+                        </div>
+                      </SelectItem>
+                      {categories
+                        .filter((c) => c !== "All Categories")
+                        .map((c) => (
+                          <SelectItem key={c} value={c} className="hover:bg-red-600/10">
+                            <div className="flex items-center gap-2">
+                              <span className="text-red-600">
+                                {categoryIcons[c] || <Wrench className="h-4 w-4" />}
+                              </span>
+                              <span>{c}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               
               {/* Guides List */}
               <div className="space-y-8">
                 <AnimatePresence mode="popLayout">
                   {filteredGuides.length === 0 ? (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
-                      <Laptop className="h-16 w-16 text-zinc-600 mx-auto mb-4" />
-                      <h2 className="text-xl font-semibold">No guides found</h2>
+                    <motion.div 
+                      initial={{ opacity: 0 }} 
+                      animate={{ opacity: 1 }}
+                      className="text-center py-20 bg-white/40 backdrop-blur-md border border-slate-200/50 dark:bg-white/5 dark:border-white/10 rounded-2xl"
+                    >
+                      <Laptop className="h-16 w-16 text-slate-600 dark:text-zinc-600 mx-auto mb-4" />
+                      <h2 className="text-xl font-black uppercase text-slate-900 dark:text-white mb-2">No guides found</h2>
+                      <p className="text-slate-600 dark:text-zinc-400 font-medium">
+                        Try adjusting your search criteria
+                      </p>
                     </motion.div>
                   ) : (
-                    filteredGuides.map((guide) => (
+                    filteredGuides.map((guide, index) => (
                       <motion.div
                         key={guide.id}
-                        layout
-                        initial="hidden" animate="visible" exit="exit"
+                        
+                       
                         variants={cardVariants}
-                        className={tileClassName}
+                        onMouseEnter={() => setHoveredCard(index)}
+                        onMouseLeave={() => setHoveredCard(null)}
+                        whileHover={{ y: -8 }}
+                        className={tileClassName(index, hoveredCard)}
                       >
-                       <div className="flex flex-col lg:flex-row items-start relative">
-{/* Left Column: Preview Image Container */}
-  {guide.steps && guide.steps.length > 0 && (guide.steps[0].image_url || guide.steps[0].imageUrl) && (
-    <div className="lg:w-1/4 w-full flex-shrink-0 lg:sticky lg:top-[30vh] p-6 z-20">
-      {/* lg:sticky: Makes it follow the scroll.
-         lg:top-[30vh]: Positions it toward the center of the screen.
-      */}
-      <div className="bg-black/40 overflow-hidden rounded-xl border border-white/10 shadow-2xl aspect-video flex items-center justify-center">
-        <img
-          src={guide.steps[0].image_url || guide.steps[0].imageUrl}
-          alt={guide.title}
-          /* Removed group-hover:scale-105 to stop zooming. 
-             Used object-contain to stop the image from being cut off. 
-          */
-          className="w-full h-full object-contain p-2" 
-        />
-      </div>
-    </div>
-  )}
+                        {/* Hover aura effect from Windows.tsx */}
+                        <AnimatePresence>
+                          {hoveredCard === index && (
+                            <motion.div 
+                              layoutId="hoverAura"
+                              className="absolute inset-0 bg-red-600/5 blur-3xl -z-10"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                            />
+                          )}
+                        </AnimatePresence>
+
+                        <div className="flex flex-col lg:flex-row items-start relative">
+                          {/* Left Column: Preview Image Container */}
+                          {guide.steps && guide.steps.length > 0 && (guide.steps[0].image_url || guide.steps[0].imageUrl) && (
+                            <div className="lg:w-1/4 w-full flex-shrink-0 lg:sticky lg:top-[30vh] p-6 z-20">
+                              <div className="bg-black/40 overflow-hidden rounded-xl border border-white/10 shadow-2xl aspect-video flex items-center justify-center">
+                                <img
+                                  src={guide.steps[0].image_url || guide.steps[0].imageUrl}
+                                  alt={guide.title}
+                                  className="w-full h-full object-contain p-2" 
+                                />
+                              </div>
+                            </div>
+                          )}
                           
                           {/* Right Column: Info */}
-                       <div className="flex-1 p-8 border-l border-slate-200 dark:border-white/5">
-  <div className="flex flex-wrap justify-between items-start gap-4 mb-4">
-    <div>
-      <h2 className="text-2xl font-bold text-slate-950 dark:text-white group-hover:text-red-600 transition-colors uppercase tracking-tight">
-        {guide.title}
-      </h2>
-      <p className="text-red-600 dark:text-red-500 font-bold text-sm mt-1">{guide.model}</p>
-    </div>
-    <Badge className={`${getDifficultyColor(guide.difficulty)} uppercase text-[10px] tracking-widest px-3`}>
-      {guide.difficulty}
-    </Badge>
-  </div>
+                          <div className="flex-1 p-8 border-l border-slate-200/50 dark:border-white/10">
+                            <div className="flex flex-wrap justify-between items-start gap-4 mb-4">
+                              <div>
+                                <h2 className="text-2xl font-black uppercase tracking-tighter text-slate-900 dark:text-white group-hover:text-red-600 transition-colors">
+                                  {guide.title}
+                                </h2>
+                                <p className="text-red-600 font-bold text-sm mt-1 font-mono">{guide.model}</p>
+                              </div>
+                              <Badge className={`${getDifficultyColor(guide.difficulty)} uppercase text-[10px] tracking-widest px-3 font-black`}>
+                                {guide.difficulty}
+                              </Badge>
+                            </div>
 
-                           <div className="flex flex-wrap items-center gap-6 text-xs text-slate-800 dark:text-zinc-400 mb-6 font-semibold">
-    <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-red-600" /> {guide.time}</div>
-    <div className="flex items-center gap-2"><Wrench className="h-4 w-4 text-red-600" /> {guide.category}</div>
-  </div>
+                            <div className="flex flex-wrap items-center gap-6 text-xs text-slate-600 dark:text-zinc-400 mb-6 font-bold">
+                              <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-red-600" /> {guide.time}</div>
+                              <div className="flex items-center gap-2"><Wrench className="h-4 w-4 text-red-600" /> {guide.category}</div>
+                            </div>
 
-                           <p className="text-slate-700 dark:text-zinc-400 text-sm mb-8 leading-relaxed line-clamp-3 font-medium">
-    {guide.description}
-  </p>
+                            <p className="text-slate-600 dark:text-zinc-400 text-sm mb-8 leading-relaxed font-medium">
+                              {guide.description}
+                            </p>
 
                             {/* Steps Accordion */}
                             {guide.steps && guide.steps.length > 0 ? (
                               <Accordion type="single" collapsible className="w-full space-y-2">
                                 <AccordionItem value="instruction-set" className="border-none">
-                                  <AccordionTrigger className={`${outlinePillButton} border border-white/10 hover:no-underline flex justify-center bg-white/5`}>
+                                  <AccordionTrigger className={`${outlinePillButton} border border-slate-200/50 dark:border-white/10 hover:no-underline flex justify-center bg-white/5 dark:bg-white/5 font-bold uppercase tracking-wider`}>
                                     View Full Instructions ({guide.steps.length} Steps)
                                   </AccordionTrigger>
                                   <AccordionContent className="pt-6 space-y-4">
-                                 {guide.steps.map((step, idx) => (
-<div key={idx} className="bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 rounded-xl p-6 transition-all hover:border-red-500/30">
-    <div className="flex flex-col md:flex-row gap-6 items-start">
-      
-    {/* STEP IMAGE (LEFT) - Large size with 'Contain' fit */}
-{(step.image_url || step.imageUrl) && (
-  <div 
-    className="w-full md:w-80 h-52 flex-shrink-0 rounded-lg overflow-hidden border border-white/10 cursor-zoom-in group/step relative bg-zinc-900/50"
-    onClick={() => setZoomedImage(step.image_url || step.imageUrl || null)}
-  >
-    <img 
-      src={step.image_url || step.imageUrl} 
-      className="w-full h-full object-contain p-2 transition-transform duration-500 group-hover/step:scale-105" 
-      alt={step.title} 
-    />
-    {/* Hover Overlay Icon */}
-    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/step:opacity-100 transition-opacity flex items-center justify-center">
-      <div className="bg-white/10 backdrop-blur-md p-3 rounded-full border border-white/20">
-        <Search className="text-white h-6 w-6" />
-      </div>
-    </div>
-  </div>
-)}
+                                    {guide.steps.map((step, idx) => (
+                                      <div key={idx} className="bg-white/40 dark:bg-black/40 border border-slate-200/50 dark:border-white/10 rounded-xl p-6 transition-all hover:border-red-500/30">
+                                        <div className="flex flex-col md:flex-row gap-6 items-start">
+                                          {/* STEP IMAGE */}
+                                          {(step.image_url || step.imageUrl) && (
+                                            <div 
+                                              className="w-full md:w-80 h-52 flex-shrink-0 rounded-lg overflow-hidden border border-white/10 cursor-zoom-in group/step relative bg-zinc-900/50"
+                                              onClick={() => setZoomedImage(step.image_url || step.imageUrl || null)}
+                                            >
+                                              <img 
+                                                src={step.image_url || step.imageUrl} 
+                                                className="w-full h-full object-contain p-2 transition-transform duration-500 group-hover/step:scale-105" 
+                                                alt={step.title} 
+                                              />
+                                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/step:opacity-100 transition-opacity flex items-center justify-center">
+                                                <div className="bg-white/10 backdrop-blur-md p-3 rounded-full border border-white/20">
+                                                  <Search className="text-white h-6 w-6" />
+                                                </div>
+                                              </div>
+                                            </div>
+                                          )}
 
-      {/* STEP TEXT (RIGHT) */}
-      <div className="flex-1 space-y-3">
-        <div className="flex items-center gap-3">
-          <span className="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded tracking-tighter">
-            STEP {step.step_number || idx + 1}
-          </span>
-<h4 className="font-bold text-slate-950 dark:text-white uppercase text-sm tracking-wide">
-            {step.step_des || step.title}
-          </h4>
-        </div>
-        <p className="text-slate-800 dark:text-zinc-400 text-sm leading-relaxed whitespace-pre-line border-l border-red-600/30 pl-4 font-medium">
-          {step.procedure || step.step_description || step.description}
-        </p>
-      </div>
-    </div>
-  </div>
-))}	
+                                          {/* STEP TEXT */}
+                                          <div className="flex-1 space-y-3">
+                                            <div className="flex items-center gap-3">
+                                              <span className="bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded tracking-tighter">
+                                                STEP {step.step_number || idx + 1}
+                                              </span>
+                                              <h4 className="font-black text-slate-900 dark:text-white uppercase text-sm tracking-wide">
+                                                {step.step_des || step.title}
+                                              </h4>
+                                            </div>
+                                            <p className="text-slate-700 dark:text-zinc-400 text-sm leading-relaxed whitespace-pre-line border-l border-red-600/30 pl-4 font-medium">
+                                              {step.procedure || step.step_description || step.description}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}	
                                   </AccordionContent>
                                 </AccordionItem>
                               </Accordion>
@@ -505,6 +542,8 @@ useEffect(() => {
                             )}
                           </div>
                         </div>
+                        
+                        <div className="mt-8 h-[1px] w-12 bg-slate-300 dark:bg-red-600/50 group-hover:w-full group-hover:bg-red-500 transition-all duration-500" />
                       </motion.div>
                     ))
                   )}
@@ -513,45 +552,52 @@ useEffect(() => {
             </>
           )}
         </div>
-		
-		
       </div>
-{/* Image Zoom Modal */}
-<AnimatePresence>
-  {zoomedImage && (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={() => setZoomedImage(null)}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 cursor-zoom-out"
-    >
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.8, opacity: 0 }}
-        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="relative max-w-5xl w-full max-h-[90vh] flex items-center justify-center"
-        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking the image itself
-      >
-        <img
-          src={zoomedImage}
-          alt="Zoomed step"
-          className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl border border-white/10"
-        />
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute -top-12 right-0 text-white hover:bg-white/10"
-          onClick={() => setZoomedImage(null)}
-        >
-          <span className="text-2xl">×</span>
-        </Button>
-      </motion.div>
-    </motion.div>
-  )}
-</AnimatePresence>	  
+
+      {/* Image Zoom Modal */}
+      <AnimatePresence>
+        {zoomedImage && (
+          <motion.div
+            
+            onClick={() => setZoomedImage(null)}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 cursor-zoom-out"
+          >
+            <motion.div
+              
+             
+              className="relative max-w-5xl w-full max-h-[90vh] flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={zoomedImage}
+                alt="Zoomed step"
+                className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl border border-white/10"
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute -top-12 right-0 text-white hover:bg-white/10"
+                onClick={() => setZoomedImage(null)}
+              >
+                <span className="text-2xl">×</span>
+              </Button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <style>{`
+        .outline-text {
+          -webkit-text-stroke: 2px #dc2626;
+          color: transparent;
+        }
+        @media (max-width: 1024px) {
+          .outline-text { -webkit-text-stroke: 1.5px #dc2626; }
+        }
+        @media (max-width: 640px) {
+          .outline-text { -webkit-text-stroke: 1px #dc2626; }
+        }
+      `}</style>
     </div>
-	
   );
 }
