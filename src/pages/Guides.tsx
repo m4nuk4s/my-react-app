@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Laptop, Cpu, Smartphone, HardDrive, PenTool } from "lucide-react";
+import { Search, Laptop, Cpu, Smartphone, HardDrive, PenTool, Activity } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Accordion from 'react-bootstrap/Accordion';
 import 'bootstrap/dist/css/bootstrap.min.css'; // Ensure this is loaded in your app
@@ -17,6 +17,8 @@ import fn2 from '../assets/wtpth/fn2.jpg';
 import fnesc from '../assets/wtpth/fnesc.jpg';
 import nlk from '../assets/wtpth/nlk.jpg';
 import plane from '../assets/wtpth/plane.jpg';
+import { motion } from "framer-motion";
+
 
 export default function Guides() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -196,33 +198,54 @@ export default function Guides() {
     }
   };
 
-return (
-    <div className="relative min-h-screen text-foreground bg-[#050505] selection:bg-red-500/30">
-      {/* BACKGROUND VIDEO LAYER */}
+  return (
+    <div className="relative min-h-screen transition-colors duration-700 overflow-hidden font-sans bg-[#f8f9fa] dark:bg-[#050505] text-slate-900 dark:text-white">
+      {/* BACKGROUND - Matches Windows.tsx exactly */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <video 
-          className="w-full h-full object-cover opacity-40 contrast-125 saturate-100" 
+          className="w-full h-full object-cover transition-opacity duration-1000 grayscale opacity-40 contrast-125 dark:opacity-40" 
           autoPlay loop muted playsInline
         >
           <source src={BackVideo} type="video/mp4" />
         </video>
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60" />
+        <div className="absolute inset-0 transition-all duration-700 bg-gradient-to-r from-[#f8f9fa]/60 via-[#f8f9fa]/20 to-transparent dark:from-[#050505] dark:via-[#050505]/80 dark:to-transparent" />
       </div>
 
       <div className="relative z-10">
-       <section className="pt-20 pb-12">
-  <div className="container mx-auto px-6">
-    <div className="max-w-4xl">
-      <h1 className="text-4xl md:text-6xl font-light tracking-tight mb-4 text-white text-left">
-        Computer Repair <span className="font-bold uppercase text-red-600">Guides</span>
-      </h1>
-      <p className="text-lg text-zinc-200 max-w-lg leading-relaxed border-l-2 border-red-600 pl-6 drop-shadow-md text-left">
-        Step-by-step disassembly and repair guides for your devices. 
-        Follow official procedures to diagnose and fix common issues.
-      </p>
-    </div>
-  </div>
-</section>
+        <section className="h-[40vh] flex items-center">
+          <div className="container mx-auto px-6">
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }} 
+              animate={{ opacity: 1, y: 0 }}
+              className="max-w-4xl"
+            >
+              <div className="mb-6 flex items-center gap-4 text-[10px] font-black tracking-[0.3em] uppercase text-slate-600 dark:text-zinc-500">
+                <Activity size={14} className="text-red-600 animate-pulse" /> REPAIR_GUIDES // STEP_BY_STEP
+              </div>
+              
+             <h1 className="text-4xl md:text-[5rem] font-black tracking-[-0.05em] uppercase leading-[0.8] text-slate-950 dark:text-white mb-6">
+  Repair <br />
+  <span 
+    className="outline-text"
+    style={{
+      WebkitTextStroke: '2px #dc2626',
+      color: 'transparent',
+      textStroke: '2px #dc2626',
+      MozTextStroke: '2px #dc2626'
+    }}
+  >
+    Guides
+  </span>
+</h1>
+              
+              <p className="text-lg text-slate-600 dark:text-zinc-400 max-w-lg leading-relaxed border-l-2 border-red-600 pl-6 font-medium">
+                Step-by-step disassembly and repair guides for your devices. 
+                Follow official procedures to diagnose and fix common issues.
+              </p>
+            </motion.div>
+          </div>
+        </section>
+
       </div>
 
       {/* Main Content */}
@@ -2264,39 +2287,53 @@ WHOSE SERIAL NUMBER BEGINS WITH:
 
     </div>
   );
-<style>{`
-  /* LIGHT MODE: Bright Red */
-  .accordion-button {
-    color: #ef4444 !important; /* Bright Red-500 */
-    background: transparent !important;
-    font-weight: 700;
-  }
+            <style>{`
+        .outline-text {
+          -webkit-text-stroke: 2px #dc2626;
+          color: transparent;
+        }
+        @media (max-width: 1024px) {
+          .outline-text { -webkit-text-stroke: 1.5px #dc2626; }
+        }
+        @media (max-width: 640px) {
+          .outline-text { -webkit-text-stroke: 1px #dc2626; }
+        }
+        
+        /* LIGHT MODE: Bright Red */
+        .accordion-button {
+          color: #ef4444 !important; /* Bright Red-500 */
+          background: transparent !important;
+          font-weight: 700;
+        }
 
-  /* DARK MODE: Pure White */
-  .dark .accordion-button {
-    color: #ffffff !important; 
-  }
+        /* DARK MODE: Pure White */
+        .dark .accordion-button {
+          color: #ffffff !important; 
+        }
 
-  /* Sync the arrow icon */
-  .accordion-button::after {
-    filter: sepia(100%) saturate(1000%) hue-rotate(340deg); /* Red arrow in Light */
-  }
+        /* Sync the arrow icon */
+        .accordion-button::after {
+          filter: sepia(100%) saturate(1000%) hue-rotate(340deg); /* Red arrow in Light */
+        }
 
-  .dark .accordion-button::after {
-    filter: invert(1) !important; /* White arrow in Dark */
-  }
+        .dark .accordion-button::after {
+          filter: invert(1) !important; /* White arrow in Dark */
+        }
 
-  /* Match Windows.tsx tile style */
-  .card {
-    background-color: rgba(255, 255, 255, 0.9) !important; /* bg-white/90 */
-    backdrop-filter: blur(20px);
-    border-radius: 1rem;
-  }
-
-  .dark .card {
-    background-color: rgba(24, 24, 27, 0.9) !important; /* dark:bg-zinc-900/90 */
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-`}</style>
+        /* Match Windows.tsx tile style */
+        .card {
+          background-color: rgba(255, 255, 255, 0.9) !important; /* bg-white/90 */
+          backdrop-filter: blur(20px);
+          border-radius: 1rem;
+        }
+.outline-text {
+  -webkit-text-stroke: 3px #dc2626; /* Increased from 2px */
+  color: transparent;
+}
+        .dark .card {
+          background-color: rgba(24, 24, 27, 0.9) !important; /* dark:bg-zinc-900/90 */
+          border-color: rgba(255, 255, 255, 0.1);
+        }
+      `}</style>
   
 }
