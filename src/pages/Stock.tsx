@@ -392,196 +392,127 @@ const autoStatus = stockCount <= 0 ? "Out of Stock" : stockCount <= 10 ? "low_st
         {/* Dashboard Header */}
         <section className="relative pt-8 pb-6 z-10">
           <div className="container mx-auto px-6">
-            <div className="flex flex-col lg:flex-row gap-8">
-              {/* Left Column: Title and Description */}
-              <div className="lg:w-2/5 space-y-4">
+            <div className="flex flex-col space-y-8">
+              {/* Row 1: Title and Description (Original Styles) */}
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-l-4 border-red-600 pl-6">
                 <motion.div 
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="flex items-center gap-3"
                 >
-  <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-  <Database className="text-red-600 dark:text-red-400" size={48} />
+                  <div className="flex items-center gap-3 mb-2">
+                    <Database className="text-red-600 dark:text-red-400" size={48} />
+                    <h1 className="text-4xl md:text-6xl font-light tracking-tight text-white transition-colors">
+                      Notebook Parts <span className="font-bold uppercase text-red-600">Inventory</span>
+                    </h1>
                   </div>
-                  <div>
-   <h1 className="text-4xl md:text-6xl font-light tracking-tight text-white transition-colors">
-            Notebook Parts <span className="font-bold uppercase text-red-600">Inventory</span>
-          </h1>
-                    <p className="text-sm text-gray-700 dark:text-zinc-400 mt-1">Live stock tracking & management</p>
-                  </div>
+                  <p className="text-zinc-700 dark:text-zinc-400 text-sm">Live stock tracking & component compatibility database</p>
                 </motion.div>
-                    <p className="text-zinc-700 text-base max-w-lg leading-relaxed border-l-2 border-red-600 pl-6 drop-shadow-md mb-8">
-        Access real-time stock tracking and component compatibility database.
-      </p>
-                
-                {/* Quick Stats with clickable status filters */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-4">
-                  {[
-                    { label: "Total", value: stats.totalItems, bg: "bg-gradient-to-br from-white to-gray-50 dark:from-gray-800/50 dark:to-gray-900/30", border: "border-gray-300/80 dark:border-white/15", text: "text-gray-700 dark:text-zinc-400", onClick: () => setStatusFilter(null) },
-                    { 
-                      label: "In Stock", 
-                      value: stats.inStock, 
-                      bg: "bg-gradient-to-br from-green-100 to-green-200 dark:from-green-800/50 dark:to-green-600", 
-                      border: "border-green-300/80 dark:border-green-500/40", 
-                      text: "text-green-900 dark:text-green-100",
-                      active: statusFilter === "in_stock",
-                      onClick: () => handleStatusFilter("in_stock")
-                    },
-                    { 
-                      label: "Low Stock", 
-                      value: stats.lowStock, 
-                      bg: "bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800/50 dark:to-yellow-700/40", 
-                      border: "border-yellow-300/80 dark:border-yellow-500/40", 
-                      text: "text-yellow-900 dark:text-yellow-100",
-                      active: statusFilter === "low_stock",
-                      onClick: () => handleStatusFilter("low_stock")
-                    },
-                    { 
-                      label: "Out of Stock", 
-                      value: stats.outOfStock, 
-                      bg: "bg-gradient-to-br from-red-100 to-red-200 dark:from-red-800/50 dark:to-red-700/40", 
-                      border: "border-red-300/80 dark:border-red-500/40", 
-                      text: "text-red-900 dark:text-red-100",
-                      active: statusFilter === "Out of Stock",
-                      onClick: () => handleStatusFilter("Out of Stock")
-                    }
-                  ].map((stat, index) => (
-                    <motion.button
-                      key={stat.label}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      onClick={stat.onClick}
-                      className={`${stat.bg} backdrop-blur-sm border ${stat.border} rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 active:translate-y-0 text-left ${
-                        stat.active ? 'ring-2 ring-offset-2 ring-red-500 dark:ring-red-400' : ''
-                      }`}
-                    >
-                      <p className={`text-xs uppercase tracking-wider ${stat.text} font-semibold`}>{stat.label}</p>
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stat.value}</p>
-                      {stat.active && (
-                        <div className="mt-2 text-xs text-red-600 dark:text-red-400 font-medium flex items-center gap-1">
-                          <span>Active filter</span>
-                          <X size={12} className="ml-auto cursor-pointer" onClick={(e) => { e.stopPropagation(); setStatusFilter(null); }} />
-                        </div>
-                      )}
-                    </motion.button>
-                  ))}
-                </div>
-                {statusFilter && (
-                  <motion.div 
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    className="mt-3 p-3 bg-gradient-to-r from-red-100 to-red-200 dark:from-red-800/30 dark:to-red-700/20 border border-red-300 dark:border-red-600 rounded-xl"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-red-900 dark:text-red-100">
-                        Showing {statusFilter === "in_stock" ? "In Stock" : statusFilter === "low_stock" ? "Low Stock" : "Out of Stock"} items only
-                      </span>
-                      <button 
-                        onClick={() => setStatusFilter(null)}
-                        className="text-xs text-red-700 dark:text-red-300 hover:text-red-900 dark:hover:text-red-100 font-medium flex items-center gap-1"
-                      >
-                        <X size={12} /> Clear filter
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </div>
 
-              {/* Right Column: Search and Controls */}
-              <div className="lg:w-3/5 space-y-4">
-                {/* Search Bar */}
-                <motion.div 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="bg-gradient-to-br from-white/95 to-gray-50/95 dark:from-white/15 dark:to-white/10 backdrop-blur-xl border border-gray-400/50 dark:border-white/20 rounded-2xl p-4 shadow-xl dark:shadow-2xl"
-                >
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {[
-                      { icon: Search, placeholder: "Search by Part Code...", value: partCodeSearch, setter: setPartCodeSearch },
-                      { icon: Laptop, placeholder: "Filter by Model...", value: modelSearch, setter: setModelSearch },
-                      { icon: MapPin, placeholder: "Location...", value: locSearch, setter: setLocSearch }
-                    ].map((field, idx) => (
-                      <div key={idx} className="relative">
-                        <field.icon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600 dark:text-zinc-500" size={18} />
-                        <input
-                          type="text"
-                          placeholder={field.placeholder}
-                          value={field.value || ''}
-                          onChange={(e) => {field.setter(e.target.value); setVisibleCount(20);}}
-                          className="w-full pl-10 pr-4 h-11 bg-white/90 dark:bg-white/15 border border-gray-400/50 dark:border-white/20 rounded-xl text-gray-900 dark:text-white placeholder:text-gray-600 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-500/70 focus:border-transparent transition-all text-sm hover:border-gray-500/50 dark:hover:border-white/30 shadow-sm"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* Advanced Filters Row */}
-                  <div className="flex flex-wrap gap-3 mt-4 items-center">
-                    <div className="flex-1 min-w-[200px]">
-                      <select 
-                        value={modelFilter || ''}
-                        onChange={(e) => setModelFilter(e.target.value)}
-                        className="w-full h-10 px-4 bg-white/90 dark:bg-white/15 border border-gray-400/50 dark:border-white/20 rounded-xl text-gray-900 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500/70 focus:border-transparent transition-all hover:border-gray-500/50 dark:hover:border-white/30 shadow-sm"
-                      >
-                        <option value="" className="bg-white dark:bg-gray-900">All Models</option>
-                        {data && Array.from(new Set(data.map(i => i.model))).sort().map(m => (
-                          <option key={m} value={m} className="bg-white dark:bg-gray-900">{m}</option>
-                        ))}
-                      </select>
-                    </div>
-                    
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={resetFilters}
-                        className="h-10 px-4 flex items-center gap-2 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-white/20 dark:to-white/10 hover:from-red-100 hover:to-red-200 dark:hover:from-red-500/30 dark:hover:to-red-500/20 border border-gray-400/50 dark:border-white/20 hover:border-red-400 dark:hover:border-red-500/40 rounded-xl text-gray-800 dark:text-white text-sm font-medium transition-all duration-300 group hover:-translate-y-0.5 active:translate-y-0 shadow-sm hover:shadow-md"
-                      >
-                        <RefreshCw size={16} className="group-hover:rotate-180 transition-transform duration-500" />
-                        Reset All
-                      </button>
-                      <button 
-                        onClick={exportToDatasheet}
-className="h-10 px-4 flex items-center gap-2 bg-gradient-to-r from-green-100 to-green-200 dark:from-green-600 dark:to-green-700 hover:from-green-200 hover:to-green-300 dark:hover:from-green-700 dark:hover:to-green-800 border border-green-400/50 dark:border-green-500/40 rounded-xl text-green-800 dark:!text-white text-sm font-medium transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 shadow-sm"                      >
-                        <Download size={16} />
-                        Export To Excel
-                      </button>
-                      {isAdmin && (
-                        <button 
-                          onClick={() => { fetchMovements(); setIsLogsModalOpen(true); }}
-                          className="h-10 px-4 flex items-center gap-2 bg-gradient-to-r from-yellow-100 to-yellow-200 dark:from-yellow-500/30 dark:to-yellow-500/20 hover:from-yellow-200 hover:to-yellow-300 dark:hover:from-yellow-500/40 dark:hover:to-yellow-500/30 border border-yellow-400/50 dark:border-yellow-500/40 hover:border-yellow-500 dark:hover:border-yellow-500/60 rounded-xl text-yellow-800 dark:text-white text-sm font-medium transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 shadow-sm"
-                        >
-                          <BarChart3 size={16} />
-                          View Logs
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-                
-                {/* Admin Actions */}
+                {/* Admin Actions (Moved here to save space) */}
                 {isAdmin && (
                   <motion.div 
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
                     className="flex flex-wrap gap-2"
                   >
                     <button 
                       onClick={() => {setCurrentItem({}); setIsModalOpen(true);}}
-                      className="px-4 h-10 flex items-center gap-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 dark:from-red-500 dark:to-red-600 dark:hover:from-red-600 dark:hover:to-red-700 rounded-xl text-white text-sm font-bold transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 shadow-lg shadow-red-500/40 hover:shadow-xl hover:shadow-red-500/50 dark:shadow-red-500/30 dark:hover:shadow-red-500/40"
+                      className="px-4 h-10 flex items-center gap-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 rounded-xl text-white text-sm font-bold transition-all shadow-lg"
                     >
-                      <Plus size={16} />
-                      Add New Part
+                      <Plus size={16} /> Add Part
                     </button>
-                    <button 
-                      onClick={() => fetchStock()}
-                      className="px-4 h-10 flex items-center gap-2 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-white/20 dark:to-white/10 hover:from-gray-300 hover:to-gray-400 dark:hover:from-white/30 dark:hover:to-white/20 border border-gray-400/50 dark:border-white/20 rounded-xl text-gray-800 dark:text-white text-sm font-medium transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 shadow-sm"
-                    >
-                      <RefreshCw size={16} />
-                      Refresh Data
-                    </button>
+                    
                   </motion.div>
                 )}
+              </div>
+
+              {/* Row 2: Stats (Left) and Search (Right) */}
+              <div className="flex flex-col lg:flex-row gap-6 items-start">
+                
+                {/* Status Cards (Left Side - 40% Width) */}
+                <div className="w-full lg:w-2/5">
+				
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { label: "Storages", value: stats.totalItems, bg: "bg-gradient-to-br from-white to-gray-50 dark:from-gray-800/50 dark:to-gray-900/30", border: "border-gray-300/80 dark:border-white/15", text: "text-gray-700 dark:text-zinc-400", onClick: () => setStatusFilter(null) },
+                      { label: "Storages With Stock", value: stats.inStock, bg: "bg-gradient-to-br from-green-100 to-green-200 dark:from-green-800/50 dark:to-green-600", border: "border-green-300/80 dark:border-green-500/40", text: "text-green-900 dark:text-green-100", active: statusFilter === "in_stock", onClick: () => handleStatusFilter("in_stock") },
+                      { label: "Storages With Low Stock", value: stats.lowStock, bg: "bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800/50 dark:to-yellow-700/40", border: "border-yellow-300/80 dark:border-yellow-500/40", text: "text-yellow-900 dark:text-yellow-100", active: statusFilter === "low_stock", onClick: () => handleStatusFilter("low_stock") },
+                      { label: "Storages Out of Stock", value: stats.outOfStock, bg: "bg-gradient-to-br from-red-100 to-red-200 dark:from-red-800/50 dark:to-red-700/40", border: "border-red-300/80 dark:border-red-500/40", text: "text-red-900 dark:text-red-100", active: statusFilter === "Out of Stock", onClick: () => handleStatusFilter("Out of Stock") }
+                    ].map((stat, index) => (
+                      <motion.button
+                        key={stat.label}
+                       
+                        onClick={stat.onClick}
+                        className={`${stat.bg} backdrop-blur-sm border ${stat.border} rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${stat.active ? 'ring-2 ring-red-500' : ''} text-left`}
+                      >
+                        <p className={`text-[10px] uppercase tracking-wider ${stat.text} font-bold`}>{stat.label}</p>
+                        <p className="text-2xl font-black text-gray-900 dark:text-white mt-1">{stat.value}</p>
+                      </motion.button>
+                    ))}
+                  </div>
+                  {statusFilter && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3 p-2 bg-red-500/10 border border-red-500/20 rounded-lg flex justify-between items-center">
+                      <span className="text-xs font-bold text-red-600 uppercase">Filtered: {statusFilter.replace("_", " ")}</span>
+                      <X size={14} className="cursor-pointer text-red-600" onClick={() => setStatusFilter(null)} />
+                    </motion.div>
+                  )}
+                </div>
+
+                {/* Search and Filters (Right Side - 60% Width) */}
+                <div className="w-full lg:w-3/5">
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+					
+                    className="bg-white/95 dark:bg-white/10 backdrop-blur-xl border border-gray-400/50 dark:border-white/20 rounded-2xl p-5 shadow-xl h-full"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                      {[
+                        { icon: Search, placeholder: "Part Code...", value: partCodeSearch, setter: setPartCodeSearch },
+                        { icon: Laptop, placeholder: "Model...", value: modelSearch, setter: setModelSearch },
+                        { icon: MapPin, placeholder: "Location...", value: locSearch, setter: setLocSearch }
+                      ].map((field, idx) => (
+                        <div key={idx} className="relative">
+                          <field.icon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                          <input
+                            type="text"
+                            placeholder={field.placeholder}
+                            value={field.value || ''}
+                            onChange={(e) => {field.setter(e.target.value); setVisibleCount(20);}}
+                            className="w-full pl-10 pr-4 h-10 bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-xl text-sm"
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 items-center">
+                      <select 
+                        value={modelFilter || ''}
+                        onChange={(e) => setModelFilter(e.target.value)}
+                        className="flex-1 h-10 px-3 bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-xl text-xs font-medium"
+                      >
+                        <option value="">All Models</option>
+                        {data && Array.from(new Set(data.map(i => i.model))).sort().map(m => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                      
+                      <button onClick={resetFilters} className="h-10 px-3 bg-gray-100 dark:bg-white/5 hover:bg-red-50 rounded-xl font-bold  text-xs transition-colors border border-gray-300 dark:border-white/10">
+                        <RefreshCw size={14} className="inline mr-1" /> Reset
+                      </button>
+                      
+                      <button onClick={exportToDatasheet} className="h-10 px-3 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-bold shadow-md">
+                        <Download size={14} className="inline mr-1" /> Export
+                      </button>
+
+                      {isAdmin && (
+                        <button onClick={() => { fetchMovements(); setIsLogsModalOpen(true); }} className="h-10 px-3 bg-yellow-500/20 text-yellow-700 dark:text-yellow-500 border border-yellow-500/30 rounded-xl text-xs font-bold">
+                          <BarChart3 size={14} className="inline mr-1" /> Logs
+                        </button>
+                      )}
+                    </div>
+                  </motion.div>
+                </div>
               </div>
             </div>
           </div>
@@ -589,6 +520,7 @@ className="h-10 px-4 flex items-center gap-2 bg-gradient-to-r from-green-100 to-
 
         {/* Main Content Area */}
         <section className="container mx-auto px-6 pb-32">
+		
           <motion.div 
             initial="hidden" 
             animate="visible" 
@@ -599,6 +531,16 @@ className="h-10 px-4 flex items-center gap-2 bg-gradient-to-r from-green-100 to-
             <div className="p-4 border-b border-gray-400/50 dark:border-white/20 bg-gradient-to-r from-white to-gray-50 dark:from-white/15 dark:to-transparent">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
+				<button 
+  onClick={() => fetchStock()}
+  className="px-4 h-10 flex items-center gap-2 bg-white/10 dark:bg-white/5 border border-white/10 rounded-xl transition-all text-red-500 dark:!text-white hover:bg-white/20"
+>
+  <RefreshCw 
+    size={16} 
+    strokeWidth={3} 
+    className="text-red-500 dark:!text-white" 
+  />
+</button>
                   <div className="w-2 h-6 bg-gradient-to-b from-red-600 to-red-700 dark:from-red-500 dark:to-red-600 rounded-full shadow-sm" />
                   <h3 className="text-lg font-bold text-gray-900 dark:text-white">Inventory Items</h3>
                   <Badge variant="outline" className="bg-gradient-to-r from-gray-200 to-gray-300 dark:from-white/20 dark:to-white/10 text-gray-800 dark:text-zinc-300 border border-gray-400/50 dark:border-white/20">
@@ -610,6 +552,7 @@ className="h-10 px-4 flex items-center gap-2 bg-gradient-to-r from-green-100 to-
                     )}
                   </Badge>
                 </div>
+				
                 <div className="text-sm text-gray-700 dark:text-zinc-400 flex items-center gap-2">
                   <Calendar size={14} />
                   Updated just now
