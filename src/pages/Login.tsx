@@ -274,14 +274,7 @@ export default function Login() {
                 </AnimatePresence>
 
                 {/* RESTORED SUPPORT LINK */}
-                <div className="mt-10 flex flex-col items-center">
-                  <a href="mailto:Operateur.sav.5@groupsfit.eu" className="group flex flex-col items-center gap-2 text-slate-400 hover:text-red-600 dark:text-zinc-500 transition-all">
-                    <div className="h-8 w-8 rounded-full border border-slate-200 dark:border-white/10 flex items-center justify-center group-hover:border-red-500/50 group-hover:bg-red-500/5">
-                        <Mail className="h-3.5 w-3.5" />
-                    </div>
-                    <span className="text-[9px] font-black uppercase tracking-[0.4em]">Contact Support</span>
-                  </a>
-                </div>
+               
               </CardContent>
             </Tabs>
           </div>
@@ -311,7 +304,7 @@ export default function Login() {
           <Activity size={12} className="text-red-600 animate-pulse" /> SECURITY_RECOVERY
         </div>
         <DialogTitle className="text-4xl font-black uppercase tracking-tighter text-slate-950 dark:text-white leading-none">
-          Secure <span className="outline-text" style={{ WebkitTextStroke: '1.5px #dc2626' }}>Restore</span>
+          Password <span className="outline-text" style={{ WebkitTextStroke: '1.5px #dc2626' }}>Recovery</span>
         </DialogTitle>
         <DialogDescription className="text-slate-600 dark:text-zinc-400 font-bold text-[10px] uppercase tracking-[0.2em] border-y border-red-600/20 py-3 mx-auto max-w-[280px]">
           Enter your Email to recovery the Password.
@@ -339,13 +332,13 @@ export default function Login() {
       ) : (
         <div className="space-y-6">
           <div className="space-y-2">
-            <label className="text-[10px] font-black tracking-[0.3em] uppercase text-slate-500 ml-1">Identity_Protocol</label>
+            <label className="text-[10px] font-black tracking-[0.3em] uppercase text-slate-500 ml-1">Email Address</label>
             <Input 
               type="email" 
               placeholder="AUTH@SYSTEM.LOCAL" 
               value={recoveryEmail} 
               onChange={(e) => setRecoveryEmail(e.target.value)} 
-              className="h-14 px-5 rounded-md border-slate-200 dark:border-white/10 bg-white/40 dark:bg-white/5 focus:border-red-600 focus:ring-0 transition-all font-mono text-sm uppercase" 
+              className="h-14 px-5 rounded-md border-slate-200 dark:border-white/10 bg-white/40 dark:bg-white/5 focus:border-red-600 focus:ring-0 transition-all text-sm uppercase" 
             />
           </div>
 
@@ -463,11 +456,24 @@ export default function Login() {
         </DialogContent>
       </Dialog>
 
-      <style>{`
-        .outline-text { -webkit-text-stroke: 2px #dc2626; color: transparent; }
-        @media (max-width: 1024px) { .outline-text { -webkit-text-stroke: 1.5px #dc2626; } }
-        input:-webkit-autofill { -webkit-box-shadow: 0 0 0px 1000px rgba(9, 9, 11, 0.5) inset; -webkit-text-fill-color: #fff; }
-      `}</style>
+     <style>{`
+  .outline-text { -webkit-text-stroke: 2px #dc2626; color: transparent; }
+  @media (max-width: 1024px) { .outline-text { -webkit-text-stroke: 1.5px #dc2626; } }
+  
+  /* --- AUTOFILL FIX --- */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover, 
+  input:-webkit-autofill:focus, 
+  input:-webkit-autofill:active {
+    /* This transitions the background color to transparent over a long period */
+    -webkit-transition: "color 9999s ease-out, background-color 9999s ease-out";
+    -webkit-transition-delay: 9999s;
+    
+    /* This handles the text color specifically */
+    -webkit-text-fill-color: inherit !important;
+    caret-color: white; 
+  }
+`}</style>
     </div>
   );
 }
