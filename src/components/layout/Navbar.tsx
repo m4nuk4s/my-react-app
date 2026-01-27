@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { MenuIcon, User, LogOut, ChevronDown } from "lucide-react";
+import { MenuIcon, LogOut, ChevronDown, Activity, ShieldCheck, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { EnhancedThemeToggle } from "@/components/ui/enhanced-theme-toggle";
 import { useSettings } from "@/contexts/SettingsContext";
@@ -22,275 +22,141 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
-  const { settings } = useSettings();
 
-  // Handle scroll effect
   useEffect(() => {
-    const handleScroll = () => {
-      const isScrolled = window.scrollY > 10;
-      if (isScrolled !== scrolled) {
-        setScrolled(isScrolled);
-      }
-    };
-
+    const handleScroll = () => setScrolled(window.scrollY > 15);
     window.addEventListener("scroll", handleScroll);
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, [scrolled]);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
-  const outlinePillButton =
-    "!rounded-md bg-transparent border border-transparent " +
-    "text-gray-900 dark:text-gray-100 px-6 py-2 text-sm font-medium " +
-    "transition-all duration-200 ease-out " +
-    "hover:border-gray-400 hover:bg-gray-100 hover:-translate-y-[1px] hover:shadow-sm " +
-    "dark:hover:border-gray-500 dark:hover:bg-gray-800 " +
-    "active:translate-y-0 active:shadow-none " +
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400/40";
+  // Syncing with Login.tsx "Industrial Pill" style
+  const navPillButton = cn(
+    "flex items-center gap-2 px-4 py-2 rounded-md transition-all duration-300",
+    "text-[10px] font-black uppercase tracking-[0.2em]",
+    "bg-white/40 dark:bg-white/5 backdrop-blur-md border border-slate-200/50 dark:border-white/10",
+    "hover:border-red-600/60 hover:shadow-[0_0_20px_-5px_rgba(220,38,38,0.3)] hover:text-red-600 active:scale-95"
+  );
 
   const allNavigation = [
     { name: "Windows Images", href: "/windows", roles: ["admin", "user"] },
     { name: "Drivers", href: "/drivers", roles: ["admin", "user", "client"] },
     { name: "Guides", href: "/guides", roles: ["admin", "user", "client"] },
     { name: "Docs", href: "/docs", roles: ["admin", "user"] },
-    {
-      name: "Disassembly Guides",
-      href: "/disassembly-guides",
-      roles: ["admin", "user"],
-    },
+    { name: "Disassembly Guides", href: "/disassembly-guides", roles: ["admin", "user"] },
     { name: "Test Tools", href: "/test-tools", roles: ["admin", "user"] },
-	{ name: "Stock", href: "/stock", roles: ["admin", "user"] },
+    { name: "Stock", href: "/stock", roles: ["admin", "user"] },
     { name: "Requests", href: "/requests", roles: ["admin", "user", "client"] },
   ];
 
-  const navigation = user
-    ? allNavigation.filter((item) => item.roles.includes(user.role))
-    : [];
-
+  const navigation = user ? allNavigation.filter((item) => item.roles.includes(user.role)) : [];
   const isActive = (path: string) => location.pathname === path;
-
-  const handleLogout = () => {
-    logout();
-    setIsOpen(false);
-  };
 
   return (
     <motion.nav
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      initial={{ y: -70 }}
+      animate={{ y: 0 }}
       className={cn(
-        "sticky top-0 z-40 w-full backdrop-blur-md transition-all duration-200 border-b-2",
+        "sticky top-0 z-50 w-full transition-all duration-300 border-b",
         scrolled
-          ? "bg-background/95 shadow-md border-red-600 dark:border-white"
-          : "bg-background border-red-600 dark:border-white"
+          ? "bg-white/95 dark:bg-[#020202]/95 backdrop-blur-xl border-red-600/50 h-14"
+          : "bg-background/80 backdrop-blur-md border-transparent h-16"
       )}
     >
-      <div className="w-full px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between relative w-full">
+      <div className="max-w-[1800px] mx-auto px-6 h-full">
+        <div className="flex items-center justify-between h-full relative">
           
-          {/* LEFT: Logo Section */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="flex items-center z-10"
-          >
-            <Link to="/" className="flex-shrink-0 flex items-center group">
-              <div className="relative">
-                <motion.img
-                  whileHover={{ scale: 1.1 }}
-                  transition={{ type: "spring", stiffness: 100 }}
-                  src={logoB}
-                  alt="Logo"
-                  className="h-[60px] w-auto block dark:hidden"
-                />
-                <motion.img
-                  whileHover={{ scale: 1.1 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                  src={logoW}
-                  alt="Logo White"
-                  className="hidden dark:block h-[60px] w-auto"
-                />
-              </div>
+          {/* LOGO AREA */}
+          <div className="flex items-center gap-6 z-10">
+            <Link to="/" className="flex items-center transition-opacity hover:opacity-80">
+              <img src={logoB} className="h-12 w-auto dark:hidden" alt="Logo" />
+              <img src={logoW} className="h-12 w-auto hidden dark:block" alt="Logo" />
             </Link>
-          </motion.div>
-
-          {/* CENTER: Navigation Links (Absolutely centered) */}
-          <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center">
-            {isAuthenticated && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex space-x-1 items-center"
-              >
-                {navigation.map((item, index) => (
-                  <motion.div
-                    key={item.name}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 * index }}
-                  >
-                    <Button
-                      asChild
-                      variant="ghost"
-                      className={cn(
-                        "rounded-none h-9 px-4 bg-transparent transition-all duration-200",
-                        isActive(item.href)
-                          ? "font-bold text-red-600 dark:text-white"
-                          : "text-foreground hover:!text-red-600 hover:!font-bold dark:hover:!text-white"
-                      )}
-                    >
-                      <Link to={item.href}>{item.name}</Link>
-                    </Button>
-                  </motion.div>
-                ))}
-              </motion.div>
-            )}
+            <div className="hidden 2xl:flex items-center gap-2 border-l border-white/10 pl-6">
+              
+              
+            </div>
           </div>
 
-          {/* RIGHT: Auth & Theme (Right aligned) */}
-          <div className="hidden md:flex items-center space-x-4 z-10">
+          {/* MAIN NAV */}
+          <div className="hidden xl:flex absolute left-1/2 -translate-x-1/2 items-center gap-1">
+            {isAuthenticated && navigation.map((item) => (
+              <Link 
+                key={item.name} 
+                to={item.href}
+                className={cn(
+                  "relative px-4 py-2 text-[10px] font-black uppercase tracking-[0.12em] transition-all",
+                  isActive(item.href) 
+                    ? "text-red-600 drop-shadow-[0_0_8px_rgba(220,38,38,0.5)]" 
+                    : "text-slate-500 dark:text-zinc-500 hover:text-red-500"
+                )}
+              >
+                {item.name}
+                {isActive(item.href) && (
+                  <motion.div layoutId="nav-glow" className="absolute bottom-0 left-2 right-2 h-[1px] bg-red-600 shadow-[0_0_10px_#dc2626]" />
+                )}
+              </Link>
+            ))}
+          </div>
+
+          {/* ACTIONS */}
+          <div className="flex items-center gap-4 z-10">
             <EnhancedThemeToggle />
 
             {isAuthenticated ? (
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={outlinePillButton}
-                  >
-                    <User className="h-4 w-4 mr-2 text-primary" />
-                    <span className="max-w-[100px] truncate">
-                      {user?.username}
-                    </span>
-                    <ChevronDown className="h-4 w-4 ml-1 opacity-70" />
-                  </Button>
+                <DropdownMenuTrigger className={navPillButton}>
+                  <ShieldCheck size={14} className="text-red-600" />
+                  <span className="hidden lg:inline-block truncate max-w-[100px]">{user?.username}</span>
+                  <ChevronDown size={12} className="opacity-30" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="end"
-                  className="w-56 animate-in fade-in-80 shadow-lg"
-                >
+                <DropdownMenuContent align="end" className="w-52 mt-2 bg-white/95 dark:bg-zinc-950/95 border-red-600/30 shadow-2xl backdrop-blur-2xl">
                   {isAdmin && (
-                    <DropdownMenuItem asChild>
-                      <Link
-                        to="/admin"
-                        className="w-full cursor-pointer text-red-600 font-semibold"
-                      >
-                        Admin Dashboard
-                      </Link>
+                    <DropdownMenuItem asChild className="focus:bg-red-600/10 cursor-pointer">
+                      <Link to="/admin" className="w-full text-[10px] font-black uppercase tracking-widest text-red-600">Admin_Terminal</Link>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem
-                    onClick={handleLogout}
-                    className="cursor-pointer"
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Logout
+                  <DropdownMenuItem onClick={() => logout()} className="focus:bg-red-600/10 cursor-pointer text-[10px] font-black uppercase tracking-widest">
+                    <LogOut size={12} className="mr-2" /> End_Session
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button
-                asChild
-                variant="outline"
-                size="sm"
-                className={cn(outlinePillButton, "font-semibold")}
-              >
-                <Link to="/login">Login</Link>
-              </Button>
+              <Link to="/login" className={navPillButton}>
+                <User size={14} className="text-red-600" />
+                Authenticate
+              </Link>
             )}
-          </div>
 
-          {/* MOBILE: Menu Button (Anchored right) */}
-          <div className="flex items-center md:hidden">
-            <Sheet open={isOpen} onOpenChange={setIsOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full">
-                  <MenuIcon className="h-6 w-6" />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent
-                side="right"
-                className="w-[300px] sm:w-[400px] border-l border-primary/20"
-              >
-                <div className="mt-6 flow-root">
-                  <div className="py-4">
-                    <div className="flex flex-col gap-2">
-                      {isAuthenticated && (
-                        <>
-                          {navigation.map((item) => (
-                            <Button
-                              key={item.name}
-                              asChild
-                              variant={isActive(item.href) ? "default" : "ghost"}
-                              className={cn(
-                                "justify-start",
-                                isActive(item.href)
-                                  ? "bg-primary/90 text-primary-foreground"
-                                  : ""
-                              )}
-                              onClick={() => setIsOpen(false)}
-                            >
-                              <Link to={item.href}>{item.name}</Link>
-                            </Button>
-                          ))}
-                        </>
-                      )}
-
-                      <div className="flex items-center px-3 py-2">
-                        <EnhancedThemeToggle />
-                        <span className="ml-2 text-sm font-medium">
-                          Toggle theme
-                        </span>
-                      </div>
-
-                      <div className="pt-4 mt-4 border-t border-primary/20">
-                        {isAuthenticated ? (
-                          <>
-                            <div className="flex items-center px-3 py-2 text-sm font-medium mb-2">
-                              <User className="h-4 w-4 mr-2 text-primary" />
-                              <span className="max-w-[200px] truncate">
-                                {user?.username}
-                              </span>
-                            </div>
-                            {isAdmin && (
-                              <Button
-                                asChild
-                                variant="destructive"
-                                className="justify-start w-full font-bold"
-                                onClick={() => setIsOpen(false)}
-                              >
-                                <Link to="/admin">Admin Dashboard</Link>
-                              </Button>
-                            )}
-                            <Button
-                              variant="outline"
-                              className="w-full justify-start mt-2"
-                              onClick={handleLogout}
-                            >
-                              <LogOut className="h-4 w-4 mr-2" />
-                              Logout
-                            </Button>
-                          </>
-                        ) : (
-                          <Button
-                            asChild
-                            variant="default"
-                            className="w-full justify-start bg-gradient-to-r from-primary to-purple-600"
-                            onClick={() => setIsOpen(false)}
-                          >
-                            <Link to="/login">Login</Link>
-                          </Button>
-                        )}
-                      </div>
+            {/* MOBILE MENU */}
+            <div className="xl:hidden">
+              <Sheet open={isOpen} onOpenChange={setIsOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="hover:bg-red-600/10">
+                    <MenuIcon className="h-6 w-6 text-red-600" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="bg-white dark:bg-[#020202] border-l border-red-600/40">
+                  <div className="mt-10 flex flex-col gap-1">
+                    <div className="text-[10px] font-black tracking-[0.4em] text-zinc-500 mb-6 flex items-center gap-2">
+                       <Activity size={12} className="text-red-600" /> DIRECTORY
                     </div>
+                    {navigation.map((item) => (
+                      <Link 
+                        key={item.name} 
+                        to={item.href} 
+                        onClick={() => setIsOpen(false)}
+                        className={cn(
+                          "py-4 px-4 text-sm font-black uppercase tracking-widest border-l-2 transition-all",
+                          isActive(item.href) ? "border-red-600 bg-red-600/5 text-red-600" : "border-transparent text-zinc-400"
+                        )}
+                      >
+                        {item.name}
+                      </Link>
+                    ))}
                   </div>
-                </div>
-              </SheetContent>
-            </Sheet>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
         </div>
       </div>
