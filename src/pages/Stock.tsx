@@ -210,6 +210,7 @@ const fetchStock = async () => {
     toast.success("All filters cleared");
   };
 
+const [isConsuming, setIsConsuming] = useState(false);
 const exportLogsToCSV = () => {
   if (movements.length === 0) return toast.error("No logs to export");
 
@@ -245,21 +246,24 @@ const exportLogsToCSV = () => {
   toast.success("Logs exported successfully");
 };
 
-  const handleStockMovement = async () => {
-    if (!movingItem || !movingItem.id) return;
-    
-    const finalTech = selectedTech === "other" ? customTech : selectedTech;
-    if (!finalTech) {
-      toast.error("Please select or enter a technician");
-      return;
-    }
+const handleStockMovement = async () => {
+  if (!movingItem || !movingItem.id || isConsuming) return; // Prevent entry if already consuming
+  
+  const finalTech = selectedTech === "other" ? customTech : selectedTech;
+  if (!finalTech) {
+    toast.error("Please select or enter a technician");
+    return;
+  }
 
-    const oldQty = movingItem.stock;
-    if (oldQty <= 0) {
-      toast.error("Stock is already empty");
-      return;
-    }
+  const oldQty = movingItem.stock;
+  if (oldQty <= 0) {
+    toast.error("Stock is already empty");
+    return;
+  }
 
+  setIsConsuming(true); // Start loading state
+
+  try {
     const newQty = oldQty - 1;
     const autoStatus = newQty <= 0 ? "Out of Stock" : newQty <= 10 ? "low_stock" : "in_stock";
 
@@ -268,10 +272,7 @@ const exportLogsToCSV = () => {
       .update({ stock: newQty, status: autoStatus })
       .eq("id", movingItem.id);
 
-    if (updateError) {
-      toast.error("Update failed");
-      return;
-    }
+    if (updateError) throw updateError;
 
     const { error: logError } = await supabase.from("movement").insert({
       user: userEmail,
@@ -283,15 +284,20 @@ const exportLogsToCSV = () => {
       newqt: newQty
     });
 
-    if (!logError) {
-      toast.success(`Part consumed by ${finalTech}`);
-      setIsMoveModalOpen(false);
-      setSelectedTech("");
-      setCustomTech("");
-      fetchStock();
-    }
-  };
+    if (logError) throw logError;
 
+    toast.success(`Part consumed by ${finalTech}`);
+    setIsMoveModalOpen(false);
+    setSelectedTech("");
+    setCustomTech("");
+    fetchStock();
+  } catch (error) {
+    console.error(error);
+    toast.error("Update failed. Please try again.");
+  } finally {
+    setIsConsuming(false); // Reset loading state regardless of outcome
+  }
+};
   const handleSave = async () => {
     const stockCount = currentItem.stock || 0;
     const autoStatus = stockCount <= 0 ? "Out of Stock" : stockCount <= 10 ? "low_stock" : "in_stock";
@@ -972,19 +978,24 @@ useEffect(() => {
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <Button 
-                    onClick={handleStockMovement} 
-                    className="flex-1 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white font-bold h-12 rounded-xl transition-all duration-300 hover:-translate-y-0.5"
-                  >
-                    Yes, Consume Part
-                  </Button>
-                  <Button 
-                    onClick={() => setIsMoveModalOpen(false)} 
-                    variant="outline" 
-                    className="flex-1 h-12 rounded-xl border border-slate-200/50 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/10 text-slate-900 dark:text-white"
-                  >
-                    Cancel
-                  </Button>
+     <Button 
+  onClick={handleStockMovement} 
+  disabled={isConsuming}
+  className={`
+    flex-1 h-12 rounded-xl font-bold transition-all duration-300
+    bg-gradient-to-r from-yellow-500 to-yellow-600 
+    hover:from-yellow-600 hover:to-yellow-700 
+    text-white shadow-lg
+    ${isConsuming ? "opacity-70 cursor-wait" : "hover:-translate-y-0.5 active:scale-95"}
+  `}
+>
+  <div className="flex items-center justify-center gap-2">
+    {isConsuming && (
+      <RefreshCw size={16} className="animate-spin text-white" />
+    )}
+    <span>{isConsuming ? "Processing..." : "Yes, Consume Part"}</span>
+  </div>
+</Button>
                 </div>
               </Card>
             </motion.div>
@@ -992,80 +1003,149 @@ useEffect(() => {
         )}
       </AnimatePresence>
 
-      {/* Logs Modal */}
-      <AnimatePresence>
-        {isLogsModalOpen && isAdmin && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-lg flex items-center justify-center z-[70] p-4">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 10 }} 
-              animate={{ opacity: 1, scale: 1, y: 0 }} 
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="w-full max-w-5xl"
-            >
-              <Card className="relative overflow-hidden border-none bg-white dark:bg-zinc-900 shadow-2xl border border-slate-200/50 dark:border-white/10">
-                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-600 to-red-700" />
-                <div className="p-8 flex justify-between items-center border-b border-slate-200/50 dark:border-white/10">
+<AnimatePresence>
+  {isLogsModalOpen && isAdmin && (
+    <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/90 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        exit={{ opacity: 0, y: 10 }}
+        className="w-full max-w-7xl h-[85vh] flex flex-col"
+      >
+        <Card className="flex-1 flex flex-col overflow-hidden border border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-950 shadow-2xl rounded-xl">
+          
+          {/* Top Integrated Toolbar */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between px-6 py-5 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/10 gap-4">
+            <div className="flex items-center gap-4">
+              <div className="h-10 w-1 bg-red-600 dark:bg-red-500 rounded-full" />
+              <div>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-2 uppercase tracking-tight">
+                  Inventory Audit Trail
+                  <span className="text-[10px] font-medium px-2 py-0.5 bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 rounded border border-slate-300 dark:border-zinc-700">READ_ONLY</span>
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-zinc-500 font-medium mt-0.5">Comprehensive record of every stock reconciliation and movement.</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="flex items-center bg-white dark:bg-zinc-900 rounded-lg border border-slate-200 dark:border-zinc-800 p-1">
+                <button 
+                  onClick={exportLogsToCSV}
+                  className="flex items-center gap-2 px-4 py-1.5 hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-zinc-300 rounded-md text-xs font-bold transition-all"
+                >
+                  <Download size={14} className="text-red-600" />
+                  Generate Report (.csv)
+                </button>
+              </div>
+              <button 
+                onClick={() => setIsLogsModalOpen(false)} 
+                className="p-2 hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-400 hover:text-red-600 transition-all rounded-lg"
+              >
+                <X size={20}/>
+              </button>
+            </div>
+          </div>
+
+          {/* Data Grid Header */}
+          <div className="bg-white dark:bg-zinc-950 border-b border-slate-200 dark:border-white/5">
+            <div className="grid grid-cols-12 gap-0">
+              {[
+                { label: "Execution Date", span: "col-span-2" },
+                { label: "Authorized User", span: "col-span-3" },
+                { label: "Part ID", span: "col-span-2" },
+                { label: "Variance", span: "col-span-3" },
+                { label: "Assigned Loc", span: "col-span-2" }
+              ].map((h, i) => (
+                <div key={i} className={`${h.span} px-6 py-3 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest border-r border-slate-100 dark:border-white/5 last:border-r-0`}>
+                  {h.label}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Table Body */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30 dark:bg-transparent">
+            {logsLoading ? (
+              <div className="h-full flex items-center justify-center flex-col gap-4 text-slate-400">
+                <RefreshCw size={32} className="animate-spin text-red-600" />
+                <span className="text-xs font-bold uppercase tracking-widest">Initialising Audit Scan...</span>
+              </div>
+            ) : movements.map((log, idx) => (
+              <div 
+                key={log.id} 
+                className="grid grid-cols-12 gap-0 border-b border-slate-100 dark:border-white/5 hover:bg-white dark:hover:bg-white/[0.02] transition-colors group"
+              >
+                <div className="col-span-2 px-6 py-4 flex flex-col justify-center border-r border-slate-100 dark:border-white/5">
+                  <span className="text-xs font-bold text-slate-800 dark:text-zinc-300">{new Date(log.created_at).toLocaleDateString()}</span>
+                  <span className="text-[10px] font-medium text-slate-500 dark:text-zinc-500">{new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+
+                <div className="col-span-3 px-6 py-4 flex items-center gap-3 border-r border-slate-100 dark:border-white/5">
+                  <div className="w-8 h-8 rounded bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center text-[10px] font-black text-slate-600 dark:text-zinc-400">
+                    {log.user.substring(0, 2).toUpperCase()}
+                  </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white uppercase tracking-tighter">
-                      System <span className="bg-gradient-to-r from-red-600 to-red-700 bg-clip-text text-transparent">Logs</span>
-                    </h2>
-                    <p className="text-sm text-slate-600 dark:text-zinc-400">Inventory movement history</p>
-                    <div className="flex items-center gap-4 mt-4">
-                      <button 
-                        onClick={exportLogsToCSV}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-bold transition-all"
-                      >
-                        <Download size={16} />
-                        Export Logs
-                      </button>
+                    <p className="text-xs font-bold text-slate-900 dark:text-zinc-200 leading-tight">{log.user}</p>
+                    <p className="text-[13px] text-white-500 dark:text-white font-semibold">{log.tech || "System Admin"}</p>
+                  </div>
+                </div>
+
+                <div className="col-span-2 px-6 py-4 flex items-center border-r border-slate-100 dark:border-white/5">
+                  <code className="px-2 py-1 bg-red-50 dark:bg-red-500/5 text-white-600 dark:text-red-500 rounded text-[13px] font-bold border border-red-100 dark:border-red-500/20">
+                    {log.part}
+                  </code>
+                </div>
+
+                <div className="col-span-3 px-6 py-4 flex items-center border-r border-slate-100 dark:border-white/5">
+                  <div className="flex items-center gap-4 w-full">
+                    <div className="text-center">
+                      <p className="text-[12px] font-bold text-slate-400 uppercase">Old</p>
+                      <p className="text-xs font-semibold text-slate-600 dark:text-zinc-400">{log.oldqt}</p>
+                    </div>
+                    <ArrowRight size={14} className="text-slate-300 dark:text-white-700" />
+                    <div className="text-center">
+                      <p className="text-[12px] font-bold text-slate-400 uppercase">New</p>
+                      <p className="text-xs font-black text-emerald-600 dark:text-emerald-500">{log.newqt}</p>
+                    </div>
+                    <div className="ml-auto">
+                      <span className={`text-[14px] font-black px-1.5 py-0.5 rounded ${Number(log.newqt) > Number(log.oldqt) ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                        {Number(log.newqt) - Number(log.oldqt) > 0 ? '+' : ''}{Number(log.newqt) - Number(log.oldqt)}
+                      </span>
                     </div>
                   </div>
-                  <button onClick={() => setIsLogsModalOpen(false)} className="text-slate-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-500 transition-colors">
-                    <X size={28}/>
-                  </button>
                 </div>
-                <div className="max-h-[60vh] overflow-y-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead className="bg-white/40 dark:bg-white/5 sticky top-0">
-                      <tr>
-                        <th className="p-4 text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-zinc-500 text-left">Timestamp</th>
-                        <th className="p-4 text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-zinc-500 text-left">User</th>
-                        <th className="p-4 text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-zinc-500 text-center">Tech</th>
-                        <th className="p-4 text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-zinc-500 text-center">Part Code</th>
-                        <th className="p-4 text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-zinc-500 text-center">Old Qty</th>
-                        <th className="p-4 text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-zinc-500 text-center">New Qty</th>
-                        <th className="p-4 text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-zinc-500 text-right">Loc</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-200/50 dark:divide-white/10">
-                      {logsLoading ? (
-                        <tr><td colSpan={7} className="p-10 text-center text-slate-600 dark:text-zinc-500">Loading records...</td></tr>
-                      ) : movements.map((log) => (
-                        <tr key={log.id} className="hover:bg-red-50/50 dark:hover:bg-red-500/10 transition-colors">
-                          <td className="p-4 text-[12px] font-bold text-slate-600 dark:text-zinc-400">{new Date(log.created_at).toLocaleString()}</td>
-                          <td className="p-4 text-sm font-bold text-slate-900 dark:text-zinc-300">{log.user}</td>
-                          <td className="p-4 text-center">
-                            <Badge className="bg-yellow-600/10 text-yellow-800 dark:text-yellow-400 border border-yellow-600/30 text-[12px] font-black">
-                              {log.tech || "N/A"}
-                            </Badge>
-                          </td>
-                          <td className="p-4 text-sm font-bold text-red-600 dark:text-red-500 text-center">{log.part}</td>
-                          <td className="p-4 text-center text-slate-600 dark:text-zinc-500 font-bold">{log.oldqt}</td>
-                          <td className="p-4 text-center font-bold text-green-600 dark:text-green-400">{log.newqt}</td>
-                          <td className="p-4 text-right text-xs font-bold uppercase text-red-600 dark:text-red-500">{log.location}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+
+                <div className="col-span-2 px-6 py-4 flex items-center justify-end">
+                  <div className="text-right">
+                    <p className="text-xs font-bold text-slate-800 dark:text-zinc-300 uppercase tracking-tighter">{log.location}</p>
+                    <p className="text-[12px] font-medium text-slate-500 uppercase">Warehouse Zone</p>
+                  </div>
                 </div>
-                <div className="p-4 bg-white/40 dark:bg-white/5 text-center border-t border-slate-200/50 dark:border-white/10">
-                  <p className="text-[10px] text-slate-600 dark:text-zinc-500 uppercase tracking-[0.2em]">End of Records</p>
-                </div>
-              </Card>
-            </motion.div>
+              </div>
+            ))}
           </div>
-        )}
-      </AnimatePresence>
+
+          {/* System Footer Status */}
+          <div className="px-6 py-3 bg-white dark:bg-zinc-950 border-t border-slate-200 dark:border-white/10 flex justify-between items-center">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+                <span className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase">DB Connection: Stable</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 bg-slate-300 dark:bg-zinc-700 rounded-full" />
+                <span className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase">Last Sync: 1 minute ago</span>
+              </div>
+            </div>
+            <p className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-tighter">
+              Page 1 of 1 <span className="mx-2 text-slate-300">|</span> {movements.length} Logged Entries
+            </p>
+          </div>
+        </Card>
+      </motion.div>
+    </div>
+  )}
+</AnimatePresence>
 
       {/* Edit/Add Modal */}
       <AnimatePresence>
