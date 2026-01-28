@@ -5,7 +5,6 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MenuIcon, LogOut, ChevronDown, Activity, ShieldCheck, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { EnhancedThemeToggle } from "@/components/ui/enhanced-theme-toggle";
-import { useSettings } from "@/contexts/SettingsContext";
 import { cn } from "@/lib/utils";
 import logoW from "@/assets/wtpth/logoW.png";
 import logoB from "@/assets/wtpth/logoB.png";
@@ -29,9 +28,8 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Syncing with Login.tsx "Industrial Pill" style
   const navPillButton = cn(
-    "flex items-center gap-2 px-4 py-2 rounded-md transition-all duration-300",
+    "flex items-center gap-2 px-3 sm:px-4 py-2 rounded-md transition-all duration-300",
     "text-[10px] font-black uppercase tracking-[0.2em]",
     "bg-white/40 dark:bg-white/5 backdrop-blur-md border border-slate-200/50 dark:border-white/10",
     "hover:border-red-600/60 hover:shadow-[0_0_20px_-5px_rgba(220,38,38,0.3)] hover:text-red-600 active:scale-95"
@@ -62,22 +60,18 @@ export default function Navbar() {
           : "bg-background/80 backdrop-blur-md border-transparent h-16"
       )}
     >
-      <div className="max-w-[1800px] mx-auto px-6 h-full">
+      <div className="max-w-[1800px] mx-auto px-4 sm:px-6 h-full">
         <div className="flex items-center justify-between h-full relative">
           
           {/* LOGO AREA */}
           <div className="flex items-center gap-6 z-10">
             <Link to="/" className="flex items-center transition-opacity hover:opacity-80">
-              <img src={logoB} className="h-12 w-auto dark:hidden" alt="Logo" />
-              <img src={logoW} className="h-12 w-auto hidden dark:block" alt="Logo" />
+              <img src={logoB} className="h-9 sm:h-12 w-auto dark:hidden" alt="Logo" />
+              <img src={logoW} className="h-9 sm:h-12 w-auto hidden dark:block" alt="Logo" />
             </Link>
-            <div className="hidden 2xl:flex items-center gap-2 border-l border-white/10 pl-6">
-              
-              
-            </div>
           </div>
 
-          {/* MAIN NAV */}
+          {/* MAIN NAV (Desktop Only) */}
           <div className="hidden xl:flex absolute left-1/2 -translate-x-1/2 items-center gap-1">
             {isAuthenticated && navigation.map((item) => (
               <Link 
@@ -99,14 +93,14 @@ export default function Navbar() {
           </div>
 
           {/* ACTIONS */}
-          <div className="flex items-center gap-4 z-10">
+          <div className="flex items-center gap-2 sm:gap-4 z-10">
             <EnhancedThemeToggle />
 
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger className={navPillButton}>
                   <ShieldCheck size={14} className="text-red-600" />
-                  <span className="hidden lg:inline-block truncate max-w-[100px]">{user?.username}</span>
+                  <span className="hidden sm:inline-block truncate max-w-[80px]">{user?.username}</span>
                   <ChevronDown size={12} className="opacity-30" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-52 mt-2 bg-white/95 dark:bg-zinc-950/95 border-red-600/30 shadow-2xl backdrop-blur-2xl">
@@ -123,7 +117,7 @@ export default function Navbar() {
             ) : (
               <Link to="/login" className={navPillButton}>
                 <User size={14} className="text-red-600" />
-                Authenticate
+                <span className="hidden sm:inline">Authenticate</span>
               </Link>
             )}
 
@@ -131,28 +125,57 @@ export default function Navbar() {
             <div className="xl:hidden">
               <Sheet open={isOpen} onOpenChange={setIsOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="hover:bg-red-600/10">
+                  <Button variant="ghost" size="icon" className="hover:bg-red-600/10 border border-transparent active:border-red-600/40">
                     <MenuIcon className="h-6 w-6 text-red-600" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="bg-white dark:bg-[#020202] border-l border-red-600/40">
-                  <div className="mt-10 flex flex-col gap-1">
-                    <div className="text-[10px] font-black tracking-[0.4em] text-zinc-500 mb-6 flex items-center gap-2">
-                       <Activity size={12} className="text-red-600" /> DIRECTORY
+                <SheetContent side="right" className="bg-white/95 dark:bg-[#020202]/95 backdrop-blur-2xl border-l border-red-600/40 p-0 w-[280px]">
+                  <div className="flex flex-col h-full">
+                    {/* Industrial Header */}
+                    <div className="p-6 pt-12 border-b border-zinc-200 dark:border-white/5">
+                      <div className="text-[10px] font-black tracking-[0.4em] text-zinc-500 mb-2 flex items-center gap-2">
+                         <Activity size={12} className="text-red-600 animate-pulse" /> SYSTEM_ROOT
+                      </div>
+                      <div className="text-[9px] font-mono opacity-50 uppercase tracking-widest">Access_Level: {user?.role || "Unauthorized"}</div>
                     </div>
-                    {navigation.map((item) => (
-                      <Link 
-                        key={item.name} 
-                        to={item.href} 
-                        onClick={() => setIsOpen(false)}
-                        className={cn(
-                          "py-4 px-4 text-sm font-black uppercase tracking-widest border-l-2 transition-all",
-                          isActive(item.href) ? "border-red-600 bg-red-600/5 text-red-600" : "border-transparent text-zinc-400"
-                        )}
-                      >
-                        {item.name}
-                      </Link>
-                    ))}
+
+                    {/* Nav Links */}
+                    <div className="flex-1 py-4 overflow-y-auto">
+                      {navigation.map((item) => (
+                        <Link 
+                          key={item.name} 
+                          to={item.href} 
+                          onClick={() => setIsOpen(false)}
+                          className={cn(
+                            "group block py-4 px-6 text-[11px] font-black uppercase tracking-[0.2em] transition-all relative",
+                            isActive(item.href) 
+                              ? "text-red-600 bg-red-600/5 border-r-4 border-red-600" 
+                              : "text-zinc-500 hover:text-red-500 hover:bg-zinc-100 dark:hover:bg-white/5 border-r-4 border-transparent"
+                          )}
+                        >
+                          <div className="flex justify-between items-center">
+                            {item.name}
+                            <span className={cn("text-[8px] opacity-0 group-hover:opacity-100 transition-opacity", isActive(item.href) && "opacity-100 animate-pulse")}>
+                              {isActive(item.href) ? "ACTIVE" : "SELECT"}
+                            </span>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+
+                    {/* Industrial Footer */}
+                    <div className="p-6 border-t border-zinc-200 dark:border-white/5 bg-zinc-50/50 dark:bg-white/[0.02]">
+                      <Button 
+    onClick={() => {
+      logout();      // Logs the user out
+      setIsOpen(false); // Closes the mobile side menu
+    }} 
+    variant="ghost" 
+    className="w-full justify-start text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-red-600 p-0 h-auto"
+  >
+    <LogOut size={12} className="mr-2" /> Terminate_Session
+  </Button>
+                    </div>
                   </div>
                 </SheetContent>
               </Sheet>
