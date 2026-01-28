@@ -158,11 +158,7 @@ export default function Login() {
   return (
     <div className="relative min-h-screen flex flex-col md:flex-row bg-slate-50 dark:bg-[#020202] text-foreground selection:bg-red-500/30 overflow-hidden font-sans">
       
-      {showWelcomeAnimation && (
-        <div className="fixed inset-0 z-[100]">
-          <AnimatedWelcome onComplete={handleWelcomeComplete} />
-        </div>
-      )}
+   
 
       {/* LEFT PANEL: CINEMATIC MEDIA */}
       <div className="relative hidden md:flex md:w-1/2 lg:w-[60%] flex-col items-center justify-center overflow-hidden border-r border-white/10">
